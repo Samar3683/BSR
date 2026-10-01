@@ -1,0 +1,185 @@
+/*
+ * Layout and interaction utilities shared by every component.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Containers — page-level width + gutters in one step. Inside a container,   */
+/* constrain reading text with max-w-text* instead of nesting containers.     */
+/* -------------------------------------------------------------------------- */
+
+@utility container-text-narrow {
+  width: min(100% - 2 * var(--spacing-gutter), var(--container-text-narrow));
+  margin-inline: auto;
+}
+
+@utility container-text {
+  width: min(100% - 2 * var(--spacing-gutter), var(--container-text));
+  margin-inline: auto;
+}
+
+@utility container-text-wide {
+  width: min(100% - 2 * var(--spacing-gutter), var(--container-text-wide));
+  margin-inline: auto;
+}
+
+@utility container-content {
+  width: min(100% - 2 * var(--spacing-gutter), var(--container-content));
+  margin-inline: auto;
+}
+
+@utility container-wide {
+  width: min(100% - 2 * var(--spacing-gutter), var(--container-wide));
+  margin-inline: auto;
+}
+
+/* Cinematic / full-bleed: edge to edge, no gutters. */
+@utility container-full {
+  width: 100%;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Grid — 4 / 8 / 12 columns (see --grid-columns). Place children with         */
+/* col-span-* / col-start-*; the grid guides layout, it doesn't mandate it.   */
+/* -------------------------------------------------------------------------- */
+
+@utility layout-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), minmax(0, 1fr));
+  column-gap: var(--spacing-grid-gap);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Interaction                                                                */
+/* -------------------------------------------------------------------------- */
+
+/* The single transition for control state changes (hover, press, selection):
+   fast and consistent everywhere. Focus (outline + halo box-shadow) is
+   deliberately excluded — the focus indicator must appear instantly in its
+   final colour. Transform changes must still be gated with `motion-safe:`;
+   colour feedback remains under reduced motion. */
+@utility transition-ui {
+  transition-property:
+    color, background-color, border-color, text-decoration-color, fill, stroke, opacity, translate,
+    scale, transform;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-ui);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Legibility over cinematic media (video, WebGL, imagery). Scrims use the    */
+/* surface's scrim colour, so a dark scene gets a dark scrim.                 */
+/* -------------------------------------------------------------------------- */
+
+@utility scrim-bottom {
+  background-image: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--color-scrim) 88%, transparent) 0%,
+    color-mix(in srgb, var(--color-scrim) 55%, transparent) 45%,
+    transparent 100%
+  );
+}
+
+@utility scrim-top {
+  background-image: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-scrim) 80%, transparent) 0%,
+    transparent 100%
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Scroll-linked marks (the transition out of the hero, technical drawings):   */
+/* tied to the reader's scroll, progressive — without support, or under        */
+/* reduced motion, the final state is simply there. Entry reveals, parallax    */
+/* and sequences below the hero live in styles/motion.css.                     */
+/* -------------------------------------------------------------------------- */
+
+/* A marker appearing in its place: opacity and a small scale from its own
+   centre. Range: `--seq-range` (default: as it enters). */
+@keyframes seq-pop {
+  from {
+    opacity: 0;
+    scale: 0.4;
+  }
+}
+
+@utility seq-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: seq-pop var(--ease-enter) both;
+      animation-timeline: var(--seq-timeline, view());
+      animation-range: var(--seq-range, entry 20% cover 40%);
+    }
+  }
+}
+
+@keyframes draw-x {
+  from {
+    scale: 0 1;
+  }
+}
+
+@keyframes draw-y {
+  from {
+    scale: 1 0;
+  }
+}
+
+/* A rule drawing itself across, left to right, as it enters. */
+@utility rule-draw {
+  transform-box: fill-box;
+  transform-origin: left center;
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: draw-x var(--ease-cinematic) both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 35%;
+    }
+  }
+}
+
+/* A vertical thread drawing itself downwards as it enters. */
+@utility rule-draw-down {
+  transform-box: fill-box;
+  transform-origin: center top;
+
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      animation: draw-y var(--ease-cinematic) both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 45%;
+    }
+  }
+}
+
+/* A native disclosure (<details>) whose content eases open and closed where
+   the browser can animate to `auto` (::details-content + interpolate-size);
+   elsewhere, and always under reduced motion, it simply opens. */
+@utility disclosure {
+  interpolate-size: allow-keywords;
+
+  &::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow-y: clip;
+    transition:
+      block-size 360ms var(--ease-ui),
+      opacity 360ms var(--ease-ui),
+      content-visibility 360ms allow-discrete;
+  }
+
+  &[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::details-content {
+      transition: none;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+# Fail installs on a Node version outside package.json "engines".
+engineStrict: true
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver

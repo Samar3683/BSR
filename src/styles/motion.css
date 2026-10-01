@@ -1,0 +1,140 @@
+/*
+ * Entry motion below the hero — time-based, played when an element enters the
+ * viewport (RevealController: one IntersectionObserver for the whole page), so
+ * a reveal always runs to completion: nothing is ever left half-clipped at the
+ * speed of the reader's scroll.
+ *
+ *   data-reveal="rise"    each child rises 24px from behind its own lower edge, in turn
+ *   data-reveal="left"    a picture (the children) opening from the left edge
+ *   data-reveal="right"   … from the right edge
+ *   data-reveal="bottom"  … from the bottom edge
+ *   data-reveal="group"   no effect of its own: a trigger for `pending:` children
+ *   data-reveal-once      never replays (the coverage sequence)
+ *   --reveal-delay        stagger, e.g. style={{ "--reveal-delay": "120ms" }}
+ *
+ * The controller marks an element `data-inview` on entry, and clears it when
+ * the element has left through the bottom (the reader scrolled back up), so
+ * the reveal plays again on the way down — motion reverses, never sticks.
+ *
+ * Text never fades: reveals move and clip, so text keeps its real colours (and
+ * its contrast) at every moment, and stays in the accessibility tree while
+ * waiting to be shown. Pictures fade in on their image layer only
+ * (MediaFrame), never their captions.
+ *
+ * Progressive and safe: the hidden state applies only once the controller runs
+ * (html[data-reveal-ready]) and only when motion is allowed. Without
+ * JavaScript, or under reduced motion, everything is in its final state.
+ */
+
+/* `pending:` styles an element while its reveal — its own `data-reveal`, or
+   an ancestor's — has not happened yet (see above for when it applies). */
+@custom-variant pending {
+  @media (prefers-reduced-motion: no-preference) {
+    &:where(
+      html[data-reveal-ready] [data-reveal]:not([data-inview]),
+      html[data-reveal-ready] [data-reveal]:not([data-inview]) *
+    ) {
+      @slot;
+    }
+  }
+}
+
+/* The effect is carried by the observed element's children, never the element
+   itself: an element clipped out of sight would no longer "intersect" for the
+   IntersectionObserver. In the components layer, so a child's own transition
+   utility (a button's colour feedback) is never overridden. */
+@layer components {
+  @media (prefers-reduced-motion: no-preference) {
+    [data-reveal]:not([data-reveal="group"]) > * {
+      /* At rest a clip just outside the box — room for focus rings, halos and
+         descenders; nothing is cut — so the wipe interpolates evenly to it. */
+      clip-path: inset(-1rem);
+      transition:
+        translate 800ms var(--ease-enter),
+        clip-path 900ms var(--ease-cinematic),
+        opacity 700ms var(--ease-enter);
+      transition-delay: var(--reveal-delay, 0ms);
+    }
+
+    /* A block of text arrives line by line: each child 80ms after the last. */
+    [data-reveal="rise"] > :nth-child(2) {
+      transition-delay: calc(var(--reveal-delay, 0ms) + 80ms);
+    }
+    [data-reveal="rise"] > :nth-child(3) {
+      transition-delay: calc(var(--reveal-delay, 0ms) + 160ms);
+    }
+    [data-reveal="rise"] > :nth-child(n + 4) {
+      transition-delay: calc(var(--reveal-delay, 0ms) + 240ms);
+    }
+
+    html[data-reveal-ready] [data-reveal="rise"]:not([data-inview]) > * {
+      translate: 0 1.5rem;
+      clip-path: inset(0 0 100% 0);
+    }
+
+    html[data-reveal-ready] [data-reveal="left"]:not([data-inview]) > * {
+      clip-path: inset(0 100% 0 0);
+    }
+
+    html[data-reveal-ready] [data-reveal="right"]:not([data-inview]) > * {
+      clip-path: inset(0 0 0 100%);
+    }
+
+    html[data-reveal-ready] [data-reveal="bottom"]:not([data-inview]) > * {
+      clip-path: inset(100% 0 0 0);
+    }
+  }
+}
+
+/* Parallax: a picture drifting ±3% inside its frame as the frame crosses the
+   viewport (scroll-driven, compositor-run; nothing moves layout). Give the
+   element a frame with `overflow-clip` and let it overhang by 4% top and
+   bottom (MediaFrame does both). Large screens only; never under reduced
+   motion or on a low-power device (html[data-motion-lite]). */
+@keyframes parallax {
+  from {
+    translate: 0 -3%;
+  }
+  to {
+    translate: 0 3%;
+  }
+}
+
+@utility parallax {
+  @media (prefers-reduced-motion: no-preference) and (width >= 64rem) {
+    @supports (animation-timeline: view()) {
+      html:not([data-motion-lite]) & {
+        animation: parallax linear both;
+        animation-timeline: view();
+        animation-range: cover 0% cover 100%;
+      }
+    }
+  }
+}
+
+/* A panel arriving in place (a tab's content): fades and rises 8px. Runs each
+   time the panel is shown again (display: none → block restarts it). */
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+@utility panel-in {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: panel-in 500ms var(--ease-enter) both;
+  }
+}
+
+/* A route marker pulsing once when it appears: a ring spreading and fading. */
+@keyframes pulse-once {
+  from {
+    opacity: 0.7;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 2.6;
+  }
+}

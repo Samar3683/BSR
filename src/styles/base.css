@@ -1,0 +1,71 @@
+/*
+ * Document-level defaults. Tailwind Preflight already provides the reset
+ * (box-sizing, margins, media display, form inheritance); this layer only
+ * adds project-wide behaviour. No page- or component-specific styling here.
+ */
+
+@layer base {
+  html {
+    background-color: var(--color-background-primary);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* In-page anchors land below the site header. */
+    scroll-padding-top: var(--header-height);
+  }
+
+  body {
+    min-height: 100dvh;
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    text-wrap: balance;
+  }
+
+  :where(p) {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-action-primary);
+    color: var(--color-on-action-primary);
+  }
+
+  /*
+   * Focus: a solid ring with a contrasting halo on both sides, so the
+   * indicator stays visible on any surface — dark, light, red or green fills,
+   * imagery and WebGL. Colours follow the surface (see themes.css).
+   * Interactive elements therefore don't use elevation shadows.
+   */
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-ring-offset);
+    box-shadow: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset) + 2px)
+      var(--color-focus-halo);
+  }
+
+  /* Programmatic focus targets (e.g. <main tabindex="-1"> after a skip link)
+     are not controls and should not show a control ring. */
+  [tabindex="-1"]:focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  /*
+   * Reduced motion. Only native smooth scrolling is neutralised globally.
+   * Everything else provides a designed alternative: CSS transform motion
+   * uses the `motion-safe:` variant (colour/opacity feedback remains), GSAP
+   * uses `gsap.matchMedia()` with REDUCED_MOTION_QUERY / FULL_MOTION_QUERY, and Lenis is not started.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}

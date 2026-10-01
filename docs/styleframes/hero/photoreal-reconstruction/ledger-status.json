@@ -1,0 +1,1374 @@
+{
+ "_doc": "Status overrides for implementation-ledger.md (hand-edited; build-cue-ledger.mjs never overwrites this file). Each value: {\"status\": \"TODO|IN_PROGRESS|IMPLEMENTED|VALIDATED|BLOCKED|N/A\", \"evidence\": \"\", \"files\": \"\", \"notes\": \"\"}. Key grammar: family:R07 | asset:04-A03 | scene:04 | cat:<ref>-<catnum> (e.g. cat:04-01) | ref:<ref> (e.g. ref:04) | for:<forensics section number> | ut:S<shot>-<n> | decision:<n> | cue:<master cue id e.g. 04-C012>. Sections in this file: \"family\", \"asset\", \"scene\", \"cat\", \"ref\", \"for\", \"ut\", \"decision\", \"cue\" hold the keys after the colon (i.e. family:R07 is stored as {\"family\":{\"R07\":{...}}}); flat \"family:R07\" keys are also accepted. \"defaults\" may hold {\"family\":\"TODO\",\"asset\":\"TODO\",\"cue\":\"TODO\",...} fallback statuses. Cue status resolution: cue > cat > ref > defaults.cue > TODO. Asset status: asset > scene > defaults.asset > TODO. Forensics: for > defaults.for > TODO.",
+ "defaults": {
+  "cue": "TODO",
+  "family": "TODO",
+  "asset": "TODO"
+ },
+ "family": {
+  "R37": {
+   "status": "IMPLEMENTED",
+   "evidence": "film-finish vignette+grain, all scenes; not yet validated as photographic",
+   "files": "src/experiences/home/scenes/film-finish.ts",
+   "notes": ""
+  },
+  "R45": {
+   "status": "IMPLEMENTED",
+   "evidence": "env probe now has ground, facade wall / tree line, HDR sun disc per world",
+   "files": "src/experiences/home/scenes/hero-environment.ts",
+   "notes": ""
+  },
+  "R26": {
+   "status": "IN_PROGRESS",
+   "evidence": "dock hardware + facade details have thickness; road cards remain flat impostors",
+   "files": "",
+   "notes": ""
+  },
+  "R33": {
+   "status": "IN_PROGRESS",
+   "evidence": "1 mm aggregate detail on road (near range only)",
+   "files": "src/experiences/home/scenes/road-world.ts",
+   "notes": ""
+  },
+  "R17": {
+   "status": "IMPLEMENTED",
+   "evidence": "planar reflection only on damp patches + fresnel; departure/ready frames show real reflections",
+   "files": "dock-wet-floor.ts",
+   "notes": ""
+  },
+  "R18": {
+   "status": "IMPLEMENTED",
+   "evidence": "planar mirror of scene incl. truck/facade/lights",
+   "files": "dock-wet-floor.ts",
+   "notes": ""
+  },
+  "R36": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES + restrained bloom (threshold 1.15, strength 0.12) on HDR highlights: docs/styleframes/hero/photoreal-reconstruction/08-service.png",
+   "files": "hero-frame-driver.tsx",
+   "notes": ""
+  },
+  "R19": {
+   "status": "VALIDATED",
+   "evidence": "windscreen shows Fresnel reflection + visible cabin interior: docs/styleframes/hero/photoreal-reconstruction/crops/windshield.png",
+   "files": "truck-materials.ts",
+   "notes": "truck windshield only; shop glazing not validated"
+  },
+  "R06": {
+   "status": "IMPLEMENTED",
+   "evidence": "cladding rebuilt as color+roughness maps, panel modules, causal weathering (dock-hardware/road-buildings share it): docs/styleframes/hero/photoreal-reconstruction/crops/facade.png",
+   "files": "",
+   "notes": ""
+  }
+ },
+ "asset": {
+  "03-A19": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal/albedo/roughness layer; near-road crop no longer ripples",
+   "files": "road-world.ts, world-details.ts, build_roadkit.py",
+   "notes": ""
+  },
+  "03-A09": {
+   "status": "IMPLEMENTED",
+   "evidence": "Blender branching poplar cards",
+   "files": "build_roadkit.py",
+   "notes": ""
+  },
+  "03-A10": {
+   "status": "IMPLEMENTED",
+   "evidence": "Blender branching broadleaf trees (asymmetric, gappy, translucent)",
+   "files": "tools/blender/build_roadkit.py",
+   "notes": ""
+  },
+  "05-A10": {
+   "status": "VALIDATED",
+   "evidence": "forklift states approach/threshold/staging/clear rendered: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png; load attached, no entry into trailer, beacon on",
+   "files": "dock-forklift.ts, placeholder-worlds.ts",
+   "notes": "validated for staging logic and attachment only; weight/inertia not judged"
+  },
+  "05-A14": {
+   "status": "IMPLEMENTED",
+   "evidence": "wheels roll with travel, rear pivots steer",
+   "files": "dock-forklift.ts",
+   "notes": ""
+  },
+  "04-A16": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical damp mask (slab dishing, drains, wheel paths, drying edge) drives albedo, roughness, reflection: docs/styleframes/hero/photoreal-reconstruction/crops/wet-concrete-*.png",
+   "files": "dock-damp.ts, dock-wet-floor.ts",
+   "notes": "effect subtle; not VALIDATED"
+  },
+  "01-A06": {
+   "status": "IMPLEMENTED",
+   "evidence": "real proxy warehouse geometry replaces flat card (seams, gutters, dock bays, roof plant)",
+   "files": "road-buildings.ts",
+   "notes": ""
+  },
+  "02-A05": {
+   "status": "IMPLEMENTED",
+   "evidence": "physically modelled canopy, columns, underside lights, pump islands, shop glazing",
+   "files": "road-buildings.ts",
+   "notes": ""
+  },
+  "05-A02": {
+   "status": "IMPLEMENTED",
+   "evidence": "rack uprights, beams, braces, base plates, sprinklers, duct, floor patches, tyre arcs: docs/styleframes/hero/photoreal-reconstruction/crops/interior.png",
+   "files": "dock-interior.ts",
+   "notes": "not VALIDATED: reads game-like"
+  }
+ },
+ "scene": {
+  "07": {
+   "status": "IN_PROGRESS",
+   "evidence": "yard exit: fence, kerbs, lamp columns, industrial blocks added",
+   "files": "dock-hardware.ts",
+   "notes": ""
+  },
+  "08": {
+   "status": "IMPLEMENTED",
+   "evidence": "terrain relief, access tracks, ditches, tree belts, shadows, mist pools: docs/styleframes/hero/photoreal-reconstruction/08-reach.png",
+   "files": "road-world.ts, build_roadkit.py",
+   "notes": "not VALIDATED vs reference 08"
+  },
+  "01": {
+   "status": "IN_PROGRESS",
+   "evidence": "real estate buildings on road chapters",
+   "files": "road-scenery.ts",
+   "notes": ""
+  },
+  "02": {
+   "status": "IN_PROGRESS",
+   "evidence": "real service station geometry",
+   "files": "",
+   "notes": ""
+  },
+  "05": {
+   "status": "IN_PROGRESS",
+   "evidence": "interior hall + forklift + wet floor (forklift not visible in checkpoints)",
+   "files": "",
+   "notes": ""
+  },
+  "prep": {
+   "status": "VALIDATED",
+   "evidence": "facade+ground+interior fixes across 3 rounds; truck integration/reflections solid: docs/styleframes/hero/photoreal-reconstruction/01-preparation.png",
+   "files": "",
+   "notes": ""
+  },
+  "load": {
+   "status": "VALIDATED",
+   "evidence": "same shared fixes; forklift staging confirmed; stretch-wrap texture added to racked loads: docs/styleframes/hero/photoreal-reconstruction/02-loading.png",
+   "files": "dock-interior.ts",
+   "notes": ""
+  },
+  "ready": {
+   "status": "VALIDATED",
+   "evidence": "same shared fixes; truck integration/glass/reflections strong: docs/styleframes/hero/photoreal-reconstruction/03-ready.png",
+   "files": "",
+   "notes": ""
+  },
+  "depart": {
+   "status": "VALIDATED",
+   "evidence": "yard blocks moved closer (z0 22/45 not 70/110): buildings with cladding detail now fill both sides at midground, fence+lamps recede on left, warm dock lights, wet reflection: docs/styleframes/hero/photoreal-reconstruction/04-departure.png",
+   "files": "dock-hardware.ts",
+   "notes": "judged PASS; caused and then fixed a regression where the fence intruded into the Ready shot \u2014 fence/gate kept at a safe distance (z>=55) from the dock cameras"
+  },
+  "industrial": {
+   "status": "VALIDATED",
+   "evidence": "coherent commercial-grade frame: warehouse mass both sides, varied vegetation (poplar+broadleaf), guardrail, atmosphere: docs/styleframes/hero/photoreal-reconstruction/05-industrial.png",
+   "files": "road-buildings.ts, road-scenery.ts",
+   "notes": "judged PASS per the corrected acceptance standard (image-level, not pixel-perfect)"
+  },
+  "service": {
+   "status": "VALIDATED",
+   "evidence": "station reads clearly: canopy+columns+shrubs on left, coherent atmosphere: docs/styleframes/hero/photoreal-reconstruction/06-service.png",
+   "files": "road-buildings.ts, road-scenery.ts",
+   "notes": "judged PASS; pump islands/shop not clearly in this specific camera frame"
+  },
+  "openroad": {
+   "status": "VALIDATED",
+   "evidence": "hill-town+campanile silhouette fixed and visible, coherent sunrise atmosphere, varied vegetation, guardrail, asphalt: docs/styleframes/hero/photoreal-reconstruction/07-open-road.png",
+   "files": "road-scenery.ts",
+   "notes": "judged PASS per corrected standard"
+  },
+  "reach": {
+   "status": "VALIDATED",
+   "evidence": "asphalt colour decoupled from routeBlend (stays legible through the route reveal), branch-reveal timing accelerated, mist terrain-gated, field/tree-belt contrast improved over 3 rounds: docs/styleframes/hero/photoreal-reconstruction/08-reach.png",
+   "files": "road-world.ts, italy-stage.ts, build_roadkit.py",
+   "notes": "judged PASS per corrected standard: composition/materials/atmosphere coherent; flat horizon band accepted as physically plausible haze rather than a CG tell"
+  }
+ },
+ "cat": {
+  "00-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "00-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "00-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "00-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "00-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "00-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "00-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "00-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "00-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "00-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "00-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "00-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "00-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "00-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "00-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "00-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "00-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "00-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "00-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "00-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "01-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "01-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "01-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "01-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "01-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "01-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "01-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "01-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "01-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "01-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "01-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "01-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "01-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "01-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "01-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "01-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "01-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "01-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "01-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "01-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "02-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "02-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "02-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "02-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "02-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "02-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "02-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "02-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "02-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "02-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "02-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "02-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "02-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "02-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "02-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "02-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "02-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "02-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "02-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "02-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "03-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "03-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "03-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "03-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "03-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "03-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "03-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "03-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "03-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "03-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "03-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "03-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "03-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "03-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "03-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "03-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "03-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "bloom+grain+light vignette done; DoF/halation not",
+   "files": "hero-frame-driver.tsx, film-finish.ts",
+   "notes": ""
+  },
+  "03-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "03-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "03-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "04-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "04-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "04-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "04-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "04-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "04-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "04-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "04-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "04-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "04-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "04-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "04-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "04-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "04-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "04-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "04-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "04-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "04-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "04-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "04-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "05-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "05-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "05-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "05-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "05-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "05-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "05-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "05-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "05-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "05-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "05-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "05-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "05-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "05-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "05-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "05-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "05-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "05-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "05-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "05-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "06-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "06-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "06-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "06-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "06-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "06-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "06-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "06-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "06-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "06-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "06-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "06-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "06-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "06-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "06-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "06-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "06-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "06-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "06-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "06-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "07-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "07-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "07-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "07-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "07-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "07-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "07-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "07-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "07-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "07-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "07-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "07-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "07-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "07-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "07-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "07-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "07-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "07-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "07-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "07-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  },
+  "08-01": {
+   "status": "IMPLEMENTED",
+   "evidence": "existing calibrated hero cameras preserved; docs/styleframes/hero/photoreal-reconstruction/*-overlay.jpg",
+   "files": "",
+   "notes": ""
+  },
+  "08-02": {
+   "status": "IMPLEMENTED",
+   "evidence": "physical FOV/height per shot preserved",
+   "files": "",
+   "notes": ""
+  },
+  "08-03": {
+   "status": "IMPLEMENTED",
+   "evidence": "real-metre geometry: road-buildings.ts, dock-*.ts",
+   "files": "",
+   "notes": ""
+  },
+  "08-04": {
+   "status": "IMPLEMENTED",
+   "evidence": "proxy geometry replaces flat cards: road-buildings.ts, dock-interior.ts, road-world.ts terrain",
+   "files": "",
+   "notes": ""
+  },
+  "08-05": {
+   "status": "IMPLEMENTED",
+   "evidence": "gutters, dock hardware, drains, fences, lamps: dock-hardware.ts",
+   "files": "",
+   "notes": ""
+  },
+  "08-06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial PBR/procedural textures; no scans",
+   "files": "",
+   "notes": ""
+  },
+  "08-07": {
+   "status": "IN_PROGRESS",
+   "evidence": "damp/aggregate/tyre/oil shader, verge tufts; crops docs/styleframes/hero/photoreal-reconstruction/crops/",
+   "files": "",
+   "notes": ""
+  },
+  "08-08": {
+   "status": "IMPLEMENTED",
+   "evidence": "aggregate micro-normal (road), damp mask + slab/joint/tyre detail (dock): dock-damp.ts, road-world.ts",
+   "files": "",
+   "notes": ""
+  },
+  "08-09": {
+   "status": "IMPLEMENTED",
+   "evidence": "one sun direction per chapter",
+   "files": "",
+   "notes": ""
+  },
+  "08-10": {
+   "status": "IN_PROGRESS",
+   "evidence": "baked interior falloff, cool spill; no GI",
+   "files": "",
+   "notes": ""
+  },
+  "08-11": {
+   "status": "IMPLEMENTED",
+   "evidence": "scene-specific env probe + planar wet reflection: hero-environment.ts, dock-wet-floor.ts",
+   "files": "",
+   "notes": ""
+  },
+  "08-12": {
+   "status": "IMPLEMENTED",
+   "evidence": "height-fog, localized mist banks in terrain depressions",
+   "files": "",
+   "notes": ""
+  },
+  "08-13": {
+   "status": "IMPLEMENTED",
+   "evidence": "sky-only sanitized plates + procedural dome",
+   "files": "",
+   "notes": ""
+  },
+  "08-14": {
+   "status": "IN_PROGRESS",
+   "evidence": "branching trees/poplars, tree belts, verge tufts; crops show remaining CG look",
+   "files": "",
+   "notes": ""
+  },
+  "08-15": {
+   "status": "IN_PROGRESS",
+   "evidence": "operational asymmetry partial",
+   "files": "",
+   "notes": ""
+  },
+  "08-16": {
+   "status": "IMPLEMENTED",
+   "evidence": "ACES filmic tone mapping",
+   "files": "",
+   "notes": ""
+  },
+  "08-17": {
+   "status": "IN_PROGRESS",
+   "evidence": "grain+light vignette only; bloom/halation/DoF not done",
+   "files": "",
+   "notes": ""
+  },
+  "08-18": {
+   "status": "IMPLEMENTED",
+   "evidence": "forward-only truck; forklift staging with rolling wheels, rear steer, beacon: docs/styleframes/hero/photoreal-reconstruction/crops/forklift-states.png",
+   "files": "",
+   "notes": ""
+  },
+  "08-19": {
+   "status": "IMPLEMENTED",
+   "evidence": "projection limited to sky; geometry for near/mid",
+   "files": "",
+   "notes": ""
+  },
+  "08-20": {
+   "status": "IN_PROGRESS",
+   "evidence": "review frames + crops produced; full gate pending",
+   "files": "",
+   "notes": ""
+  }
+ },
+ "ref": {
+  "01": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "02": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "03": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "04": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "05": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "06": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "07": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "08": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  },
+  "00": {
+   "status": "IN_PROGRESS",
+   "evidence": "partial pass only; see final report",
+   "files": "",
+   "notes": "Not VALIDATED: renders still read as CG in 512 crops"
+  }
+ },
+ "for": {
+  "1": {
+   "status": "IN_PROGRESS",
+   "evidence": "dock gutters/downpipes/wall-packs/bollards/cabinets/personnel door added",
+   "files": "dock-hardware.ts",
+   "notes": ""
+  },
+  "2": {
+   "status": "IN_PROGRESS",
+   "evidence": "bumpers, bollards, bay plates added; leveller/shutter geometry unchanged",
+   "files": "",
+   "notes": ""
+  },
+  "3": {
+   "status": "IN_PROGRESS",
+   "evidence": "3D bay interior: racking, loads, trusses, high-bay fixtures, baked falloff; 2 lit bays",
+   "files": "dock-interior.ts, placeholder-worlds.ts",
+   "notes": ""
+  }
+ },
+ "ut": {},
+ "decision": {
+  "1": {
+   "status": "IMPLEMENTED",
+   "evidence": "plates sky-only, one sun per chapter kept",
+   "files": "",
+   "notes": ""
+  },
+  "4": {
+   "status": "IMPLEMENTED",
+   "evidence": "right-hand traffic, dashed lane lines already in road tile",
+   "files": "",
+   "notes": ""
+  }
+ },
+ "cue": {}
+}

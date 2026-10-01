@@ -1,0 +1,58 @@
+file,width,height,bytes,format
+01-services-express-sunrise-motorway.webp,1983,793,1392944,lossless WebP
+02-services-dedicated-loading-dock.webp,1672,941,1519076,lossless WebP
+03-coverage-northern-italy-aerial.webp,1672,941,2255486,lossless WebP
+04-process-direct-contact.webp,1672,941,1257734,lossless WebP
+05-vehicles-van.webp,1672,941,1385718,lossless WebP
+06-vehicles-rigid-truck.webp,1672,941,1483328,lossless WebP
+07-vehicles-articulated-truck.webp,1672,941,1423634,lossless WebP
+08-protection-secured-cargo.webp,1536,1024,1795840,lossless WebP
+09-protection-wrapped-pallet-detail.webp,1536,1024,1730042,lossless WebP
+10-final-cta-truck-departure.webp,1672,941,1442358,lossless WebP
+11-loading-forklift-threshold.webp,1536,1024,1682800,lossless WebP
+12-bsr-coverage-network-map.svg,1800,1000,119925,SVG vector; dimensions are viewBox units
+alternate-blue-render/05-vehicles-van.webp,1672,941,1344178,lossless WebP
+alternate-blue-render/06-vehicles-rigid-truck.webp,1672,941,1460530,lossless WebP
+alternate-blue-render/07-vehicles-articulated-truck.webp,1672,941,1431730,lossless WebP
+color-variants/black/01-services-express-sunrise-motorway.webp,1983,793,1385518,lossless WebP
+color-variants/black/02-services-dedicated-loading-dock.webp,1672,941,1506786,lossless WebP
+color-variants/black/04-process-direct-contact.webp,1672,941,1207924,lossless WebP
+color-variants/black/05-vehicles-van.webp,1672,941,1352198,lossless WebP
+color-variants/black/06-vehicles-rigid-truck.webp,1672,941,1420864,lossless WebP
+color-variants/black/07-vehicles-articulated-truck.webp,1672,941,1408760,lossless WebP
+color-variants/blue/01-services-express-sunrise-motorway.webp,1983,793,1395910,lossless WebP
+color-variants/blue/02-services-dedicated-loading-dock.webp,1672,941,1526962,lossless WebP
+color-variants/blue/04-process-direct-contact.webp,1672,941,1216684,lossless WebP
+color-variants/blue/05-vehicles-van.webp,1672,941,1375606,lossless WebP
+color-variants/blue/06-vehicles-rigid-truck.webp,1672,941,1484850,lossless WebP
+color-variants/blue/07-vehicles-articulated-truck.webp,1672,941,1436994,lossless WebP
+color-variants/green/01-services-express-sunrise-motorway.webp,1983,793,1406938,lossless WebP
+color-variants/green/02-services-dedicated-loading-dock.webp,1672,941,1526170,lossless WebP
+color-variants/green/04-process-direct-contact.webp,1672,941,1238086,lossless WebP
+color-variants/green/05-vehicles-van.webp,1672,941,1374544,lossless WebP
+color-variants/green/06-vehicles-rigid-truck.webp,1672,941,1450544,lossless WebP
+color-variants/green/07-vehicles-articulated-truck.webp,1672,941,1450782,lossless WebP
+color-variants/red/01-services-express-sunrise-motorway.webp,1983,793,1424688,lossless WebP
+color-variants/red/02-services-dedicated-loading-dock.webp,1672,941,1523440,lossless WebP
+color-variants/red/04-process-direct-contact.webp,1672,941,1230814,lossless WebP
+color-variants/red/05-vehicles-van.webp,1672,941,1382636,lossless WebP
+color-variants/red/06-vehicles-rigid-truck.webp,1672,941,1472956,lossless WebP
+color-variants/red/07-vehicles-articulated-truck.webp,1672,941,1489836,lossless WebP
+custom-bsr-wrap/01-services-express-sunrise-motorway.webp,1983,793,1465556,lossless WebP
+custom-bsr-wrap/02-services-dedicated-loading-dock.webp,1672,941,1614342,lossless WebP
+custom-bsr-wrap/04-process-direct-contact.webp,1672,941,1328700,lossless WebP
+custom-bsr-wrap/05-vehicles-van.webp,1672,941,1700524,lossless WebP
+custom-bsr-wrap/06-vehicles-rigid-truck.webp,1672,941,1656794,lossless WebP
+custom-bsr-wrap/07-vehicles-articulated-truck.webp,1672,941,1657662,lossless WebP
+custom-bsr-wrap/13-cargo-ready-for-dispatch.webp,1672,941,1794980,lossless WebP
+design-references/front-three-quarter/07-vehicles-articulated-truck.webp,1448,1086,1359376,lossless WebP
+design-references/rear/07-vehicles-articulated-truck.webp,1448,1086,1155998,lossless WebP
+design-references/side/07-vehicles-articulated-truck.webp,1448,1086,1535072,lossless WebP
+earlier-drafts/articulated-before-wheel-correction/07-vehicles-articulated-truck.webp,1672,941,1502666,lossless WebP
+earlier-drafts/dock-before-white-stripe/02-services-dedicated-loading-dock.webp,1672,941,1566962,lossless WebP
+earlier-drafts/dock-first-render/02-services-dedicated-loading-dock.webp,1672,941,1511168,lossless WebP
+earlier-drafts/motorway-before-white-stripe/01-services-express-sunrise-motorway.webp,1983,793,1407948,lossless WebP
+earlier-drafts/motorway-first-render/01-services-express-sunrise-motorway.webp,1672,941,1336220,lossless WebP
+map-variants/dark/12-bsr-coverage-network-map.svg,1800,1000,121318,SVG vector; dimensions are viewBox units
+map-variants/geography-only/12-bsr-coverage-network-map.svg,1800,1000,116009,SVG vector; dimensions are viewBox units
+map-variants/routes-only/12-bsr-coverage-network-map.svg,1800,1000,4396,SVG vector; dimensions are viewBox units

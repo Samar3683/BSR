@@ -1,0 +1,284 @@
+/*
+ * Semantic roles, resolved per surface.
+ *
+ * `@theme reference` registers the role names with Tailwind (so utilities
+ * like `bg-surface-elevated` or `text-text-muted` exist) without emitting
+ * values; the values come from the surface scopes below. Any subtree can
+ * switch environment with `data-surface="…"` (see the Surface component) and
+ * every component inside adapts — dark is not a mechanical inversion of light.
+ *
+ * Surfaces: carbon (default), graphite, asphalt · white, soft-white, warm-white · green.
+ * Routes and progress use Active Green (green-600) on every surface.
+ * Every text/graphic pairing is contrast-checked by themes.test.ts.
+ */
+
+@theme reference {
+  --color-background-primary: var(--color-carbon);
+  --color-background-secondary: var(--color-graphite);
+  --color-background-inverse: var(--color-soft-white);
+  --color-background-inverse-hover: var(--color-titanium);
+
+  --color-surface-primary: var(--color-carbon);
+  --color-surface-secondary: var(--color-graphite);
+  --color-surface-elevated: var(--color-asphalt);
+  --color-surface-field: var(--color-graphite);
+
+  --color-text-primary: var(--color-soft-white);
+  --color-text-secondary: var(--color-titanium);
+  --color-text-muted: var(--color-smoke);
+  --color-text-inverse: var(--color-carbon);
+  --color-text-disabled: var(--color-shale);
+
+  --color-border-subtle: transparent;
+  --color-border-default: transparent;
+  --color-border-strong: var(--color-pewter);
+  --color-border-interactive: var(--color-titanium);
+
+  --color-overlay-hover: transparent;
+  --color-overlay-pressed: transparent;
+
+  --color-action-primary: var(--color-red-500);
+  --color-action-primary-hover: var(--color-red-600);
+  --color-action-primary-active: var(--color-red-700);
+  --color-on-action-primary: var(--color-soft-white);
+
+  --color-success: var(--color-green-300);
+  --color-success-graphic: var(--color-green-600);
+  --color-success-surface: var(--color-green-tint-dark);
+  --color-success-strong: var(--color-green-700);
+  --color-on-success-strong: var(--color-soft-white);
+
+  --color-danger: var(--color-red-300);
+  --color-danger-graphic: var(--color-red-400);
+  --color-danger-surface: var(--color-red-tint-dark);
+  --color-danger-strong: var(--color-red-500);
+  --color-on-danger-strong: var(--color-soft-white);
+
+  --color-focus: var(--color-soft-white);
+  --color-focus-halo: var(--color-carbon);
+  --color-scrim: var(--color-carbon);
+
+  --shadow-ambient: none;
+  --shadow-raised: none;
+  --shadow-overlay: none;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dark environments                                                          */
+/* -------------------------------------------------------------------------- */
+
+:root,
+[data-surface="carbon"],
+[data-surface="graphite"],
+[data-surface="asphalt"] {
+  color-scheme: dark;
+
+  --color-background-primary: var(--color-carbon);
+  --color-background-secondary: var(--color-graphite);
+  --color-background-inverse: var(--color-soft-white);
+  --color-background-inverse-hover: var(--color-titanium);
+
+  --color-surface-primary: var(--color-carbon);
+  --color-surface-secondary: var(--color-graphite);
+  --color-surface-elevated: var(--color-asphalt);
+  --color-surface-field: var(--color-graphite);
+
+  --color-text-primary: var(--color-soft-white);
+  --color-text-secondary: var(--color-titanium);
+  --color-text-muted: var(--color-smoke);
+  --color-text-inverse: var(--color-carbon);
+  --color-text-disabled: var(--color-shale);
+
+  /* Translucent borders adapt to whichever dark material they sit on. */
+  --color-border-subtle: rgb(247 247 242 / 0.08);
+  --color-border-default: rgb(247 247 242 / 0.16);
+  --color-border-strong: var(--color-pewter);
+  --color-border-interactive: var(--color-titanium);
+
+  --color-overlay-hover: rgb(247 247 242 / 0.06);
+  --color-overlay-pressed: rgb(247 247 242 / 0.1);
+
+  --color-action-primary: var(--color-red-500);
+  --color-action-primary-hover: var(--color-red-600);
+  --color-action-primary-active: var(--color-red-700);
+  --color-on-action-primary: var(--color-soft-white);
+
+  --color-success: var(--color-green-300);
+  --color-success-graphic: var(--color-green-600);
+  --color-success-surface: var(--color-green-tint-dark);
+  --color-success-strong: var(--color-green-700);
+  --color-on-success-strong: var(--color-soft-white);
+
+  --color-danger: var(--color-red-300);
+  --color-danger-graphic: var(--color-red-400);
+  --color-danger-surface: var(--color-red-tint-dark);
+  --color-danger-strong: var(--color-red-500);
+  --color-on-danger-strong: var(--color-soft-white);
+
+  --color-focus: var(--color-soft-white);
+  --color-focus-halo: var(--color-carbon);
+  --color-scrim: var(--color-carbon);
+
+  /* On dark materials depth reads through a faint top highlight and deep,
+     soft ambient shadow — not bright drop shadows. */
+  --shadow-ambient: inset 0 1px 0 0 rgb(247 247 242 / 0.04), 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-raised: inset 0 1px 0 0 rgb(247 247 242 / 0.05), 0 12px 32px -12px rgb(0 0 0 / 0.7);
+  --shadow-overlay: inset 0 1px 0 0 rgb(247 247 242 / 0.06), 0 32px 80px -24px rgb(0 0 0 / 0.85);
+}
+
+[data-surface="graphite"] {
+  --color-background-primary: var(--color-graphite);
+  --color-background-secondary: var(--color-asphalt);
+  --color-surface-primary: var(--color-graphite);
+  --color-surface-secondary: var(--color-asphalt);
+  --color-surface-elevated: var(--color-iron);
+  --color-surface-field: var(--color-carbon);
+}
+
+[data-surface="asphalt"] {
+  --color-background-primary: var(--color-asphalt);
+  --color-background-secondary: var(--color-graphite);
+  --color-surface-primary: var(--color-asphalt);
+  --color-surface-secondary: var(--color-graphite);
+  --color-surface-elevated: var(--color-iron);
+  --color-surface-field: var(--color-graphite);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Light environments                                                         */
+/* -------------------------------------------------------------------------- */
+
+[data-surface="white"],
+[data-surface="soft-white"],
+[data-surface="warm-white"] {
+  color-scheme: light;
+
+  --color-background-primary: var(--color-white);
+  --color-background-secondary: var(--color-soft-white);
+  --color-background-inverse: var(--color-carbon);
+  --color-background-inverse-hover: var(--color-asphalt);
+
+  --color-surface-primary: var(--color-white);
+  --color-surface-secondary: var(--color-soft-white);
+  --color-surface-elevated: var(--color-white);
+  --color-surface-field: var(--color-white);
+
+  --color-text-primary: var(--color-carbon);
+  --color-text-secondary: var(--color-slate);
+  --color-text-muted: var(--color-mist);
+  --color-text-inverse: var(--color-soft-white);
+  --color-text-disabled: var(--color-pewter);
+
+  --color-border-subtle: rgb(9 11 11 / 0.06);
+  --color-border-default: var(--color-line);
+  --color-border-strong: var(--color-shale);
+  --color-border-interactive: var(--color-carbon);
+
+  --color-overlay-hover: rgb(9 11 11 / 0.05);
+  --color-overlay-pressed: rgb(9 11 11 / 0.09);
+
+  --color-action-primary: var(--color-red-500);
+  --color-action-primary-hover: var(--color-red-600);
+  --color-action-primary-active: var(--color-red-700);
+  --color-on-action-primary: var(--color-soft-white);
+
+  --color-success: var(--color-green-800);
+  --color-success-graphic: var(--color-green-600);
+  --color-success-surface: var(--color-green-tint-light);
+  --color-success-strong: var(--color-green-700);
+  --color-on-success-strong: var(--color-soft-white);
+
+  --color-danger: var(--color-red-600);
+  --color-danger-graphic: var(--color-red-500);
+  --color-danger-surface: var(--color-red-tint-light);
+  --color-danger-strong: var(--color-red-500);
+  --color-on-danger-strong: var(--color-soft-white);
+
+  --color-focus: var(--color-carbon);
+  --color-focus-halo: var(--color-white);
+  --color-scrim: var(--color-white);
+
+  /* On paper-like materials depth is a tight contact shadow plus a soft
+     ambient falloff. */
+  --shadow-ambient: 0 1px 2px 0 rgb(9 11 11 / 0.06);
+  --shadow-raised: 0 1px 2px 0 rgb(9 11 11 / 0.06), 0 12px 32px -16px rgb(9 11 11 / 0.2);
+  --shadow-overlay: 0 1px 2px 0 rgb(9 11 11 / 0.08), 0 32px 80px -32px rgb(9 11 11 / 0.32);
+}
+
+/* Soft White (#f7f7f2): the brand's primary colour, the page's main surface. */
+[data-surface="soft-white"] {
+  --color-background-primary: var(--color-soft-white);
+  --color-background-secondary: var(--color-white);
+  --color-surface-primary: var(--color-soft-white);
+  --color-surface-secondary: var(--color-white);
+  --color-scrim: var(--color-soft-white);
+}
+
+/* Warm White (#ecede7): the supporting light step, for rhythm between sections. */
+[data-surface="warm-white"] {
+  --color-background-primary: var(--color-warm-white);
+  --color-background-secondary: var(--color-white);
+  --color-surface-primary: var(--color-warm-white);
+  --color-surface-secondary: var(--color-white);
+  --color-scrim: var(--color-warm-white);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Deep Green — the brand's trust surface (cargo security)                     */
+/* -------------------------------------------------------------------------- */
+
+/* BSR Green as a material: soft-white text, pale-green secondary text and
+   graphics (never a lighter green on green). Red actions keep their soft-white
+   label; on this surface they are used sparingly, next to a white alternative. */
+[data-surface="green"] {
+  color-scheme: dark;
+
+  --color-background-primary: var(--color-green-700);
+  --color-background-secondary: var(--color-green-800);
+  --color-background-inverse: var(--color-soft-white);
+  --color-background-inverse-hover: var(--color-green-50);
+
+  --color-surface-primary: var(--color-green-700);
+  --color-surface-secondary: var(--color-green-800);
+  --color-surface-elevated: var(--color-green-800);
+  --color-surface-field: var(--color-green-800);
+
+  --color-text-primary: var(--color-soft-white);
+  --color-text-secondary: var(--color-green-50);
+  --color-text-muted: var(--color-green-100);
+  --color-text-inverse: var(--color-carbon);
+  --color-text-disabled: var(--color-green-200);
+
+  --color-border-subtle: rgb(247 247 242 / 0.12);
+  --color-border-default: rgb(247 247 242 / 0.26);
+  --color-border-strong: var(--color-green-200);
+  --color-border-interactive: var(--color-soft-white);
+
+  --color-overlay-hover: rgb(247 247 242 / 0.08);
+  --color-overlay-pressed: rgb(247 247 242 / 0.14);
+
+  --color-action-primary: var(--color-red-500);
+  --color-action-primary-hover: var(--color-red-600);
+  --color-action-primary-active: var(--color-red-700);
+  --color-on-action-primary: var(--color-soft-white);
+
+  --color-success: var(--color-soft-white);
+  --color-success-graphic: var(--color-green-200);
+  --color-success-surface: var(--color-green-tint-dark);
+  --color-success-strong: var(--color-green-800);
+  --color-on-success-strong: var(--color-soft-white);
+
+  --color-danger: var(--color-red-100);
+  --color-danger-graphic: var(--color-red-100);
+  --color-danger-surface: var(--color-red-tint-dark);
+  --color-danger-strong: var(--color-red-500);
+  --color-on-danger-strong: var(--color-soft-white);
+
+  --color-focus: var(--color-soft-white);
+  --color-focus-halo: var(--color-green-800);
+  --color-scrim: var(--color-green-700);
+
+  --shadow-ambient: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow-raised: 0 12px 32px -12px rgb(0 0 0 / 0.4);
+  --shadow-overlay: 0 32px 80px -24px rgb(0 0 0 / 0.5);
+}

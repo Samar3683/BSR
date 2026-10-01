@@ -1,0 +1,55 @@
+PACK RK_Atlas_Built skyline 1500x455 at 0,0
+PACK RK_Atlas_Built village 1400x414 at 0,457
+PACK RK_Atlas_Built pylon 74x255 at 1402,457
+PACK RK_Atlas_Built farmhouse 480x234 at 1478,457
+PACK RK_Atlas_Built warehouse_long 1400x217 at 0,873
+PACK RK_Atlas_Built farm_shed 560x205 at 1402,873
+PACK RK_Atlas_Built yard_trailers 900x203 at 0,1092
+PACK RK_Atlas_Built distribution 1200x199 at 0,1297
+PACK RK_Atlas_Built fuel_station 1400x195 at 0,1498
+PACK RK_Atlas_Built hotel 1000x181 at 0,1695
+PACK RK_Atlas_Built truck_parking 800x177 at 1002,1695
+PACK RK_Atlas_Built restaurant 762x110 at 0,1878
+PACK RK_Atlas_Built low_shed 600x110 at 764,1878
+ATLAS RK_Atlas_Built 2048x2048
+PACK RK_Atlas_Nature poplar_row 881x1397 at 0,0
+PACK RK_Atlas_Nature tree_a 421x510 at 883,0
+PACK RK_Atlas_Nature tree_b 394x510 at 1306,0
+PACK RK_Atlas_Nature poplar_b 131x490 at 1702,0
+PACK RK_Atlas_Nature poplar_a 114x488 at 1835,0
+PACK RK_Atlas_Nature tree_group 700x427 at 0,1399
+PACK RK_Atlas_Nature hedge 640x287 at 702,1399
+PACK RK_Atlas_Nature truck_rear 237x238 at 1344,1399
+PACK RK_Atlas_Nature truck_front 240x196 at 1583,1399
+PACK RK_Atlas_Nature van_rear 190x182 at 1825,1399
+PACK RK_Atlas_Nature shrub 256x169 at 0,1828
+PACK RK_Atlas_Nature car_rear_a 180x125 at 258,1828
+PACK RK_Atlas_Nature car_rear_b 180x125 at 440,1828
+PACK RK_Atlas_Nature car_front 180x113 at 622,1828
+ATLAS RK_Atlas_Nature 2048x2048
+INFO Draco mesh compression is available, use library at C:\Users\Hp\Tools\blender-4.5.14-windows-x64\4.5\scripts\addons_core\io_scene_gltf2\extern_draco.dll
+05:04:59 | INFO: Starting glTF 2.0 export
+05:04:59 | INFO: Extracting primitive: RK_Aerial
+05:04:59 | INFO: Primitives created: 1
+05:04:59 | INFO: Extracting primitive: RK_Atlas_Built
+05:04:59 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+05:04:59 | INFO: Primitives created: 1
+05:04:59 | INFO: Extracting primitive: RK_Atlas_Nature
+05:04:59 | WARNING: More than one shader node tex image used for a texture. The resulting glTF sampler will behave like the first shader node tex image.
+05:04:59 | INFO: Primitives created: 1
+05:04:59 | INFO: Extracting primitive: RK_Interior
+05:04:59 | INFO: Primitives created: 1
+05:04:59 | INFO: Extracting primitive: RK_Plate_A
+05:05:00 | INFO: Primitives created: 1
+05:05:00 | INFO: Extracting primitive: RK_Plate_B
+05:05:00 | INFO: Primitives created: 1
+05:05:00 | INFO: Extracting primitive: RK_Plate_C
+05:05:01 | INFO: Primitives created: 1
+05:05:01 | INFO: Extracting primitive: RK_Road
+05:05:01 | INFO: Primitives created: 1
+05:05:01 | INFO: Finished glTF 2.0 export in 1.8796305656433105 s
+
+EXPORTED C:\Users\Hp\Documents\Internship\BSR\BSR_V1\assets\work\roadkit\roadkit.glb
+Blender 4.5.14 LTS (hash 62c1db4208e8 built 2026-09-15 01:33:49)
+
+Blender quit

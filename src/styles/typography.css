@@ -1,0 +1,193 @@
+/*
+ * Semantic text styles. Each `type-*` utility sets family, size, weight,
+ * width, leading and tracking together; colour stays a separate role
+ * (`text-text-*`). Styles are not tied to HTML elements: choose the element
+ * for document structure and the style for visual hierarchy.
+ *
+ * Fluid sizes combine rem + vw so text still scales with browser zoom.
+ * Display and stat styles use Archivo's width axis (font-stretch) for an
+ * expanded, industrial voice; reading styles stay at normal width.
+ */
+
+/* Display — cinematic moments, one per view. */
+@utility type-display-xl {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 1.25rem + 8.5vw, 10rem);
+  font-weight: 700;
+  font-stretch: 118%;
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+}
+
+@utility type-display-lg {
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 1.4rem + 5.2vw, 6.5rem);
+  font-weight: 700;
+  font-stretch: 112%;
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+}
+
+/* Section title — the one headline of a section: strong, at most two lines,
+   never dominating the page (sections are sized to about one viewport). */
+@utility type-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.4rem + 2vw, 3.25rem);
+  font-weight: 650;
+  font-stretch: 106%;
+  line-height: 1.04;
+  letter-spacing: -0.022em;
+}
+
+/* A chapter's lead statement (the company introduction): one step up. */
+@utility type-title-lg {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.5rem + 2.6vw, 3.75rem);
+  font-weight: 650;
+  font-stretch: 106%;
+  line-height: 1.02;
+  letter-spacing: -0.024em;
+}
+
+/* Supporting sentence under a section title (17–19px). */
+@utility type-lede {
+  font-family: var(--font-sans);
+  font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+/* Operational figures on a dashboard (tabular, lining). */
+@utility type-metric {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 1.7rem + 2.6vw, 4.25rem);
+  font-weight: 600;
+  font-stretch: 108%;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Headings — structure within sections. */
+@utility type-heading-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.5rem + 3vw, 4rem);
+  font-weight: 650;
+  font-stretch: 106%;
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+@utility type-heading-lg {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.3rem + 1.8vw, 2.75rem);
+  font-weight: 600;
+  font-stretch: 104%;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+@utility type-heading-md {
+  font-family: var(--font-sans);
+  font-size: clamp(1.375rem, 1.2rem + 0.75vw, 1.875rem);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.012em;
+}
+
+@utility type-heading-sm {
+  font-family: var(--font-sans);
+  font-size: clamp(1.125rem, 1.06rem + 0.3vw, 1.3125rem);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+
+/* Body — reading text. Pair with a text measure (max-w-text*). */
+@utility type-body-lg {
+  font-family: var(--font-sans);
+  font-size: clamp(1.125rem, 1.08rem + 0.2vw, 1.25rem);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+@utility type-body-md {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+@utility type-body-sm {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+/* Labels — controls, navigation, eyebrows. */
+@utility type-label-lg {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 550;
+  line-height: 1.25;
+  letter-spacing: 0.005em;
+}
+
+@utility type-label-md {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 550;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+@utility type-label-sm {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Statistics — tabular, lining figures so values align and don't jitter
+   when they change. */
+@utility type-stat-xl {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 1.8rem + 4.8vw, 6.5rem);
+  font-weight: 600;
+  font-stretch: 110%;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+@utility type-stat-lg {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 1.5rem + 2vw, 3.25rem);
+  font-weight: 600;
+  font-stretch: 106%;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Supporting text. */
+@utility type-caption {
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+/* Operational metadata: route codes, timestamps, references. */
+@utility type-metadata {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums lining-nums;
+}

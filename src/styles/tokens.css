@@ -1,0 +1,186 @@
+/*
+ * BSR design tokens — primitives and scales.
+ *
+ * Primitives are raw brand/material values. Components never use them
+ * directly: they consume the semantic roles defined per surface in
+ * themes.css. `@theme static` registers every value with Tailwind and always
+ * emits it as a custom property, so GSAP and WebGL can read tokens at runtime.
+ *
+ * Tailwind's default colour, radius, shadow, easing and type scales are
+ * cleared so only this vocabulary exists.
+ *
+ * Mirrors in TypeScript (motion, breakpoints, theme colour) are guarded by
+ * src/styles/tokens.test.ts; contrast by src/styles/themes.test.ts.
+ */
+
+@theme static {
+  /* ---------------------------------------------------------------------- */
+  /* Colour primitives                                                       */
+  /* ---------------------------------------------------------------------- */
+  --color-*: initial;
+
+  /* Dark materials */
+  --color-carbon: #090b0b;
+  --color-graphite: #121615;
+  --color-asphalt: #1d2220;
+  --color-iron: #262b29;
+
+  /* Metal neutrals */
+  --color-shale: #5e6461;
+  --color-pewter: #7a807d;
+  --color-smoke: #9aa09d;
+  --color-titanium: #b8bdba;
+  --color-slate: #4a504d;
+  --color-mist: #565c59;
+
+  /* Light materials. Soft White (#f7f7f2) is the brand's primary colour: the
+     page's main background, and the text colour on dark surfaces (mirrored
+     by the 3D scene, src/lib/three/brand-colors.ts). Warm White (#ecede7) is
+     the one supporting light step, for rhythm between sections; pure white is
+     for panels on them (forms, figures). No beige, cream or taupe. */
+  --color-soft-white: #f7f7f2;
+  --color-warm-white: #ecede7;
+  --color-white: #ffffff;
+  /* Neutral line: rules and dividers on light surfaces. */
+  --color-line: #d9ddda;
+
+  /* Brand red. 500 is BSR Red (action, destination), 700 is Deep Red; the rest
+     are tonal variants for contrast (300/400 on dark, 600 on light). */
+  --color-red-100: #ffd9d6;
+  --color-red-300: #f27c77;
+  --color-red-400: #e04a44;
+  --color-red-500: #b32025;
+  --color-red-600: #971c21;
+  --color-red-700: #75191d;
+
+  /* Brand green. 700 is BSR Green, 600 is Active Green (routes, progress,
+     positive state); the rest are tonal variants (300/500 on dark, 800 on light;
+     50/100/200 are text and graphics on the Deep Green surface). */
+  --color-green-50: #e4f1ea;
+  --color-green-100: #cce5d8;
+  --color-green-200: #9fdcbc;
+  --color-green-300: #3fbf86;
+  --color-green-500: #1a9a63;
+  --color-green-600: #128453;
+  --color-green-700: #0b6e45;
+  --color-green-800: #095c3a;
+
+  /* Status tints */
+  --color-red-tint-dark: #2a1213;
+  --color-red-tint-light: #f6e3e1;
+  --color-green-tint-dark: #0e2419;
+  --color-green-tint-light: #e1f0e7;
+
+  /* ---------------------------------------------------------------------- */
+  /* Typography                                                              */
+  /* Archivo (variable: wght 100–900, wdth 62–125) via next/font; the width  */
+  /* axis separates expanded display type from normal-width reading text.    */
+  /* ---------------------------------------------------------------------- */
+  --font-sans:
+    var(--font-archivo), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial,
+    sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, monospace;
+
+  /* Type sizes live in typography.css as composite `type-*` utilities. */
+  --text-*: initial;
+
+  /* ---------------------------------------------------------------------- */
+  /* Spacing                                                                 */
+  /* Tailwind's 4px-based numeric scale (p-1 = 4px) is kept. Use the steps   */
+  /* 1 2 3 4 6 8 12 16 24 32 (4–128px); these add fluid layout rhythm.       */
+  /* ---------------------------------------------------------------------- */
+  --spacing-gutter: clamp(1.25rem, 0.6rem + 2.8vw, 4rem);
+  --spacing-grid-gap: clamp(1rem, 0.6rem + 1.4vw, 2rem);
+  /* Sections are sized to about one viewport: rhythm, not empty space. */
+  --spacing-section-sm: clamp(2.5rem, 1.75rem + 2.5vw, 4rem);
+  --spacing-section: clamp(3.5rem, 2.25rem + 4vw, 6rem);
+  --spacing-section-lg: clamp(4.5rem, 2.75rem + 5vw, 8rem);
+
+  /* ---------------------------------------------------------------------- */
+  /* Content widths (max-w-*). Text measures keep body copy at ~55–85ch.     */
+  /* ---------------------------------------------------------------------- */
+  --container-text-narrow: 32rem;
+  --container-text: 40rem;
+  --container-text-wide: 48rem;
+  --container-content: 80rem;
+  --container-wide: 110rem;
+
+  /* Layout breakpoints only — they say nothing about device capability. */
+  --breakpoint-*: initial;
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 96rem;
+
+  /* ---------------------------------------------------------------------- */
+  /* Radius — restrained, industrial. Pills are reserved for status badges.  */
+  /* ---------------------------------------------------------------------- */
+  --radius-*: initial;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* ---------------------------------------------------------------------- */
+  /* Motion easing (mirrored in src/lib/animation/motion-tokens.ts)          */
+  /* ---------------------------------------------------------------------- */
+  --ease-*: initial;
+  --ease-ui: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-cinematic: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-mechanical: cubic-bezier(0.77, 0, 0.175, 1);
+
+  --shadow-*: initial;
+}
+
+/*
+ * Tokens with no Tailwind namespace. Use via arbitrary values, e.g.
+ * `duration-(--duration-fast)` or `z-(--z-modal)`.
+ */
+:root {
+  /* Motion duration (mirrored in src/lib/animation/motion-tokens.ts) */
+  --duration-instant: 100ms;
+  --duration-fast: 160ms;
+  --duration-normal: 240ms;
+  --duration-slow: 400ms;
+  --duration-cinematic: 800ms;
+
+  /* Focus */
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* Layering. The WebGL canvas sits beneath HTML content; HTML synchronised
+     with a scene (cinematic-ui) sits above content but below navigation. */
+  --z-canvas: 0;
+  --z-content: 10;
+  --z-cinematic-ui: 20;
+  --z-sticky: 30;
+  --z-navigation: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-skip-link: 80;
+
+  /* Grid: 4 columns on small screens, 8 from md, 12 from lg. */
+  --grid-columns: 4;
+
+  /* Touch-comfortable minimum for interactive targets (44px). */
+  --target-min: 2.75rem;
+
+  /* Site header bar (the hero copy already reserves this space above itself). */
+  --header-height: 4.5rem;
+}
+
+@media (width >= 48rem) {
+  :root {
+    --grid-columns: 8;
+  }
+}
+
+@media (width >= 64rem) {
+  :root {
+    --grid-columns: 12;
+  }
+}

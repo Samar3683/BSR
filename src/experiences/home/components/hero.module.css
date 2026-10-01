@@ -1,0 +1,116 @@
+/*
+ * Hero layout geometry (CSS only, independent of the rendering path — so it
+ * never shifts after hydration).
+ *
+ *   height = one viewport (the sticky stage) + the story scroll distance
+ *   compact layout: 70svh of story · standard/wide: 120svh
+ *
+ * The copy stays sticky through the reveal (progress ≤ 0.42) and then
+ * scrolls away naturally; the stage stays sticky for the whole story.
+ */
+
+.hero {
+  --hero-story: 70svh;
+  position: relative;
+  isolation: isolate;
+  height: calc(100svh + var(--hero-story));
+  background-color: var(--color-background-primary);
+}
+
+@media (width >= 48rem) {
+  .hero {
+    --hero-story: 120svh;
+  }
+}
+
+/* Visual stage: sticky for the full story, beneath the copy. */
+.stageTrack {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-canvas);
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+/* Readability insurance on top of the visuals (composition comes first). */
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Eases with the copy; the floor keeps the state 5 line legible (no JS: full). */
+  opacity: calc(0.45 + 0.55 * var(--hero-copy-opacity, 1));
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-scrim) 82%, transparent) 0%,
+    color-mix(in srgb, var(--color-scrim) 45%, transparent) 38%,
+    transparent 62%
+  );
+}
+
+@media (width < 48rem) {
+  .scrim {
+    background-image: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--color-scrim) 88%, transparent) 0%,
+      color-mix(in srgb, var(--color-scrim) 55%, transparent) 42%,
+      transparent 64%
+    );
+  }
+}
+
+/* Copy: sticky while the truck is revealed, then released at the departure. */
+.copyTrack {
+  position: relative;
+  z-index: var(--z-content);
+  height: calc(100svh + var(--hero-story) * 0.42);
+  pointer-events: none;
+}
+
+.copy {
+  /* Faded out during the departure by the client island (opacity only). */
+  opacity: var(--hero-copy-opacity, 1);
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100svh;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-block: calc(var(--spacing-gutter) + 4.5rem) var(--spacing-gutter);
+}
+
+@media (width >= 48rem) {
+  .copy {
+    justify-content: center;
+  }
+}
+
+/* Keyboard focus always brings the copy back: focus is never on something invisible. */
+.copy:focus-within {
+  opacity: 1;
+}
+
+/* The copy layer lets clicks through to the stage only in its empty space:
+   text stays selectable and every control stays operable. */
+.copy :where(h1, p, a, button) {
+  pointer-events: auto;
+}
+
+/* Fully faded copy stays in the accessibility tree but ignores the pointer. */
+.hero[data-copy-hidden] .copy :where(h1, p, a, button) {
+  pointer-events: none;
+}
+
+/* State 5 line (HTML, semantic). */
+.roadLine {
+  position: absolute;
+  z-index: var(--z-content);
+  inset-inline: 0;
+  /* One viewport below the road state's start: it scrolls in naturally only once
+     the road begins (p ≈ 0.62) and leaves with the stage. */
+  top: calc(100svh + var(--hero-story) * 0.62);
+}
