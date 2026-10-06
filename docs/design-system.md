@@ -334,9 +334,11 @@ is action only). Large type only at statement moments.
   (so hydration never shifts the page); a `<noscript>` rule shows every step without JavaScript.
   Inputs are 48px tall, labels are always visible, errors are named and move focus to the first
   missing field.
-- **Known limit.** `VehicleSelector` still renders the three vehicles stacked until the page is
-  interactive, so the page height shrinks (≈ 4,400px) after hydration. Pre-dates this pass; a
-  server-rendered tabbed layout would remove it.
+- **No hydration shift.** The fleet selector's tabbed layout and the request form's closed steps
+  are server-rendered, so the page height is the same from first paint (13,925px at 1280 × 720).
+  Without JavaScript a `<noscript>` rule shows every vehicle's details and every form step.
+- **Text never fades.** Counting figures and headings change position or mask, never opacity:
+  a mid-fade state fails the contrast audit.
 
 ## Text over cinematic media
 

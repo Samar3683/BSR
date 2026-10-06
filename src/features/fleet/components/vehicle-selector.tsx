@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { type KeyboardEvent, useId, useRef, useState, useSyncExternalStore } from "react";
+import { type KeyboardEvent, useId, useRef, useState } from "react";
 
 import { MediaSlot } from "@/components/media/media-slot";
 import { ButtonLink } from "@/components/ui/button";
@@ -10,9 +10,6 @@ import { cx } from "@/lib/utils/cx";
 import type { VehicleCategory } from "../config/vehicles-content";
 import { VehicleSchematic } from "./vehicle-schematic";
 
-/** Nothing to subscribe to: only the server/client distinction matters. */
-const subscribeNever = () => () => {};
-
 /**
  * The vehicle selector: one dominant media stage and small tabs above the
  * details (WAI-ARIA tabs, automatic activation — arrows move and select,
@@ -20,9 +17,10 @@ const subscribeNever = () => () => {};
  * details in (500ms; instant under reduced motion) — name, use case, the
  * verified figures (van only) or where they come from, the request.
  *
- * Progressive: rendered without JavaScript (and before hydration) as the three
- * types stacked, every one fully readable; the tabbed stage takes over once the
- * page is interactive. Under reduced motion the swap is instant.
+ * The tabbed layout is rendered from the server, so hydration never moves the
+ * page. Without JavaScript a <noscript> rule shows every type's details, one
+ * after another (the stage keeps the first photograph). Under reduced motion the
+ * swap is instant.
  */
 interface CapacityCopy {
   label: string;
@@ -38,12 +36,6 @@ export function VehicleSelector({
   label: string;
   capacity: CapacityCopy;
 }) {
-  // False on the server and through hydration, true once interactive.
-  const enhanced = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  );
   const [active, setActive] = useState(0);
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
   const swipe = useRef<number | null>(null);
@@ -70,32 +62,14 @@ export function VehicleSelector({
     }
   };
 
-  if (!enhanced) {
-    return (
-      <div className="flex flex-col gap-16">
-        {categories.map((vehicle) => (
-          <section key={vehicle.id} aria-labelledby={`${base}-${vehicle.id}-name`}>
-            <MediaSlot
-              name={`vehicle-${vehicle.id}`}
-              media={vehicle.media}
-              aspect="16/9"
-              sizes="100vw"
-            />
-            <Details
-              vehicle={vehicle}
-              capacity={capacity}
-              headingId={`${base}-${vehicle.id}-name`}
-            />
-          </section>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="grid gap-6 lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-(--spacing-grid-gap) lg:gap-y-8">
+      <noscript>
+        <style>{"[data-fleet-tabs]{display:none!important}[data-fleet-panel]{display:block!important;grid-row:auto!important;grid-column:1/-1!important}"}</style>
+      </noscript>
       <div
         role="tablist"
+        data-fleet-tabs=""
         aria-label={label}
         onKeyDown={onKeyDown}
         className="grid grid-cols-3 border-b border-border-default lg:col-span-4 lg:col-start-9 lg:row-start-1"
@@ -188,6 +162,7 @@ export function VehicleSelector({
           key={vehicle.id}
           id={`${base}-panel-${vehicle.id}`}
           role="tabpanel"
+          data-fleet-panel=""
           aria-labelledby={`${base}-tab-${vehicle.id}`}
           tabIndex={0}
           hidden={i !== active}

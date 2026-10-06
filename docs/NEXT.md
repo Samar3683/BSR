@@ -35,8 +35,7 @@ Where the project stands and what comes next. Update this file at the end of eve
 `docs/design-system.md`. Sections recomposed (lanes, the load, sticky process, fleet track,
 network pulse, green editorial, progressive request, finale), carbon header and green mobile menu,
 section bridges. The hero is untouched (only `hero-content.ts` differs from the baseline). Open
-items: server-render the fleet selector's tabbed layout (page height changes on hydration), and
-visual review on real devices.
+item: visual review on real devices.
 
 **Do not start Phase 5 implementation until the items below are scheduled.**
 

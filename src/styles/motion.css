@@ -255,23 +255,22 @@
 
 /* The service lanes (features/services): the lane in play widens ≈ 10% and the
    other eases back and loses some colour. Pointer devices, tablets and up. */
-@layer components {
-  @media (hover: hover) and (width >= 48rem) {
-    .lane {
-      transition: flex-grow 700ms var(--ease-cinematic);
-    }
-    .lane:is(:hover, :focus-within) {
-      flex-grow: 1.1;
-    }
-    .lanes:has(.lane:is(:hover, :focus-within)) > .lane:not(:hover, :focus-within) {
-      flex-grow: 0.92;
-    }
-    .lane [data-slot] {
-      transition: filter 700ms var(--ease-ui);
-    }
-    .lanes:has(.lane:is(:hover, :focus-within)) > .lane:not(:hover, :focus-within) [data-slot] {
-      filter: saturate(0.55);
-    }
+/* Unlayered on purpose: the lanes' `flex-1` utility would otherwise win over flex-grow. */
+@media (hover: hover) and (width >= 48rem) {
+  .lane {
+    transition: flex-grow 700ms var(--ease-cinematic);
+  }
+  .lane:is(:hover, :focus-within) {
+    flex-grow: 1.1;
+  }
+  .lanes:has(.lane:is(:hover, :focus-within)) > .lane:not(:hover, :focus-within) {
+    flex-grow: 0.92;
+  }
+  .lane [data-slot] {
+    transition: filter 700ms var(--ease-ui);
+  }
+  .lanes:has(.lane:is(:hover, :focus-within)) > .lane:not(:hover, :focus-within) [data-slot] {
+    filter: saturate(0.55);
   }
 }
 

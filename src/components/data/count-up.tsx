@@ -46,7 +46,6 @@ export function CountUp({
       timer = window.setTimeout(count, delay);
     };
     const count = () => {
-      output.style.opacity = "1";
       const t0 = performance.now();
       const tick = (now: number) => {
         const t = Math.min(1, (now - t0) / DURATION);
@@ -58,9 +57,6 @@ export function CountUp({
     };
 
     output.textContent = mapNumbers(value, () => 0);
-    // Begins slightly transparent and settles to full as it counts.
-    output.style.opacity = "0.3";
-    output.style.transition = "opacity 700ms var(--ease-enter)";
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
@@ -74,7 +70,6 @@ export function CountUp({
       observer.disconnect();
       cancelAnimationFrame(frame);
       clearTimeout(timer);
-      output.style.opacity = "";
       output.textContent = value;
     };
   }, [value, delay]);

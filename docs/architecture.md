@@ -247,7 +247,7 @@ video. Everything else is built so that swap touches one line.
   | Section (anchor)                  | Feature                                                          |
   | --------------------------------- | ---------------------------------------------------------------- |
   | Hero → page, who BSR is (`bsr`)   | `features/home` (`RouteTransition`, `IdentitySection`)           |
-  | Servizi (`servizi`)               | `features/services`                                              |
+  | Servizi (`servizi`)               | `features/services` (`LaneTrack`: two lanes, swipe + dots on phones) |
   | Per chi lavoriamo (`settori`)     | `features/sectors`                                               |
   | Come funziona (`come-funziona`)   | `features/booking` (`ShipmentJourney`)                           |
   | Flotta (`flotta`)                 | `features/fleet` (`VehicleSelector`, technical schematics)       |
@@ -256,7 +256,7 @@ video. Everything else is built so that swap touches one line.
   | Clienti (`clienti`)               | `features/trust` (`NetworkSection`; logos only when verified)    |
   | Recensioni (`recensioni`)         | `features/reviews` (an invitation until real testimonials exist) |
   | Chi siamo (`chi-siamo`)           | `features/about`                                                 |
-  | Preventivo (`richiesta`)          | `features/booking` (`BookingSection`; the `/preventivo` page)    |
+  | Preventivo (`richiesta`)          | `features/booking` (`BookingSection` → `BookingFlow`; `/preventivo`) |
   | FAQ (`faq`)                       | `features/faq` (native `<details>` disclosures)                  |
   | Final CTA (`preventivo`)          | `features/contact` (`QuoteSection`)                              |
   | Header, menu, footer, quick       | `features/site` (`QuickActions`)                                 |
@@ -272,13 +272,19 @@ video. Everything else is built so that swap touches one line.
 - **Server first.** Every section is a Server Component. The client code below the hero is small
   and self-contained: the header's scroll state (pure logic in `features/site/lib/header-state.ts`,
   unit-tested), the mobile menu (a native modal `<dialog>`), the journey's current step (one
-  rAF-throttled scroll measurement, attached only while the block is near the screen), the vehicle selector (WAI-ARIA tabs; stacked without JS), the
+  rAF-throttled scroll measurement, attached only while the block is near the screen), the vehicle selector (WAI-ARIA tabs, server-rendered; a `<noscript>` rule lists every type without JS), the request flow (`BookingFlow`: three steps that open in turn, closed steps rendered closed and `inert`), the service lanes (`LaneTrack`), the
   metric count-up (`CountUp`: final value server-rendered, counting copy written to its own text
   node), the quote page's URL draft, the sector preview (`SectorExplorer`), the header's section
   in view, the entry motion (`RevealController`: one IntersectionObserver for the page — see
   docs/design-system.md, "Motion") and the quick actions (IntersectionObservers; `inert` while
   hidden, stepping aside for any `data-conversion` section and the footer). None of it uses GSAP, so the
   hero's ScrollTrigger setup stays isolated.
+- **Section bridges.** `components/layout/section-bridge.tsx` is a server component: a gradient
+  between two surface tokens, placed between sections whose backgrounds differ strongly (white →
+  carbon, carbon → green, green → warm white).
+- **No layout shift on hydration.** Anything that appears or collapses after the page becomes
+  interactive must be rendered in its final state from the server (fleet tabs, closed form steps);
+  the no-JavaScript fallback is a `<noscript>` style, not a different DOM.
 - **No WebGL below the hero.** Richness comes from type, surfaces, SVG and the supplied
   photography. `site.spec.ts` fails on any canvas or video outside `[data-hero]`, and on any
   image outside it that is not from the live livery or the coverage map, lacks `alt` or is not
