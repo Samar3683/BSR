@@ -51,9 +51,9 @@ test.describe("prefill: every action that passes data", () => {
   test("the starter form carries route, service and sector", async ({ page }) => {
     await page.goto("/");
     const form = page.locator("#richiesta form");
+    await form.getByLabel(/Trasporto dedicato/).check({ force: true });
     await form.getByLabel(/Partenza/).fill("Carpi (MO)");
     await form.getByLabel(/Destinazione/).fill("Lione, Francia");
-    await form.getByLabel(/Servizio/).selectOption("dedicato");
     await form.getByLabel(/Settore/).selectOption("e-commerce");
     await form.getByRole("button", { name: "Continua" }).click();
     await page.waitForURL("**/preventivo?**");

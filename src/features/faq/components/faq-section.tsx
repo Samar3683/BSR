@@ -76,7 +76,7 @@ export function FaqSection() {
               key={item.question}
               name="faq"
               open={i === 0}
-              className="group disclosure rounded-[0.875rem] border border-border-default bg-white/92 shadow-[0_8px_24px_-16px_rgb(9_11_11/0.45)] transition-[border-color,background-color] duration-300 open:border-success-graphic/45 open:bg-white/97 motion-reduce:transition-none"
+              className="group disclosure rounded-[0.875rem] border border-border-default bg-white/92 shadow-[0_8px_24px_-16px_rgb(9_11_11/0.45)] transition-[border-color,background-color] duration-300 hover:border-success-graphic/55 open:border-success-graphic/45 open:bg-white/97 motion-reduce:transition-none"
             >
               <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-5 rounded-[0.875rem] px-4 py-3 text-text-primary sm:min-h-15 sm:px-6 [&::-webkit-details-marker]:hidden">
                 <span className="type-faq-question">{item.question}</span>

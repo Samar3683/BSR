@@ -31,6 +31,13 @@ Where the project stands and what comes next. Update this file at the end of eve
   and the untouched baseline (`archive/hero-baseline-2026-09-28`) fails the same way under the
   same load. Re-run them on an idle machine or CI before treating a failure as a regression.
 
+**Cinematic redesign pass (below the hero): done, October 2026.** See "Cinematic pass" in
+`docs/design-system.md`. Sections recomposed (lanes, the load, sticky process, fleet track,
+network pulse, green editorial, progressive request, finale), carbon header and green mobile menu,
+section bridges. The hero is untouched (only `hero-content.ts` differs from the baseline). Open
+items: server-render the fleet selector's tabbed layout (page height changes on hydration), and
+visual review on real devices.
+
 **Do not start Phase 5 implementation until the items below are scheduled.**
 
 ## Launch blockers

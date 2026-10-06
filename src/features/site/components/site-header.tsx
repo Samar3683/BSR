@@ -14,11 +14,11 @@ import { MobileMenu } from "./mobile-menu";
 /**
  * Site header (see docs/hero-ui-visual-map.md, "Navbar"):
  * - at the top of the home page it is transparent over the hero's dark
- *   opening frame, with light text (Carbon surface); pages without the hero
- *   open on the solid White bar;
+ *   opening frame, with light text; pages without the hero open on the bar;
  * - scrolling down past the threshold slides it away, so the page leads;
- * - scrolling up brings it back as a solid White bar with dark text, underlined
- *   by the brand's route rule: green, arriving on a short red destination;
+ * - scrolling up brings it back as a compact dark Carbon bar (64px, a light
+ *   backdrop blur), underlined by the brand's route rule: green, arriving on a
+ *   short red destination; the section in view is green;
  * - keyboard focus inside it always brings it back (CSS :focus-within);
  * - without JavaScript it stays a solid Carbon bar over every surface.
  * - on the home page the link of the section in view is marked (a green
@@ -74,12 +74,12 @@ export function SiteHeader() {
 
   return (
     <header
-      data-surface={overHero ? "carbon" : "white"}
+      data-surface="carbon"
       data-state={state}
       data-transparent={overHero || undefined}
       className={
-        "fixed inset-x-0 top-0 z-(--z-navigation) h-(--header-height) border-b border-border-subtle bg-background-primary text-text-primary " +
-        "transition-[translate,background-color,border-color] duration-(--duration-normal) ease-ui motion-reduce:transition-none " +
+        "fixed inset-x-0 top-0 z-(--z-navigation) h-(--header-height) border-b border-border-subtle bg-background-primary/94 text-text-primary backdrop-blur-md " +
+        "transition-[translate,background-color,border-color,height] duration-(--duration-normal) ease-ui data-[state=shown]:h-16 motion-reduce:transition-none " +
         "[@media(scripting:enabled)]:data-transparent:border-transparent [@media(scripting:enabled)]:data-transparent:bg-transparent " +
         "data-[state=hidden]:not-focus-within:-translate-y-full"
       }
@@ -100,7 +100,7 @@ export function SiteHeader() {
                   variant="utility"
                   href={link.href}
                   aria-current={home && current === link.href ? "location" : undefined}
-                  className="decoration-success-graphic! hover:underline aria-[current=location]:text-text-primary aria-[current=location]:underline"
+                  className="decoration-success-graphic! hover:text-text-primary hover:underline aria-[current=location]:text-success aria-[current=location]:underline"
                 >
                   {link.label}
                 </TextLink>
@@ -112,7 +112,7 @@ export function SiteHeader() {
           <ButtonLink href={nav.cta.href} size="sm" className="hidden sm:inline-flex">
             {nav.cta.label}
           </ButtonLink>
-          <MobileMenu className="xl:hidden" />
+          <MobileMenu className="xl:hidden" current={home ? current : null} />
         </div>
       </div>
       {/* The brand's route rule, shown with the solid bar: green, then a red destination. */}

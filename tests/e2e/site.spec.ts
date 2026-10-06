@@ -159,20 +159,18 @@ test.describe("page structure", () => {
     await page.goto("/");
     const steps = page.locator("#come-funziona ol > li");
     await expect(steps).toHaveCount(4);
-    // The journey's progress is the block's position against a line at 65% of
-    // the viewport: scroll to 10% of the way through it, then to 90%.
-    const [early, late] = await page.locator("#come-funziona ol").evaluate((list) => {
-      const block = list.parentElement!.getBoundingClientRect();
-      const start = block.top + window.scrollY - window.innerHeight * 0.65;
-      return [start + block.height * 0.1, start + block.height * 0.9];
-    });
-    await scrollTo(page, early!);
+    // The current step is the one whose centre is nearest the middle of the
+    // viewport: put the first step there, then the last.
+    const centre = (index: number) =>
+      page.locator("#come-funziona ol > li").nth(index).evaluate(
+        (li) => li.getBoundingClientRect().top + window.scrollY + li.getBoundingClientRect().height / 2 - window.innerHeight / 2,
+      );
+    await scrollTo(page, await centre(0));
     await expect(page.locator('#come-funziona li[aria-current="step"]')).toHaveCount(1);
-    const first = await page.locator('#come-funziona li[aria-current="step"]').textContent();
-    await scrollTo(page, late!);
-    await expect
-      .poll(() => page.locator('#come-funziona li[aria-current="step"]').textContent())
-      .not.toBe(first);
+    await expect(steps.nth(0)).toHaveAttribute("aria-current", "step");
+    await scrollTo(page, await centre(3));
+    await expect(steps.nth(3)).toHaveAttribute("aria-current", "step");
+    await expect(steps.nth(0)).not.toHaveAttribute("aria-current", "step");
   });
 
   test("quick actions appear after the hero and step aside at the quote chapter", async ({
@@ -190,11 +188,21 @@ test.describe("page structure", () => {
   test("the request form carries the route into the quote page's channels", async ({ page }) => {
     await page.goto("/");
     const form = page.locator("#richiesta form");
+    // Progressive disclosure: the route appears once a service is chosen.
+    await expect(form.getByLabel(/Partenza/)).toBeHidden();
+    await form.getByLabel("Trasporto dedicato", { exact: false }).check({ force: true });
     await form.getByLabel(/Partenza/).fill("Carpi");
     await form.getByLabel(/Destinazione/).fill("Lione");
-    await form.getByLabel(/Servizio/).selectOption("dedicato");
     await form.getByRole("button", { name: "Continua" }).click();
-    await page.waitForURL(/\/preventivo\?partenza=Carpi&destinazione=Lione&servizio=dedicato/);
+    await page.waitForURL((url) => {
+      const q = url.searchParams;
+      return (
+        url.pathname === "/preventivo" &&
+        q.get("partenza") === "Carpi" &&
+        q.get("destinazione") === "Lione" &&
+        q.get("servizio") === "dedicato"
+      );
+    });
     await expect(page.locator('[data-composer="url"]')).toBeVisible();
     await expect(page.getByLabel("Partenza")).toHaveValue("Carpi");
     await expect(page.getByLabel("Servizio")).toHaveValue("dedicato");

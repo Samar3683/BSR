@@ -19,7 +19,16 @@ const mapNumbers = (value: string, f: (n: number) => number) =>
  * The counting copy is written straight to its text node (a leaf React never
  * re-renders with other content): no re-render per frame.
  */
-export function CountUp({ value, className }: { value: string; className?: string }) {
+export function CountUp({
+  value,
+  className,
+  delay = 0,
+}: {
+  value: string;
+  className?: string;
+  /** Wait this long (ms) after entering before counting: figures run in sequence. */
+  delay?: number;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
   const counter = useRef<HTMLSpanElement>(null);
 
@@ -32,7 +41,12 @@ export function CountUp({ value, className }: { value: string; className?: strin
     if (box.top < window.innerHeight && box.bottom > 0) return;
 
     let frame = 0;
+    let timer = 0;
     const start = () => {
+      timer = window.setTimeout(count, delay);
+    };
+    const count = () => {
+      output.style.opacity = "1";
       const t0 = performance.now();
       const tick = (now: number) => {
         const t = Math.min(1, (now - t0) / DURATION);
@@ -44,6 +58,9 @@ export function CountUp({ value, className }: { value: string; className?: strin
     };
 
     output.textContent = mapNumbers(value, () => 0);
+    // Begins slightly transparent and settles to full as it counts.
+    output.style.opacity = "0.3";
+    output.style.transition = "opacity 700ms var(--ease-enter)";
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry?.isIntersecting) return;
@@ -56,9 +73,11 @@ export function CountUp({ value, className }: { value: string; className?: strin
     return () => {
       observer.disconnect();
       cancelAnimationFrame(frame);
+      clearTimeout(timer);
+      output.style.opacity = "";
       output.textContent = value;
     };
-  }, [value]);
+  }, [value, delay]);
 
   return (
     <span ref={ref} className={className}>

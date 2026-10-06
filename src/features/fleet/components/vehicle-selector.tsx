@@ -46,6 +46,7 @@ export function VehicleSelector({
   );
   const [active, setActive] = useState(0);
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
+  const swipe = useRef<number | null>(null);
   const base = useId();
 
   const select = (index: number) => {
@@ -134,27 +135,50 @@ export function VehicleSelector({
         })}
       </div>
 
-      {/* The stage: the photograph, dominant — beside the details from `lg`. */}
+      {/* The stage: the photograph, dominant — beside the details from `lg`. The
+          pictures sit on a track and the track slides sideways: each vehicle drives
+          into frame, its picture moving a little more slowly than its frame
+          (mechanical, not a crossfade). On a touch screen a horizontal swipe
+          moves to the next vehicle. */}
       <div
         aria-hidden="true"
         data-reveal="left"
-        className="relative aspect-[16/10] overflow-clip bg-surface-secondary lg:col-span-8 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:aspect-auto lg:h-[min(34rem,62svh)]"
+        onTouchStart={(event) => {
+          swipe.current = event.touches[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(event) => {
+          const from = swipe.current;
+          swipe.current = null;
+          const to = event.changedTouches[0]?.clientX;
+          if (from === null || to === undefined || Math.abs(to - from) < 48) return;
+          setActive((current) =>
+            Math.min(categories.length - 1, Math.max(0, current + (to < from ? 1 : -1))),
+          );
+        }}
+        className="relative aspect-[16/10] touch-pan-y overflow-clip bg-surface-secondary lg:col-span-8 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:aspect-auto lg:h-[min(34rem,62svh)]"
       >
-        {/* One layer for the entry wipe; the pictures crossfade inside it. */}
+        {/* One layer for the entry wipe; the track slides inside it. */}
         <div className="absolute inset-0">
-          {categories.map((vehicle, i) => (
-            <MediaSlot
-              key={vehicle.id}
-              name={`vehicle-${vehicle.id}`}
-              media={vehicle.media}
-              aspect="fill"
-              sizes="(min-width: 64rem) 66vw, 100vw"
-              className={cx(
-                "transition-[opacity,scale] duration-500 ease-enter motion-reduce:transition-none",
-                i === active ? "scale-100 opacity-100" : "scale-[1.02] opacity-0",
-              )}
-            />
-          ))}
+          <div
+            className="flex h-full transition-transform duration-[800ms] ease-cinematic motion-reduce:transition-none"
+            style={{ transform: `translateX(-${active * 100}%)` }}
+          >
+            {categories.map((vehicle, i) => (
+              <div key={vehicle.id} className="relative h-full w-full shrink-0 overflow-clip">
+                <div
+                  className="absolute inset-0 transition-transform duration-[800ms] ease-cinematic motion-reduce:transition-none"
+                  style={{ transform: `translateX(${(i - active) * 12}%)` }}
+                >
+                  <MediaSlot
+                    name={`vehicle-${vehicle.id}`}
+                    media={vehicle.media}
+                    aspect="fill"
+                    sizes="(min-width: 64rem) 66vw, 100vw"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
           <span className="absolute inset-x-0 bottom-0 h-1 bg-success-graphic" />
         </div>
       </div>
@@ -215,7 +239,7 @@ function Details({
       <dl className="grid gap-4 border-t border-border-default pt-5">
         {(vehicle.specs ?? [{ label: capacity.label, value: capacity.pending }]).map((spec) => (
           <div key={spec.label} className="flex flex-col gap-0.5">
-            <dt className="type-label-sm text-text-muted">{spec.label}</dt>
+            <dt className="type-label-sm text-success">{spec.label}</dt>
             <dd className={vehicle.specs ? "type-heading-md tabular-nums" : "type-body-md"}>
               {spec.value}
             </dd>

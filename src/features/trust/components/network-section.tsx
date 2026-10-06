@@ -67,7 +67,7 @@ export function NetworkSection() {
           </ul>
         )}
 
-        <div data-reveal="group" className="flex flex-col gap-3">
+        <div data-reveal="slide" className="flex flex-col gap-3">
           <p className="type-label-sm text-text-muted">{network.categoriesLabel}</p>
           <ul className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             {categories.map((category, i) => (

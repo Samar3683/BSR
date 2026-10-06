@@ -82,13 +82,7 @@ export function CoverageMap({ className }: { className?: string }) {
           <g clipPath="url(#coverage-network-clip)" strokeLinecap="round" strokeLinejoin="round">
             <g className="stroke-success-graphic" strokeOpacity="0.7" strokeWidth="1.8">
               {EUROPE_CORRIDORS.map((route) => (
-                <path
-                  key={route.id}
-                  d={route.d}
-                  pathLength={1}
-                  className={DRAW}
-                  style={at(1400)}
-                />
+                <path key={route.id} d={route.d} pathLength={1} className={DRAW} style={at(1400)} />
               ))}
             </g>
             <g
@@ -173,14 +167,22 @@ export function CoverageMap({ className }: { className?: string }) {
                 </text>
               ))}
             </g>
-            {/* Carpi pulses once, as the network leaves it. */}
-            <circle
-              cx={ORIGIN.x}
-              cy={ORIGIN.y}
-              r="13"
-              className="[transform-box:fill-box] origin-center fill-none stroke-success-graphic opacity-0 motion-safe:[[data-inview]_&]:animate-[pulse-once_1.6s_var(--ease-enter)_600ms_1]"
-              strokeWidth="2"
-            />
+            {/* The network breathes: once drawn, Carpi and each destination send out a
+                slow ring, one after another (paused while the hero is on screen). */}
+            {[
+              { id: "origin", x: ORIGIN.x, y: ORIGIN.y, r: 13 },
+              ...destinations.map(({ id, at: [x, y] }) => ({ id, x, y, r: 9 })),
+            ].map(({ id, x, y, r }, i) => (
+              <circle
+                key={`ring-${id}`}
+                cx={x}
+                cy={y}
+                r={r}
+                className="origin-center breathe fill-none stroke-success-graphic opacity-0 [transform-box:fill-box]"
+                strokeWidth="2"
+                style={{ animationDelay: `${3000 + i * 700}ms` }}
+              />
+            ))}
           </g>
         </svg>
       </div>

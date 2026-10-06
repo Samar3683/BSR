@@ -18,7 +18,14 @@ const MENU_ID = "site-menu";
  * While open the page behind does not scroll: `overflow: hidden` on the root
  * for touch, and `data-lenis-prevent` so smooth scroll ignores the wheel.
  */
-export function MobileMenu({ className }: { className?: string }) {
+export function MobileMenu({
+  className,
+  current = null,
+}: {
+  className?: string;
+  /** The href of the section in view (marked green), if any. */
+  current?: string | null;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -59,8 +66,8 @@ export function MobileMenu({ className }: { className?: string }) {
         ref={dialog}
         aria-label={nav.menu.title}
         data-lenis-prevent
-        data-surface="white"
-        className="m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto overscroll-contain bg-background-primary text-text-primary backdrop:bg-transparent open:flex open:flex-col"
+        data-surface="green"
+        className="menu-in m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto overscroll-contain bg-green-800 text-text-primary backdrop:bg-transparent open:flex open:flex-col"
       >
         <div className="container-content flex h-(--header-height) shrink-0 items-center justify-between">
           <BrandMark />
@@ -74,9 +81,16 @@ export function MobileMenu({ className }: { className?: string }) {
                   <a
                     href={link.href}
                     onClick={close}
-                    className="flex min-h-16 items-center justify-between gap-4 type-heading-md transition-ui hover:text-text-secondary"
+                    aria-current={link.href === current ? "location" : undefined}
+                    className="group/link flex min-h-16 items-center justify-between gap-4 type-heading-lg transition-ui hover:text-success-graphic aria-[current=location]:text-success-graphic"
                   >
-                    {link.label}
+                    <span className="flex items-center gap-4">
+                      <span
+                        aria-hidden="true"
+                        className="h-0.5 w-0 bg-success-graphic transition-[width] duration-300 group-aria-[current=location]/link:w-8"
+                      />
+                      {link.label}
+                    </span>
                     <ArrowRight
                       aria-hidden="true"
                       className="size-5 text-text-muted"

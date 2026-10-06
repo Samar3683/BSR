@@ -8,6 +8,11 @@
  *   data-reveal="left"    a picture (the children) opening from the left edge
  *   data-reveal="right"   … from the right edge
  *   data-reveal="bottom"  … from the bottom edge
+ *   data-reveal="editorial"  a slow wipe along the line (1.4 s), no travel: statements
+ *   data-reveal="lane-left" / "lane-right"  enters along a road lane from that
+ *                         side (travel + wipe, 1 s): the services
+ *   data-reveal="door"    opens from the centre outwards, like a loading-bay door (1.2 s)
+ *   data-reveal="slide"   a short horizontal slide (proof, testimonials)
  *   data-reveal="group"   no effect of its own: a trigger for `pending:` children
  *   data-reveal-once      never replays (the coverage sequence)
  *   --reveal-delay        stagger, e.g. style={{ "--reveal-delay": "120ms" }}
@@ -83,6 +88,49 @@
     html[data-reveal-ready] [data-reveal="bottom"]:not([data-inview]) > * {
       clip-path: inset(100% 0 0 0);
     }
+
+    /* One motion language per section: different travel, speed and easing. */
+    [data-reveal="editorial"] > * {
+      transition:
+        clip-path 1400ms var(--ease-cinematic) var(--reveal-delay, 0ms),
+        translate 1400ms var(--ease-cinematic) var(--reveal-delay, 0ms);
+    }
+    html[data-reveal-ready] [data-reveal="editorial"]:not([data-inview]) > * {
+      clip-path: inset(-1rem 100% -1rem -1rem);
+      translate: -1.5rem 0;
+    }
+
+    [data-reveal="lane-left"] > *,
+    [data-reveal="lane-right"] > * {
+      transition:
+        translate 1000ms var(--ease-enter) var(--reveal-delay, 0ms),
+        clip-path 1000ms var(--ease-enter) var(--reveal-delay, 0ms);
+    }
+    html[data-reveal-ready] [data-reveal="lane-left"]:not([data-inview]) > * {
+      translate: -6vw 0;
+      clip-path: inset(0 100% 0 0);
+    }
+    html[data-reveal-ready] [data-reveal="lane-right"]:not([data-inview]) > * {
+      translate: 6vw 0;
+      clip-path: inset(0 0 0 100%);
+    }
+
+    [data-reveal="door"] > * {
+      transition: clip-path 1200ms var(--ease-cinematic) var(--reveal-delay, 0ms);
+    }
+    html[data-reveal-ready] [data-reveal="door"]:not([data-inview]) > * {
+      clip-path: inset(0 50% 0 50%);
+    }
+
+    [data-reveal="slide"] > * {
+      transition:
+        translate 900ms var(--ease-ui) var(--reveal-delay, 0ms),
+        clip-path 900ms var(--ease-ui) var(--reveal-delay, 0ms);
+    }
+    html[data-reveal-ready] [data-reveal="slide"]:not([data-inview]) > * {
+      translate: 3rem 0;
+      clip-path: inset(0 0 0 100%);
+    }
   }
 }
 
@@ -115,6 +163,69 @@
   }
 }
 
+/* Scroll-linked picture scale (compositor transform; tablets and up; same
+   gates as the parallax: never under reduced motion, on a low-power device or
+   while the hero is on screen). `scroll-settle` eases a picture from 1.07 to
+   rest as it enters (the load); `scroll-push` pushes in slowly (the final
+   scene). */
+@keyframes scroll-settle {
+  from {
+    scale: 1.07;
+  }
+}
+@keyframes scroll-push {
+  to {
+    scale: 1.08;
+  }
+}
+
+@utility scroll-settle {
+  @media (prefers-reduced-motion: no-preference) and (width >= 48rem) {
+    @supports (animation-timeline: view()) {
+      html:not([data-motion-lite]):not([data-hero-in-view]) & {
+        animation: scroll-settle linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 60%;
+      }
+    }
+  }
+}
+
+@utility scroll-push {
+  @media (prefers-reduced-motion: no-preference) and (width >= 48rem) {
+    @supports (animation-timeline: view()) {
+      html:not([data-motion-lite]):not([data-hero-in-view]) & {
+        animation: scroll-push linear both;
+        animation-timeline: view();
+        animation-range: entry 0% exit 40%;
+      }
+    }
+  }
+}
+
+/* The map breathes: a ring easing out and back, slowly, once it has been drawn.
+   Paused while the hero is on screen and under reduced motion. */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+  45% {
+    opacity: 0.55;
+    scale: 1.9;
+  }
+}
+
+@utility breathe {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: breathe 6s ease-in-out infinite;
+    html[data-hero-in-view] & {
+      animation-play-state: paused;
+    }
+  }
+}
+
 /* A panel arriving in place (a tab's content): fades and rises 8px. Runs each
    time the panel is shown again (display: none → block restarts it). */
 @keyframes panel-in {
@@ -139,5 +250,69 @@
   to {
     opacity: 0;
     scale: 2.6;
+  }
+}
+
+/* The service lanes (features/services): the lane in play widens ≈ 10% and the
+   other eases back and loses some colour. Pointer devices, tablets and up. */
+@layer components {
+  @media (hover: hover) and (width >= 48rem) {
+    .lane {
+      transition: flex-grow 700ms var(--ease-cinematic);
+    }
+    .lane:is(:hover, :focus-within) {
+      flex-grow: 1.1;
+    }
+    .lanes:has(.lane:is(:hover, :focus-within)) > .lane:not(:hover, :focus-within) {
+      flex-grow: 0.92;
+    }
+    .lane [data-slot] {
+      transition: filter 700ms var(--ease-ui);
+    }
+    .lanes:has(.lane:is(:hover, :focus-within)) > .lane:not(:hover, :focus-within) [data-slot] {
+      filter: saturate(0.55);
+    }
+  }
+}
+
+/* The process stage's horizontal mask: a panel crossing the picture from left to
+   right as the step changes (the picture pans underneath, at the middle of the
+   crossing). Instant under reduced motion. */
+@keyframes stage-wipe {
+  from {
+    translate: -101% 0;
+  }
+  50% {
+    translate: 0 0;
+  }
+  to {
+    translate: 101% 0;
+  }
+}
+
+@utility stage-wipe {
+  display: none;
+  @media (prefers-reduced-motion: no-preference) {
+    display: block;
+    animation: stage-wipe 900ms var(--ease-cinematic) both;
+  }
+}
+
+/* The mobile menu opens as a directional panel: it is drawn in from the right
+   edge (never a plain fade). Instant under reduced motion. */
+@keyframes menu-in {
+  from {
+    clip-path: inset(0 0 0 100%);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+@utility menu-in {
+  @media (prefers-reduced-motion: no-preference) {
+    &[open] {
+      animation: menu-in 480ms var(--ease-cinematic) both;
+    }
   }
 }

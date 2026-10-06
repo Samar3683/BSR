@@ -5,7 +5,7 @@ import type { SlotMedia } from "@/types/media";
 
 import { MediaSlot } from "./media-slot";
 
-export type RevealDirection = "left" | "right" | "bottom";
+export type RevealDirection = "left" | "right" | "bottom" | "door" | "slide";
 
 interface MediaFrameProps {
   /** Stable slot name, e.g. "service-espresso" (see MediaSlot). */
@@ -24,8 +24,10 @@ interface MediaFrameProps {
    * restrained: the picture answers, the text beside it stays still.
    */
   zoom?: boolean;
-  /** Settle from 1.03 to rest as it enters (the final call to action). */
+  /** Settle from 1.03 to rest as it enters. */
   settle?: boolean;
+  /** Scroll-linked scale: `settle` eases in from 1.07 (the load), `push` pushes in slowly (the finale). */
+  scrollScale?: "settle" | "push";
   caption?: ReactNode;
   /** Decorative background layers: no figure semantics. */
   decorative?: boolean;
@@ -48,6 +50,7 @@ export function MediaFrame({
   parallax = false,
   zoom = false,
   settle = false,
+  scrollScale,
   caption,
   decorative = false,
 }: MediaFrameProps) {
@@ -72,6 +75,8 @@ export function MediaFrame({
             zoom &&
               "transition-[scale] duration-500 ease-enter motion-safe:group-focus-within/media:scale-[1.03] motion-safe:group-hover/media:scale-[1.03]",
             settle && "transition-[scale] duration-[900ms] ease-enter pending:scale-[1.03]",
+            scrollScale === "settle" && "scroll-settle",
+            scrollScale === "push" && "scroll-push",
           )}
         >
           <MediaSlot name={name} media={media} aspect="fill" sizes={sizes} />

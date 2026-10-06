@@ -37,14 +37,16 @@ export function SectorExplorer({
   const current = sectors[active]!;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12 lg:gap-x-(--spacing-grid-gap) lg:gap-y-0">
+    <div className="grid gap-6 lg:grid-cols-12 lg:items-center lg:gap-x-(--spacing-grid-gap) lg:gap-y-0">
+      {/* The load: the picture breaks the grid, running off the right edge of the
+          page; it opens from the centre like a loading-bay door. */}
       <div
         aria-hidden="true"
-        data-reveal="right"
-        className="relative aspect-[16/9] overflow-clip bg-surface-secondary lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:aspect-auto"
+        data-reveal="door"
+        className="relative -mx-(--spacing-gutter) aspect-[16/9] overflow-clip bg-surface-secondary lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:mx-0 lg:mr-[calc(-1*(100vw-min(100vw-2*var(--spacing-gutter),80rem))/2)] lg:aspect-auto lg:h-[min(36rem,68svh)]"
       >
-        {/* One layer for the entry wipe; the previews change inside it. */}
-        <div className="absolute inset-0">
+        {/* One layer for the door; the previews change inside it. */}
+        <div className="absolute inset-0 scroll-settle">
           <MediaSlot
             name="sectors-stage"
             media={stage}
@@ -72,17 +74,21 @@ export function SectorExplorer({
               />
             ) : null,
           )}
-          <p className="absolute bottom-0 left-0 hidden items-center gap-3 bg-background-primary px-4 py-3 type-label-sm lg:flex">
-            <span className="h-0.5 w-6 bg-success-graphic" />
-            <span key={current.id} className="flex panel-in gap-2">
-              <span className="text-success tabular-nums">{current.code}</span>
-              {current.title}
-            </span>
-          </p>
         </div>
       </div>
+      {/* Technical metadata, overlapping the picture's left edge. */}
+      <p
+        aria-hidden="true"
+        className="relative z-10 hidden items-center gap-3 bg-background-inverse px-4 py-3 type-label-sm text-text-inverse lg:col-span-1 lg:col-start-6 lg:row-start-1 lg:-ml-[calc(var(--spacing-grid-gap)+2.5rem)] lg:mb-0 lg:flex lg:self-end lg:justify-self-start lg:translate-y-[-3rem]"
+      >
+        <span className="h-0.5 w-6 bg-green-300" />
+        <span key={current.id} className="flex panel-in gap-2 whitespace-nowrap">
+          <span className="text-green-300 tabular-nums">{current.code}</span>
+          {current.title}
+        </span>
+      </p>
 
-      <ol className="hidden border-t border-border-default lg:col-span-7 lg:row-start-1 lg:flex lg:flex-col">
+      <ol className="hidden border-t border-border-strong lg:col-span-5 lg:row-start-1 lg:flex lg:flex-col">
         {sectors.map((sector, i) => {
           const on = i === active;
           return (
@@ -108,10 +114,10 @@ export function SectorExplorer({
                 >
                   {sector.code}
                 </span>
-                {/* Name and line side by side from `xl`; stacked below it, so a name never breaks. */}
-                <span className="relative flex flex-1 flex-col gap-1 transition-[translate] duration-[400ms] ease-enter group-data-active/row:translate-x-2 motion-reduce:transition-none xl:flex-row xl:items-baseline xl:justify-between xl:gap-6">
+                {/* Name over its line: a name never breaks. */}
+                <span className="relative flex flex-1 flex-col gap-1 transition-[translate] duration-[400ms] ease-enter group-data-active/row:translate-x-2 motion-reduce:transition-none">
                   <h3 className="type-heading-lg whitespace-nowrap">{sector.title}</h3>
-                  <span className="type-body-md text-text-secondary xl:max-w-[26ch] xl:text-right">
+                  <span className="max-w-[40ch] text-base leading-snug text-text-secondary">
                     {sector.body}
                   </span>
                 </span>

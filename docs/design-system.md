@@ -296,6 +296,48 @@ contact. No WebGL, no pinning, no scroll hijacking, no snapping.
   become an accordion (no hover-only content); the journey runs down the side; the dashboard is
   2 × 2; no parallax.
 
+## Cinematic pass (second iteration — supersedes the table and header notes above)
+
+The same story, directed more tightly: THE ROAD → THE LOAD → THE PEOPLE → THE SYSTEM → THE FLEET →
+THE NETWORK → THE PROOF → THE PROMISE. Palette unchanged (Green is the brand, used much more; Red
+is action only). Large type only at statement moments.
+
+- **Type.** `type-statement` (≈ 56–72px) for each chapter's statement, `type-figure` (64–96px)
+  for the trust numbers, `type-finale` (up to 96px) for the close. Everything else keeps the
+  existing scale.
+- **Compositions that changed.**
+
+  | Section | Composition |
+  | --- | --- |
+  | Who BSR is | Soft White statement on a green marker; four figures that count up in sequence (200 ms apart) |
+  | Servizi | Two transport lanes (`LaneTrack`): express (diagonal cut, speed stripe) and dedicated (inset frame); enter from opposite sides; hover/focus widens a lane ≈ 10 % and the other recedes; phones swipe with pagination |
+  | Per chi lavoriamo | "The load": the stage bleeds to the right edge, opens like a bay door (`door` reveal), settles 1–2 % on scroll |
+  | Come funziona | Signature: sticky stage left (one photograph panned per step, horizontal wipe, green route with a moving marker), four steps right; stacked on phones |
+  | Flotta | Lateral mechanical track, swipe on phones |
+  | Copertura | Carbon; routes draw in sequence, then a slow pulse on Carpi and destinations (`breathe`) |
+  | Sicurezza | Green editorial: photograph bleeds left and rises across the carbon → green bridge, faint green grade |
+  | Preventivo | Progressive disclosure (`BookingFlow`): service → route → sector, green progress line, red "Continua" |
+  | Final CTA | Full-bleed, push-in, finale type, actions last |
+
+- **Section bridges.** `SectionBridge` is a short gradient between two surfaces (white → carbon,
+  carbon → green, green → warm white), so no section restarts the page.
+- **Motion vocabulary** (styles/motion.css). Reveals: `rise`, `editorial` (slow, text wiped in
+  line by line), `lane-left` / `lane-right`, `door`, `slide`, `left` / `right` / `bottom`,
+  `group` + `pending:`. Utilities: `scroll-settle`, `scroll-push` (view-timeline, gated by
+  `html:not([data-motion-lite]):not([data-hero-in-view])`), `breathe`, `stage-wipe`, `menu-in`.
+  Text never fades; hidden states apply only once the controller runs and only when motion is
+  allowed. No new library, no WebGL or canvas below the hero.
+- **Header.** Transparent over the hero, then a compact carbon bar with blur and the green → red
+  rule; the active link is green. The mobile menu is a full-screen green panel with a directional
+  reveal (`menu-in`); Escape closes it.
+- **Forms.** Closed steps are rendered closed from the server and are `invisible` + `inert`
+  (so hydration never shifts the page); a `<noscript>` rule shows every step without JavaScript.
+  Inputs are 48px tall, labels are always visible, errors are named and move focus to the first
+  missing field.
+- **Known limit.** `VehicleSelector` still renders the three vehicles stacked until the page is
+  interactive, so the page height shrinks (≈ 4,400px) after hydration. Pre-dates this pass; a
+  server-rendered tabbed layout would remove it.
+
 ## Text over cinematic media
 
 Prefer composition first: place text where the scene is quiet. Then use a localised contrast

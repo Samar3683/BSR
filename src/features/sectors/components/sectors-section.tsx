@@ -1,14 +1,17 @@
 import { Container } from "@/components/layout/container";
+import { Eyebrow } from "@/components/layout/eyebrow";
 import { Section } from "@/components/layout/section";
-import { SectionHeader } from "@/components/layout/section-header";
 
 import { sectorsContent as sectors } from "../config/sectors-content";
 import { SectorExplorer } from "./sector-explorer";
 
 /**
- * Who relies on BSR, on Warm White: the sectors as interactive rows beside one
- * preview stage (SectorExplorer) — recognisable at a glance, each a way into
- * the request with its sector already noted.
+ * The load, on Warm White — "what exactly are we trusted to move?" A large
+ * statement over an editorial composition: the sectors as rows on the left,
+ * and the cargo photograph breaking the grid, running off the right edge of
+ * the page (SectorExplorer). Loading-bay motion: the picture opens from the
+ * centre like a door, then eases from 1.07 to rest as it is scrolled past —
+ * and only 1–2% after that.
  */
 export function SectorsSection() {
   return (
@@ -17,14 +20,16 @@ export function SectorsSection() {
       spacing="md"
       id={sectors.id}
       aria-labelledby={`${sectors.id}-title`}
+      className="overflow-x-clip"
     >
-      <Container className="flex flex-col gap-8 lg:gap-10">
-        <SectionHeader
-          id={`${sectors.id}-title`}
-          eyebrow={sectors.eyebrow}
-          title={sectors.title}
-          intro={sectors.intro}
-        />
+      <Container className="flex flex-col gap-10 lg:gap-14">
+        <header data-reveal="editorial" className="flex max-w-[56rem] flex-col gap-5">
+          <Eyebrow>{sectors.eyebrow}</Eyebrow>
+          <h2 id={`${sectors.id}-title`} className="type-statement text-balance">
+            {sectors.title}
+          </h2>
+          <p className="max-w-text type-lede text-text-secondary">{sectors.intro}</p>
+        </header>
         <SectorExplorer
           sectors={sectors.items}
           stage={sectors.stage}

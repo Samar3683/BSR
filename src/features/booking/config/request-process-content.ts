@@ -19,10 +19,14 @@ export const requestProcessContent = {
   id: "come-funziona",
   eyebrow: "Come funziona",
   title: "Dal ritiro alla consegna.",
-  intro: "Cosa succede dopo la tua richiesta, passo per passo — con la stessa persona dall'inizio alla fine.",
+  intro:
+    "Cosa succede dopo la tua richiesta, passo per passo — con la stessa persona dall'inizio alla fine.",
   steps: [
     { title: "Richiesta", body: "Ci dici cosa devi spedire, da dove, per dove e per quando." },
-    { title: "Analisi", body: "Scegliamo il mezzo adatto al carico e ti confermiamo tempi e prezzo." },
+    {
+      title: "Analisi",
+      body: "Scegliamo il mezzo adatto al carico e ti confermiamo tempi e prezzo.",
+    },
     {
       title: "Trasporto",
       body: "Concordiamo l'orario del ritiro; il referente ti avvisa quando il mezzo è in arrivo e ti aggiorna in viaggio.",

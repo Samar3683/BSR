@@ -17,12 +17,25 @@ export const bookingContent = {
   eyebrow: "Preventivo",
   title: "Da dove parte il tuo carico?",
   intro:
-    "Indica il percorso e il servizio. Nel passaggio successivo aggiungi i dettagli e scegli come inviarci la richiesta.",
+    "Tre passaggi brevi: il servizio, il percorso, il settore. Poi aggiungi i dettagli e scegli come inviarci la richiesta.",
   action: siteConfig.routes.quoteRequest,
   fields: {
     origin: { name: "partenza", label: "Partenza", placeholder: "Es. Carpi (MO)" },
     destination: { name: "destinazione", label: "Destinazione", placeholder: "Es. Lione, Francia" },
-    service: { name: "servizio", label: "Servizio", options: options(services) },
+    service: {
+      name: "servizio",
+      label: "Servizio",
+      /** The line under each choice — verified wording (docs/content-audit.md). */
+      options: options(services).map((option) => ({
+        ...option,
+        hint:
+          {
+            espresso: "Per le spedizioni urgenti",
+            dedicato: "Mezzo riservato, senza trasbordi",
+            "da-valutare": "Descrivi il carico: te lo indichiamo noi",
+          }[option.value] ?? "",
+      })),
+    },
     sector: {
       name: "settore",
       label: "Settore",
@@ -30,6 +43,22 @@ export const bookingContent = {
       empty: "Non indicato",
       options: options(sectors),
     },
+  },
+  /** The three steps; each appears once the one before has an answer. */
+  steps: {
+    service: "Che trasporto ti serve?",
+    route: "Il percorso",
+    details: "Ultimo passaggio",
+  },
+  progress: "Passaggio",
+  errors: {
+    service: "Scegli il servizio.",
+    origin: "Indica da dove parte il carico.",
+    destination: "Indica dove deve arrivare.",
+  },
+  hints: {
+    origin: "Città o CAP di ritiro.",
+    destination: "Città o paese di consegna.",
   },
   submit: "Continua",
   note: "Ti ricontattiamo per confermare mezzo, tempi e prezzo.",
