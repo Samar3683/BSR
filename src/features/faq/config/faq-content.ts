@@ -16,46 +16,51 @@ export interface FaqItem {
 export const faqContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "faq",
-  eyebrow: "FAQ",
-  title: "Domande frequenti",
-  intro: "Le risposte alle domande che riceviamo più spesso. Per tutto il resto, scrivici.",
+  eyebrow: "Domande frequenti",
+  /** The second part is set in the brand red. */
+  title: ["Hai delle", "domande?"] as const,
+  intro: {
+    before: "Qui trovi le risposte alle domande più comuni.",
+    after: "Se non trovi quello che cerchi,",
+    link: { label: "contattaci direttamente", href: "/#contatti" },
+  },
+  /**
+   * Not asked on purpose: "Quali tipologie di merci trasportate?" — BSR has not
+   * confirmed what goods it carries (docs/content-audit.md), so no answer
+   * exists to give. Add it when BSR supplies one.
+   */
   items: [
     {
-      question: "Quali servizi offrite?",
+      question: "Come gestite la sicurezza dei carichi di alto valore?",
       answer:
-        "Trasporti espressi, per le spedizioni urgenti, e trasporti dedicati, con il mezzo riservato alla tua merce: nessuna sosta intermedia né trasbordo.",
+        "Il carico viaggia fissato con cinghie e protezioni adeguate, e ogni trasporto ha la copertura assicurativa vettoriale. Per merci di valore elevato si possono attivare coperture integrative su richiesta, da concordare al momento del preventivo.",
     },
     {
-      question: "Dove operate?",
+      question: "In quali paesi operate?",
       answer: `In tutta Italia, isole comprese, e sulle principali tratte europee: ${europeList}.`,
     },
     {
-      question: "Quali sono i tempi di consegna?",
+      question: "Quanto tempo richiede la consegna?",
       answer: `Per i trasporti espressi in Italia, indicativamente ${transit.italyExpress.replace(" h", " ore")} e, in molti casi, anche in giornata. Per le tratte europee in genere da 2 a 5 giorni, secondo la destinazione. I tempi ti vengono comunicati prima della conferma.`,
     },
     {
-      question: "Che mezzi avete?",
+      question: "Quale mezzo è più adatto alla mia spedizione?",
       answer:
-        "Mezzi di diverse dimensioni: dai furgoni (vano interno di circa 4 × 2 × 2 m, portata fino a circa 1.000–1.200 kg) alle motrici, fino ai bilici per carichi voluminosi e spedizioni industriali. Il mezzo lo scegliamo in base a cosa devi spedire.",
+        "Dipende da cosa devi spedire: abbiamo mezzi di diverse dimensioni, dai furgoni (vano interno di circa 4 × 2 × 2 m, portata fino a circa 1.000–1.200 kg) alle motrici, fino ai bilici per carichi voluminosi e spedizioni industriali. Il mezzo lo scegliamo noi in base al carico.",
     },
     {
-      question: "Come viene calcolato il prezzo?",
-      answer:
-        "Dipende da distanza, tipo di mezzo e urgenza. Mezzo, tempi e prezzo ti vengono confermati prima del trasporto.",
+      question: "Come posso richiedere un preventivo?",
+      answer: `Indica partenza, destinazione e servizio nel modulo di questa pagina: il messaggio si apre già compilato su WhatsApp o per email, e lo invii tu. Oppure chiamaci al ${contact.phoneDisplay} o scrivici a ${contact.email}. Il prezzo dipende da distanza, tipo di mezzo e urgenza.`,
     },
     {
-      question: "Come richiedo un preventivo?",
-      answer: `Indica partenza, destinazione e servizio nel modulo di questa pagina: il messaggio si apre già compilato su WhatsApp o per email, e lo invii tu. Oppure chiamaci al ${contact.phoneDisplay} o scrivici a ${contact.email}.`,
+      question: "Offrite un servizio di trasporto dedicato?",
+      answer:
+        "Sì. Nel trasporto dedicato il mezzo è riservato alla tua merce, senza soste intermedie né trasbordi, dal ritiro alla consegna. Per le spedizioni urgenti c'è il trasporto espresso.",
     },
     {
       question: "Posso seguire la mia spedizione?",
       answer:
         "Sì: il referente ti aggiorna via WhatsApp o telefono al ritiro, durante il viaggio e alla consegna. Un solo numero, nessun call center.",
-    },
-    {
-      question: "Il trasporto è assicurato?",
-      answer:
-        "Sì: ogni trasporto viaggia con copertura assicurativa vettoriale. Per merci di valore elevato si possono attivare coperture integrative su richiesta, da concordare al momento del preventivo.",
     },
   ] as FaqItem[],
 } as const;

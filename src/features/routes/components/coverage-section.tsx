@@ -29,7 +29,7 @@ export function CoverageSection() {
       className="overflow-clip"
     >
       <Container className="flex flex-col gap-10 lg:layout-grid lg:items-center lg:gap-y-0">
-        <div className="flex flex-col gap-8 lg:col-span-5">
+        <div className="flex flex-col gap-8 lg:col-span-6 xl:col-span-5">
           <SectionHeader
             id={`${coverage.id}-title`}
             eyebrow={coverage.eyebrow}
@@ -83,7 +83,7 @@ export function CoverageSection() {
           </TextLink>
         </div>
 
-        <div className="relative isolate lg:col-span-7 lg:col-start-6">
+        <div className="relative isolate lg:col-span-6 lg:col-start-7 xl:col-span-7 xl:col-start-6">
           {/* Background layer: the aerial of the northern Italian plain behind the map —
               dimmed and feathered into the surface. Aerial footage can replace it. */}
           <div

@@ -46,7 +46,7 @@ export function BookingSection() {
           action={booking.action}
           method="get"
           data-reveal="rise"
-          className="grid gap-6 bg-background-secondary p-6 sm:p-8 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end lg:gap-5 lg:p-10"
+          className="grid gap-6 bg-background-secondary p-6 sm:p-8 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_1fr_auto] xl:items-end xl:gap-5 lg:p-10"
         >
           <Field id="booking-origin" label={<Step n="01">{origin.label}</Step>} required>
             {(control) => (
@@ -106,8 +106,8 @@ export function BookingSection() {
               </Select>
             )}
           </Field>
-          <div className="sm:col-span-2 lg:col-span-1">
-            <Button type="submit" size="lg" trailingIcon={ArrowRight} className="w-full lg:w-auto">
+          <div className="sm:col-span-2 xl:col-span-1">
+            <Button type="submit" size="lg" trailingIcon={ArrowRight} className="w-full xl:w-auto">
               {booking.submit}
             </Button>
           </div>

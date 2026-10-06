@@ -16,7 +16,21 @@ export const SITE_LIVERY: Livery = "final";
  * back to "final" for scenes an alternative set does not include).
  */
 export function scene(id: SceneId, alt: string, position?: FocalPoint): SlotMedia {
-  const asset = SCENES[SITE_LIVERY][id] ?? SCENES.final[id];
+  return sceneIn(SITE_LIVERY, id, alt, position);
+}
+
+/**
+ * A scene in a named livery — for a deliberate, documented exception to the
+ * site livery (see `siteMedia.faq`, which asks for the red set). Falls back to
+ * "final" for scenes the set does not include.
+ */
+export function sceneIn(
+  livery: Livery,
+  id: SceneId,
+  alt: string,
+  position?: FocalPoint,
+): SlotMedia {
+  const asset = SCENES[livery][id] ?? SCENES.final[id];
   if (!asset) throw new Error(`Scene "${id}" is missing from the media manifest.`);
   return { kind: "image", alt, position, ...asset };
 }

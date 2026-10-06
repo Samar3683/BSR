@@ -21,7 +21,7 @@ export const aboutContent = {
   contactId: "contatti",
   eyebrow: company.brand,
   title: "Chi siamo e come contattarci.",
-  intro: `${company.brand} è un'${company.activity} con sede a Carpi (MO), attiva in tutta Italia e sulle principali tratte europee. Un unico referente segue ogni carico dalla partenza alla consegna.`,
+  intro: `${company.brand} è un'${company.activity} con sede a Carpi (MO), attiva in tutta Italia e sulle principali tratte europee. Per un preventivo, un aggiornamento o una domanda, contattaci direttamente.`,
   caption: "Immagine illustrativa",
   contact: {
     heading: "Contatti",

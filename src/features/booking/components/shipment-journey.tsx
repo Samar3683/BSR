@@ -23,7 +23,10 @@ const FADE = "transition-colors duration-500 motion-reduce:transition-none";
  *
  * No pinning, no scroll hijacking: the reader's own scroll drives it, in both
  * directions — one position read per frame, applied through one CSS variable,
- * and React state that changes only when the current step does. Without
+ * and React state that changes only when the current step does. It listens to
+ * the scroll only while the block is within half a viewport of the screen
+ * (an IntersectionObserver switches the listener on and off), so the rest of
+ * the page — the real-time hero above all — never pays for it. Without
  * JavaScript every step shows complete; under reduced motion the states
  * follow the scroll but nothing animates between them.
  */
@@ -58,13 +61,27 @@ export function ShipmentJourney({
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(measure);
     };
-    measure();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
+    let listening = false;
+    const listen = (on: boolean) => {
+      if (on === listening) return;
+      listening = on;
+      const method = on ? "addEventListener" : "removeEventListener";
+      window[method]("scroll", schedule, { passive: true });
+      window[method]("resize", schedule);
+    };
+    // Near the screen: follow the scroll. Leaving it: settle the state once, stop.
+    const near = new IntersectionObserver(
+      ([entry]) => {
+        listen(Boolean(entry?.isIntersecting));
+        schedule();
+      },
+      { rootMargin: "50% 0px" },
+    );
+    near.observe(element);
     return () => {
+      near.disconnect();
+      listen(false);
       cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
     };
   }, [steps.length, last]);
 

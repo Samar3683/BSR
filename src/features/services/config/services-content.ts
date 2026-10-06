@@ -38,9 +38,9 @@ export const servicesContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "servizi",
   eyebrow: "Servizi",
-  title: "Espresso o dedicato: scegli come viaggia il tuo carico.",
+  title: "Espresso o dedicato?",
   intro:
-    "Dopo la richiesta ti confermiamo mezzo, tempi e prezzo; poi un unico referente segue il trasporto fino alla consegna.",
+    "Scegli l'espresso se il carico è urgente, il dedicato se deve viaggiare da solo, senza trasbordi. In entrambi i casi ti confermiamo mezzo, tempi e prezzo prima della partenza.",
   /** The route between the two services: pickup → movement → delivery (decorative). */
   connector: ["Ritiro", "In viaggio", "Consegna"] as const,
   items: [

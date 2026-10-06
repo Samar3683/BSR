@@ -92,7 +92,7 @@ export function SectorExplorer({
                 onMouseEnter={() => setActive(i)}
                 onFocus={() => setActive(i)}
                 data-active={on || undefined}
-                className="group/row relative flex items-center gap-8 px-5 py-6 outline-offset-[-2px]"
+                className="group/row relative flex items-center gap-8 px-5 py-5 outline-offset-[-2px] xl:py-6"
               >
                 <span
                   aria-hidden="true"
@@ -108,9 +108,12 @@ export function SectorExplorer({
                 >
                   {sector.code}
                 </span>
-                <span className="relative flex flex-1 items-baseline justify-between gap-6 transition-[translate] duration-[400ms] ease-enter group-data-active/row:translate-x-2 motion-reduce:transition-none">
-                  <h3 className="type-heading-lg">{sector.title}</h3>
-                  <span className="type-body-md text-text-secondary">{sector.body}</span>
+                {/* Name and line side by side from `xl`; stacked below it, so a name never breaks. */}
+                <span className="relative flex flex-1 flex-col gap-1 transition-[translate] duration-[400ms] ease-enter group-data-active/row:translate-x-2 motion-reduce:transition-none xl:flex-row xl:items-baseline xl:justify-between xl:gap-6">
+                  <h3 className="type-heading-lg whitespace-nowrap">{sector.title}</h3>
+                  <span className="type-body-md text-text-secondary xl:max-w-[26ch] xl:text-right">
+                    {sector.body}
+                  </span>
                 </span>
                 <ArrowRight
                   aria-hidden="true"

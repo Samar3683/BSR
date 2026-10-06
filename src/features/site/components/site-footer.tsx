@@ -21,14 +21,14 @@ export function SiteFooter() {
 
   return (
     <Surface as="footer" tone="carbon" aria-label={footer.label}>
-      <div className="container-content flex flex-col gap-8 py-10 lg:py-12">
+      <div className="container-content flex flex-col gap-6 py-10">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-12 lg:gap-x-(--spacing-grid-gap)">
-          <div className="flex flex-col gap-3 sm:col-span-2 lg:col-span-4">
+          <div className="flex flex-col gap-3 sm:col-span-2 lg:col-span-3">
             <BrandMark />
             <p className="max-w-[34ch] type-body-sm text-text-secondary">{footer.tagline}</p>
           </div>
 
-          <div id={footer.contactId} className="flex flex-col gap-2 lg:col-span-4 lg:col-start-6">
+          <div id={footer.contactId} className="flex flex-col gap-2 lg:col-span-4 lg:col-start-5">
             <h2 className="type-label-sm text-text-muted">{footer.contactHeading}</h2>
             <address className="flex flex-col not-italic">
               <TextLink
@@ -53,11 +53,11 @@ export function SiteFooter() {
             </address>
           </div>
 
-          <nav aria-labelledby="footer-nav" className="flex flex-col gap-2 lg:col-span-3 lg:col-start-10">
+          <nav aria-labelledby="footer-nav" className="flex flex-col gap-2 lg:col-span-4 lg:col-start-9">
             <h2 id="footer-nav" className="type-label-sm text-text-muted">
               {footer.navHeading}
             </h2>
-            <ul className="grid grid-cols-2 gap-x-6">
+            <ul className="grid grid-cols-2 gap-x-6 lg:grid-cols-3">
               {nav.links.map((link) => (
                 <li key={link.href}>
                   <TextLink variant="utility" href={link.href} className={COMPACT}>

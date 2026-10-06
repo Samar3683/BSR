@@ -69,16 +69,16 @@ function Invitation() {
     >
       <Container
         data-reveal="rise"
-        className="flex flex-col gap-6 border-y border-border-default py-8 lg:layout-grid lg:items-center lg:py-10"
+        className="flex flex-col gap-6 border-y border-border-default py-8 lg:py-10 xl:layout-grid xl:items-center"
       >
-        <div className="flex flex-col gap-3 lg:col-span-6">
+        <div className="flex flex-col gap-3 xl:col-span-6">
           <Eyebrow>{invitation.eyebrow}</Eyebrow>
           <h2 id={`${reviews.id}-title`} className="type-heading-lg">
             {invitation.title}
           </h2>
           <p className="max-w-text type-lede text-text-secondary">{invitation.body}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 lg:col-span-6 lg:justify-end">
+        <div className="flex flex-wrap items-center gap-3 xl:col-span-6 xl:justify-end">
           <ButtonLink href={invitation.quote.href} trailingIcon={ArrowRight}>
             {invitation.quote.label}
           </ButtonLink>

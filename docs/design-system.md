@@ -239,7 +239,7 @@ contact. No WebGL, no pinning, no scroll hijacking, no snapping.
   | Recensioni           | Real testimonials only; until then, a short invitation to talk        |
   | Chi siamo            | Documentary: large photograph, the person who answers, company facts  |
   | Preventivo           | Functional form: flat white panel, neutral fields, green in use       |
-  | FAQ                  | Minimal accordion, one answer open at a time                          |
+  | FAQ                  | Cinematic: motorway photograph fading into white, centred compact accordion, one open at a time (≈ 1 viewport) |
   | Final call to action | Full-bleed photograph, light Carbon scrim                             |
   | Footer               | Compact utility (≤ ⅓ viewport)                                        |
 
@@ -282,7 +282,8 @@ contact. No WebGL, no pinning, no scroll hijacking, no snapping.
     islands → European corridors → red destinations.
   - *Scroll-linked*: the journey's progress (one position read per frame, React state only on a
     step change); parallax ±3% on large screens only, never under reduced motion or on a
-    low-power device (`html[data-motion-lite]`); the hero transition's line.
+    low-power device (`html[data-motion-lite]`), nor while the hero is on screen
+    (`html[data-hero-in-view]`: nothing below the hero may cost it frames); the hero transition's line.
   - *Stateful*: counters count up once (`CountUp`), the sector preview, the vehicle crossfade
     (500 ms, the new details fade in), the FAQ (exclusive `<details name>`, 360 ms, the plus
     turns half a revolution into a red minus), the quick actions.

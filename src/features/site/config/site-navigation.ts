@@ -51,7 +51,7 @@ export const siteNavigation = {
 
 export const siteFooter = {
   label: "Piè di pagina",
-  tagline: "Trasporti espressi e dedicati in tutta Italia e su rotte europee selezionate.",
+  tagline: "Trasporti espressi e dedicati in tutta Italia e sulle principali tratte europee.",
   navHeading: "Sito",
   /** Anchor of the footer's contact column (the navigation's "Contatti" is in "Chi siamo"). */
   contactId: "contatti-footer",

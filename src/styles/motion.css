@@ -90,7 +90,10 @@
    viewport (scroll-driven, compositor-run; nothing moves layout). Give the
    element a frame with `overflow-clip` and let it overhang by 4% top and
    bottom (MediaFrame does both). Large screens only; never under reduced
-   motion or on a low-power device (html[data-motion-lite]). */
+   motion or on a low-power device (html[data-motion-lite]), and not while
+   the hero is on screen (html[data-hero-in-view], set by HeroInView):
+   the pictures are below the fold then, and composited layers moving with
+   every scroll would compete with the hero's frames. */
 @keyframes parallax {
   from {
     translate: 0 -3%;
@@ -103,7 +106,7 @@
 @utility parallax {
   @media (prefers-reduced-motion: no-preference) and (width >= 64rem) {
     @supports (animation-timeline: view()) {
-      html:not([data-motion-lite]) & {
+      html:not([data-motion-lite]):not([data-hero-in-view]) & {
         animation: parallax linear both;
         animation-timeline: view();
         animation-range: cover 0% cover 100%;

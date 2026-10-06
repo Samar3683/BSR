@@ -85,7 +85,7 @@ export function ServicesSection() {
                     <p className="max-w-text type-body-sm text-text-secondary">{item.body}</p>
                     <dl className="grid grid-cols-3 gap-x-4 border-t border-border-default pt-4">
                       {item.facts.map((fact) => (
-                        <div key={fact.label} className="flex flex-col-reverse gap-1">
+                        <div key={fact.label} className="flex flex-col-reverse justify-end gap-1">
                           <dt className="type-caption text-text-muted">{fact.label}</dt>
                           <dd className="type-label-lg tabular-nums">{fact.value}</dd>
                         </div>

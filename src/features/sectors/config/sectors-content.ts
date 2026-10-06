@@ -37,7 +37,8 @@ export const sectorsContent = {
   id: "settori",
   eyebrow: "Per chi lavoriamo",
   title: "Chi si affida al trasporto BSR?",
-  intro: "Ogni settore ha tempi ed esigenze diversi. Scegli il tuo e raccontaci cosa devi spedire.",
+  intro:
+    "Ogni settore ha tempi ed esigenze diversi. Scegli il tuo: la richiesta di preventivo si apre con il settore già indicato.",
   /** Each row's action (the sector's name is added for assistive technology). */
   linkLabel: "Richiedi un preventivo",
   linkFor: "per",

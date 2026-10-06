@@ -31,9 +31,9 @@ export const reviewsContent = {
   testimonials: [] as Testimonial[],
   /** Shown while there are no approved testimonials. */
   invitation: {
-    eyebrow: "Parliamone",
+    eyebrow: "Contatto diretto",
     title: "Vuoi raccontarci cosa devi trasportare?",
-    body: "Partenza, destinazione e tipo di carico: ti ricontattiamo per definire la soluzione.",
+    body: "Un solo numero, nessun call center: chiamaci, scrivici su WhatsApp o richiedi un preventivo.",
     quote: { label: "Richiedi un preventivo", href: siteConfig.routes.quoteRequest },
     whatsapp: { label: "Scrivici su WhatsApp", hint: "(apre WhatsApp)" },
     call: "Chiama",

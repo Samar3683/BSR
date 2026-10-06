@@ -69,13 +69,17 @@ test.describe("page structure", () => {
   // The supplied image package: only the live livery and the coverage map reach
   // public pages (never an alternative livery or an archived draft), every image
   // has an alt (meaningful, or "" when decorative) and loads lazily.
-  test("images outside the hero: live livery only, alt text, lazy loading", async ({ page }) => {
+  // The one documented exception: the FAQ's background is the red-livery set.
+  test("images outside the hero: live livery only (FAQ: red), alt text, lazy loading", async ({
+    page,
+  }) => {
     await page.goto("/");
     const images = await page.evaluate(() =>
       [...document.querySelectorAll("img")]
         .filter((img) => !img.closest("[data-hero]"))
         .map((img) => ({
           src: decodeURIComponent(img.getAttribute("src") ?? ""),
+          inFaq: Boolean(img.closest("#faq")),
           alt: img.getAttribute("alt"),
           loading: img.getAttribute("loading"),
         })),
@@ -83,7 +87,9 @@ test.describe("page structure", () => {
     expect(images.length).toBeGreaterThanOrEqual(10);
     for (const image of images) {
       expect(image.src).toContain("/assets/images/content/");
-      expect(image.src).toMatch(/\/(scenes\/final|maps)\//);
+      expect(image.src).toMatch(
+        image.inFaq ? /\/scenes\/red\// : /\/(scenes\/final|maps)\//,
+      );
       expect(image.alt, image.src).not.toBeNull();
       expect(image.loading, image.src).toBe("lazy");
     }
@@ -109,18 +115,25 @@ test.describe("page structure", () => {
     await expect(page.getByRole("contentinfo")).toContainText("REA MO-434008");
   });
 
-  test("FAQ answers open and close from the keyboard", async ({ page }) => {
+  test("FAQ: the first answer starts open; the keyboard opens one at a time", async ({ page }) => {
     await page.goto("/");
-    const item = page.locator("#faq details").first();
-    const question = item.locator("summary");
-    await question.focus();
-    await expect(question).toBeFocused();
+    const items = page.locator("#faq details");
+    await expect(items).toHaveCount(7);
+    await expect(items.nth(0)).toHaveJSProperty("open", true);
+    await expect(items.nth(1)).toHaveJSProperty("open", false);
+
+    // Enter on the second question opens it and closes the first.
+    const second = items.nth(1).locator("summary");
+    await second.focus();
+    await expect(second).toBeFocused();
     await page.keyboard.press("Enter");
-    await expect(item).toHaveJSProperty("open", true);
-    await expect(item.locator("p")).toBeVisible();
+    await expect(items.nth(1)).toHaveJSProperty("open", true);
+    await expect(items.nth(1).locator("p")).toBeVisible();
+    await expect(items.nth(0)).toHaveJSProperty("open", false);
+
+    // Space closes it again.
     await page.keyboard.press(" ");
-    await expect(item).toHaveJSProperty("open", false);
-    await expect(page.locator("#faq details")).toHaveCount(8);
+    await expect(items.nth(1)).toHaveJSProperty("open", false);
   });
 
   test("vehicle selector: tabs switch the type from the keyboard", async ({ page }) => {

@@ -15,7 +15,7 @@ import { siteNavigation as nav } from "../config/site-navigation";
  * `data-conversion`: the request form, the closing chapter) or the footer is
  * in view — they carry the same actions — so it never duplicates or covers them.
  * - Phones: a compact bar — the quote request (red) and WhatsApp.
- * - From `lg`: one floating quote button, bottom right.
+ * - From `lg`: one compact floating quote button, bottom right.
  * Hidden, it is `inert`: focus and assistive technology never reach an
  * invisible control. Pages without a hero or quote chapter just show it.
  */
@@ -81,8 +81,9 @@ export function QuickActions() {
         </ButtonLink>
       </div>
       <div className="hidden lg:block">
-        <ButtonLink href={nav.cta.href} trailingIcon={ArrowRight}>
-          {nav.cta.label}
+        <ButtonLink href={nav.cta.href} size="sm" trailingIcon={ArrowRight} className="shadow-raised">
+          <span className="sr-only">Richiedi un </span>
+          {nav.cta.shortLabel}
         </ButtonLink>
       </div>
     </div>

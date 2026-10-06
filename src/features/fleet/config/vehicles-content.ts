@@ -73,8 +73,8 @@ export const vehiclesContent = {
       action: { label: "Richiedi un preventivo", context: "con il furgone", href: request("furgone") },
       // No-break spaces (and a word joiner after the dash) keep each figure whole.
       specs: [
-        { label: "Vano di carico (interno)", value: "circa 4 × 2 × 2 m" },
-        { label: "Portata", value: "fino a circa 1.000–⁠1.200 kg" },
+        { label: "Vano di carico (interno)", value: "circa 4\u00a0×\u00a02\u00a0×\u00a02\u00a0m" },
+        { label: "Portata", value: "fino a circa 1.000–\u20601.200\u00a0kg" },
       ],
       note: "Valori indicativi.",
     },

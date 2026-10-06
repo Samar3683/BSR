@@ -272,7 +272,7 @@ video. Everything else is built so that swap touches one line.
 - **Server first.** Every section is a Server Component. The client code below the hero is small
   and self-contained: the header's scroll state (pure logic in `features/site/lib/header-state.ts`,
   unit-tested), the mobile menu (a native modal `<dialog>`), the journey's current step (one
-  rAF-throttled scroll measurement), the vehicle selector (WAI-ARIA tabs; stacked without JS), the
+  rAF-throttled scroll measurement, attached only while the block is near the screen), the vehicle selector (WAI-ARIA tabs; stacked without JS), the
   metric count-up (`CountUp`: final value server-rendered, counting copy written to its own text
   node), the quote page's URL draft, the sector preview (`SectorExplorer`), the header's section
   in view, the entry motion (`RevealController`: one IntersectionObserver for the page — see

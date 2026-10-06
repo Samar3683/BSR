@@ -4,7 +4,7 @@ Every business claim on the public site, where it comes from and what we may say
 copy may only use claims marked **VERIFIED**, in the wording given under _Site wording_. Update this
 file whenever a claim is added, changed or confirmed by BSR.
 
-Last audit: 1 October 2026.
+Last audit: 1 October 2026 (re-checked on the rendered site at 1440, 1024, 820 and 390).
 
 ## Sources
 
@@ -118,8 +118,12 @@ source: not published. **REMOVE** — was on this site and has been taken out.
 
 ## Production readiness
 
-**BLOCKER** — none in code. Before launch: legal review of `/privacy` and the hosting provider
-paragraph (deployment-dependent).
+**BLOCKER** (see `docs/NEXT.md`)
+- The hero's stills and phone clips are labelled development placeholders ("DEVELOPMENT
+  PLACEHOLDER — NOT FINAL ART"), visible on the stills path. Inside the locked hero: replace with
+  the approved stills through the hero asset pipeline.
+- Legal review of `/privacy` and the hosting provider paragraph (deployment-dependent).
+- Domain: canonical / Open Graph / sitemap assume https://bsrtrasporti.com.
 
 **NEEDS BSR CONFIRMATION**
 - PEC `b.s.r@legalmail.it` (live site) vs `bsr@legalmail.it` (brief). The site uses the live one.
@@ -133,3 +137,11 @@ Italian motorway, Carpi base, a consented portrait of the titolare (`src/config/
 
 **OPTIONAL** — video loops for services, process, fleet and the final call to action (slots
 accept `kind: "video"`).
+
+## FAQ background — livery exception
+
+The FAQ's background (`siteMedia.faq.background`) is the motorway photograph in the **red** livery,
+at the client's request; every other photograph is the white "final" livery. Only the livery the real
+fleet carries may go live: confirm with BSR, or switch the slot back to `scene(...)`
+(`site-media.test.ts` names this one exception). The FAQ no longer asks "Quali tipologie di merci
+trasportate?" — BSR has not confirmed what goods it carries; add it when BSR supplies the answer.

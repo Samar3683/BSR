@@ -7,6 +7,7 @@ import { QuoteSection } from "@/features/contact/components/quote-section";
 import { FaqSection } from "@/features/faq/components/faq-section";
 import { VehiclesSection } from "@/features/fleet/components/vehicles-section";
 import { IdentitySection } from "@/features/home/components/identity-section";
+import { HeroInView } from "@/features/home/components/hero-in-view";
 import { RouteTransition } from "@/features/home/components/route-transition";
 import { ReviewsSection } from "@/features/reviews/components/reviews-section";
 import { CoverageSection } from "@/features/routes/components/coverage-section";
@@ -53,6 +54,7 @@ export default function HomePage() {
         <QuoteSection />
       </main>
       <QuickActions />
+      <HeroInView />
       {/* The organisation as structured data (verified facts only). */}
       <script
         type="application/ld+json"
