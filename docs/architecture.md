@@ -239,27 +239,28 @@ video. Everything else is built so that swap touches one line.
 
 - **Route group.** `app/(site)/layout.tsx` adds the `SiteHeader` and `SiteFooter` around every
   public page (`/`, `/preventivo`). `/dev/design-system` stays outside the group.
-- **Composition only in `app`.** `app/(site)/page.tsx` composes `<HeroSection />`, the route
-  transition, the sections in the approved order, and the quick actions. Features never import
+- **Composition only in `app`.** `app/(site)/page.tsx` composes `<HeroSection />`, the twelve
+  acts of the film in story order, the quick actions, the journey indicator and the
+  `SceneDirector`. Features never import
   each other's sections (shared copy such as the navigation labels is imported from `config/`).
 - **Domain features.** Each chapter lives with its domain and keeps its copy in `config/`:
 
-  | Section (anchor)                  | Feature                                                          |
-  | --------------------------------- | ---------------------------------------------------------------- |
-  | Hero → page, who BSR is (`bsr`)   | `features/home` (`RouteTransition`, `IdentitySection`)           |
-  | Servizi (`servizi`)               | `features/services` (`ServiceStage`)                              |
-  | Per chi lavoriamo (`settori`)     | `features/sectors`                                               |
-  | Come funziona (`come-funziona`)   | `features/booking` (`ShipmentJourney`)                           |
-  | Flotta (`flotta`)                 | `features/fleet` (`VehicleSelector`, technical schematics)       |
-  | Copertura (`copertura`)           | `features/routes` (the supplied coverage map, sequenced)         |
-  | Sicurezza del carico (`sicurezza`)| `features/trust` (`ProtectionSection`)                           |
-  | Clienti (`clienti`)               | `features/trust` (`NetworkSection`; logos only when verified)    |
-  | Recensioni (`recensioni`)         | `features/reviews` (an invitation until real testimonials exist) |
-  | Chi siamo (`chi-siamo`)           | `features/about`                                                 |
-  | Preventivo (`richiesta`)          | `features/booking` (`BookingSection` → `BookingFlow` quote starter) |
-  | FAQ (`faq`)                       | `features/faq` (native `<details>` disclosures)                  |
-  | Final CTA (`preventivo`)          | `features/contact` (`QuoteSection`)                              |
-  | Header, menu, footer, quick       | `features/site` (`QuickActions`)                                 |
+  | Act — section (anchor)                 | Feature                                                              |
+  | -------------------------------------- | -------------------------------------------------------------------- |
+  | 01 Origine — who BSR is (`bsr`)        | `features/home` (`IdentitySection`: the dawn, the truck on the route) |
+  | 02 Il carico (`settori`)               | `features/sectors` (pinned: the cargo, the sectors in turn)          |
+  | 03 Il servizio (`servizi`)             | `features/services` (pinned from `lg`: the truck, the two modes)     |
+  | 04 Preparazione (`come-funziona`)      | `features/booking` (`RequestProcessSection`: the loading bay)       |
+  | 05 Sicurezza (`sicurezza`)             | `features/trust` (`ProtectionSection`: the green atmosphere)        |
+  | 06 Partenza (`flotta`)                 | `features/fleet` (pinned: the three types, then the departure)       |
+  | 07 La rete (`copertura`)               | `features/routes` (pinned: the aerial, the map's four positions)     |
+  | 08 Fiducia (`clienti`, `recensioni`)   | `features/trust`, `features/reviews` (consent-only proof)            |
+  | 09 Le persone (`chi-siamo`)            | `features/about`                                                     |
+  | 10 Richiesta (`richiesta`)             | `features/booking` (`BookingSection` → `BookingFlow`, the arrival)  |
+  | 11 Domande (`faq`)                     | `features/faq` (native `<details>` disclosures)                      |
+  | 12 Arrivo (`preventivo`)               | `features/contact` (`QuoteSection`: the last frame)                  |
+  | Header, menu, footer, quick actions    | `features/site`                                                      |
+  | The film's machinery                   | `features/story` (acts config, `SceneDirector`, `PinnedScene`, truck cut-outs, journey indicator, ink titles, road) |
 
 - **The request flow (no backend).** The home page's form is a plain GET to `/preventivo`
   (`partenza`, `destinazione`, `servizio`, `settore`); services, sectors, vehicles and coverage
@@ -271,20 +272,33 @@ video. Everything else is built so that swap touches one line.
 
 - **Server first.** Every section is a Server Component. The client code below the hero is small
   and self-contained: the header's scroll state (pure logic in `features/site/lib/header-state.ts`,
-  unit-tested), the mobile menu (a native modal `<dialog>`), the journey's current step (one
-  rAF-throttled scroll measurement, attached only while the block is near the screen), the vehicle selector (WAI-ARIA tabs, server-rendered; a `<noscript>` rule lists every type without JS), the quote starter (`BookingFlow`: route, service, sector; named errors, focus on the first missing field), the service stage (`ServiceStage`: the picture follows the service in play), the
+  unit-tested), the mobile menu (a native modal `<dialog>`), the film's `SceneDirector` (below), the journey
+  indicator (one IntersectionObserver; re-renders only when the act changes), the quote starter
+  (`BookingFlow`: route, service, sector; named errors, focus on the first missing field), the
+  media players that wait for real footage (`VideoScene`, `MediaSequence`: render only when a slot
+  declares motion), the
   metric count-up (`CountUp`: final value server-rendered, counting copy written to its own text
-  node), the quote page's URL draft, the sector preview (`SectorExplorer`), the header's section
+  node), the quote page's URL draft, the header's section
   in view, the entry motion (`RevealController`: one IntersectionObserver for the page — see
   docs/design-system.md, "Motion") and the quick actions (IntersectionObservers; `inert` while
   hidden, stepping aside for any `data-conversion` section and the footer). None of it uses GSAP, so the
   hero's ScrollTrigger setup stays isolated.
-- **Editorial components.** `components/editorial/`: `Chapter` (surface, rhythm, the chapter mark
-  "04 / 12"), `Label` (mono label with a state mark), `RouteLine`, `ActionLink` / `ActionButton`
-  (pill actions). Server components; every chapter below the hero is built from them and the
-  `ed-*` utilities in `styles/editorial.css`.
+- **The film (features/story).** One client component drives every act: the `SceneDirector`
+  reads the scroll once per frame (rAF, only for scenes near the viewport, nothing while the hero
+  plays), writes each scene's progress as `--p`, marks pinned scenes `data-pinned` (pinning
+  itself is CSS: a tall track and a sticky stage, `PinnedScene`), and sets the current step on
+  `[data-step-item]` elements (`aria-current="step"` where a list needs it). Every scroll-linked
+  motion is derived from `--p` in CSS (`styles/cinematic.css`: `seg`, `swap`, `ink-cover`,
+  `wheel-spin`, `dock-door`, `speedometer`); state is a pure function of the scroll position
+  (`lib/progress.ts`, unit-tested), so fast, reversed or jumped scrolling always lands on a complete
+  frame. The acts' structure (sections, tone, track lengths, media slots) is
+  `features/story/config/acts.ts`; the words stay in each feature's content file.
+- **Editorial components.** `components/editorial/`: `Chapter` (the calmer acts: surface,
+  rhythm, the act mark "Atto 08 — …"; a view scene for the director), `Label`, `RouteLine`,
+  `ActionLink` / `ActionButton` (pill actions).
 - **No layout shift on hydration.** Anything that appears or collapses after the page becomes
-  interactive must be rendered in its final state from the server (fleet tabs, closed form steps);
+  interactive must be rendered in its final state from the server (a pinned act's steps are laid out as a
+  list until the director pins them; closed form steps);
   the no-JavaScript fallback is a `<noscript>` style, not a different DOM.
 - **No WebGL below the hero.** Richness comes from type, surfaces, SVG and the supplied
   photography. `site.spec.ts` fails on any canvas or video outside `[data-hero]`, and on any

@@ -1,8 +1,8 @@
 import { company, coverage, transit } from "@/config/site-content";
 
 /**
- * Copy of the home page's connective pieces: the transition out of the hero
- * and the first chapter, which answers "what is BSR?" in about five seconds —
+ * Copy of ACT 01, the film's first frame after the hero (the dawn over Carpi,
+ * then the first chapter), which answers "what is BSR?" in about five seconds —
  * what (express and dedicated transport), where (Italy and the main European
  * routes, from Carpi), how (one contact from pickup to delivery). Every figure
  * is VERIFIED in docs/content-audit.md and read from config/site-content.ts:
@@ -10,17 +10,17 @@ import { company, coverage, transit } from "@/config/site-content";
  * unico referente" is the official site's own promise.
  */
 export const homeContent = {
-  transition: {
-    /** Echoes the hero's last line, "Dal ritiro alla destinazione." */
-    origin: "Ritiro",
-    destination: "Destinazione",
-  },
   identity: {
     id: "bsr",
-    chapter: { index: "01", name: "Chi è BSR", context: "Carpi · Modena · Italia" },
     label: `${company.brand} · ${coverage.base}`,
     /** Two lines, deliberately: what BSR does, then where. */
-    title: ["Trasporti espressi e dedicati.", "In Italia e sulle principali tratte europee."] as const,
+    title: [
+      "Trasporti espressi e dedicati.",
+      "In Italia e sulle principali tratte europee.",
+    ] as const,
+    /** The first line as the opening statement sets it (same words). */
+    statement: ["Trasporti espressi", "e dedicati."] as const,
+    act: { act: "01", name: "Chi è BSR", meta: "Carpi · Modena · Italia" },
     support: "Dal ritiro alla consegna, un unico referente segue la tua spedizione.",
     body: `${company.brand} è un'${company.activity} con sede a Carpi (MO).`,
     whatsapp: "WhatsApp",
@@ -53,5 +53,12 @@ export const homeContent = {
     ],
     /** The route under the chapter: from the base to its reach (decorative). */
     route: ["Carpi (MO)", "Italia", "Europa"] as const,
+    /** The opening frame out of the hero: the base, as coordinates (geography, decorative). */
+    prologue: {
+      origin: "Carpi (MO)",
+      coordinates: "44.78° N · 10.88° E",
+      stops: ["Italia", "Europa"] as const,
+      line: "Il viaggio parte da qui.",
+    },
   },
 } as const;

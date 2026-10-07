@@ -2,7 +2,10 @@ import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 
 import { cx } from "@/lib/utils/cx";
-import type { FocalPoint, SlotMedia } from "@/types/media";
+import type { FocalPoint, SceneMotion, SlotMedia } from "@/types/media";
+
+import { MediaSequence } from "./media-sequence";
+import { VideoScene } from "./video-scene";
 
 export type { SlotMedia } from "@/types/media";
 
@@ -36,6 +39,45 @@ interface MediaSlotProps {
 /** object-position per breakpoint, from the focal point's CSS variables. */
 const FOCAL =
   "object-cover object-[var(--focal,center)] md:object-[var(--focal-md,var(--focal,center))] lg:object-[var(--focal-lg,var(--focal-md,var(--focal,center)))]";
+
+/** The focal point at its widest setting (canvas frames take one position). */
+function focalOf(position?: FocalPoint): string | undefined {
+  if (!position) return undefined;
+  return typeof position === "string" ? position : (position.lg ?? position.md ?? position.base);
+}
+
+/** Moving media over the picture: a loop, or frames driven by the scene. */
+function Motion({
+  motion,
+  poster,
+  position,
+}: {
+  motion: SceneMotion;
+  poster?: string;
+  position?: FocalPoint;
+}) {
+  if (motion.kind === "video") {
+    return (
+      <VideoScene
+        src={motion.src}
+        mobileSrc={motion.mobileSrc}
+        type={motion.type}
+        poster={poster}
+      />
+    );
+  }
+  const focal = focalOf(position);
+  return (
+    <MediaSequence
+      pattern={motion.pattern}
+      frames={motion.frames}
+      mobilePattern={motion.mobilePattern}
+      mobileFrames={motion.mobileFrames}
+      scrub={motion.scrub}
+      position={focal && /%.*%/.test(focal) ? focal : undefined}
+    />
+  );
+}
 
 function focalStyle(position?: FocalPoint): CSSProperties | undefined {
   if (!position) return undefined;
@@ -88,6 +130,9 @@ export function MediaSlot({
           style={objectPosition}
         />
       )}
+      {media?.kind === "image" && media.motion && (
+        <Motion motion={media.motion} poster={media.src} position={media.position} />
+      )}
       {media?.kind === "video" && (
         <>
           <Image
@@ -98,18 +143,7 @@ export function MediaSlot({
             className={FOCAL}
             style={objectPosition}
           />
-          <video
-            aria-hidden="true"
-            src={media.src}
-            poster={media.poster}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="none"
-            className={`absolute inset-0 h-full w-full motion-reduce:hidden ${FOCAL}`}
-            style={objectPosition}
-          />
+          <VideoScene src={media.src} poster={media.poster} />
         </>
       )}
     </div>

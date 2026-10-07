@@ -14,9 +14,12 @@ const options = (names: Record<string, string>) =>
 export const bookingContent = {
   /** Navigation anchor ("Preventivo", site-navigation.ts). */
   id: "richiesta",
-  chapter: { index: "11", name: "Preventivo", context: "Partenza → Destinazione" },
+  chapter: { index: "10", name: "Richiesta", context: "Partenza → Destinazione" },
   label: "Richiesta di preventivo",
-  title: "Parliamo del tuo carico.",
+  /** The act's question, one entry per line. */
+  title: ["Hai un carico", "da muovere?"] as const,
+  /** The route arriving at its destination over the act (decorative). */
+  arrival: { origin: "Carpi (MO)", destination: "La tua destinazione" },
   /** The three questions the starter answers. */
   questions: ["Da dove parte?", "Dove deve arrivare?", "Di quale servizio hai bisogno?"] as const,
   intro:

@@ -19,7 +19,7 @@ export const aboutContent = {
   id: "chi-siamo",
   /** The contact block's anchor (navigation: "Contatti"). */
   contactId: "contatti",
-  chapter: { index: "10", name: "Chi siamo", context: "Carpi · Modena" },
+  chapter: { index: "09", name: "Le persone", context: "Carpi · Modena" },
   label: "Chi siamo",
   /** Three short lines: the promise of the official site, made personal. */
   title: ["Una persona.", "Un contatto.", "Ogni spedizione."] as const,

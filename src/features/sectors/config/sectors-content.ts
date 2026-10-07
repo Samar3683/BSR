@@ -35,9 +35,12 @@ const sector = (id: SectorId, code: string, body: string): Sector => ({
 
 export const sectorsContent = {
   id: "settori",
-  chapter: { index: "03", name: "Per chi lavoriamo", context: "Quattro settori" },
   label: "Per chi lavoriamo",
-  title: "Chi si affida a BSR?",
+  /** The act's title, one entry per line (inked in turn). */
+  title: ["Ogni carico", "ha la sua storia."] as const,
+  act: { act: "02", name: "Il carico", meta: "Quattro settori" },
+  /** The stage's caption over the photograph, e.g. "Carico 02 / 04". */
+  stageLabel: "Carico",
   intro:
     "Ogni settore ha tempi ed esigenze diversi. Scegli il tuo: la richiesta di preventivo si apre con il settore già indicato.",
   /** Each row's action (the sector's name is added for assistive technology). */
@@ -45,9 +48,17 @@ export const sectorsContent = {
   linkFor: "per",
   stage: siteMedia.sectors.stage,
   items: [
-    sector("industria", "01", "Produzione e componentistica: carichi voluminosi e trasporti dedicati."),
+    sector(
+      "industria",
+      "01",
+      "Produzione e componentistica: carichi voluminosi e trasporti dedicati.",
+    ),
     sector("retail", "02", "Negozi e punti vendita: rifornimenti programmati e urgenze."),
     sector("e-commerce", "03", "Magazzini e spedizioni: volumi che cambiano, consegne rapide."),
-    sector("aziende-commerciali", "04", "Merce da e verso clienti e fornitori, con il mezzo adatto al carico."),
+    sector(
+      "aziende-commerciali",
+      "04",
+      "Merce da e verso clienti e fornitori, con il mezzo adatto al carico.",
+    ),
   ],
 } as const;

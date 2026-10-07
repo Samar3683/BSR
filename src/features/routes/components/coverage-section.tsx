@@ -1,102 +1,174 @@
 import { ActionLink } from "@/components/editorial/action";
-import { Chapter } from "@/components/editorial/chapter";
-import { Label } from "@/components/editorial/label";
 import { MediaSlot } from "@/components/media/media-slot";
+import { ActLabel, InkTitle, seg } from "@/features/story/components/cine";
+import { PinnedScene } from "@/features/story/components/scene";
+import { actOf } from "@/features/story/config/acts";
 
 import { coverageContent as coverage } from "../config/coverage-content";
 import { CoverageMap } from "./coverage-map";
 
+const STEPS = [0.2, 0.92] as const;
+
 /**
- * Chapter 06 — "where can you take it?", on Carbon: the page's one controlled
- * dark stage, an editorial map rather than a map card.
+ * ACT 07 — La rete. The journey expanding across the country, at night.
  *
- * Left: the heading, the reach as three figures on hairlines (Italy, Europe,
- * the seven confirmed countries — indicative), the routes with their
- * indicative times (each a link to the request with that destination), the
- * base, and "Verifica la tua tratta". Right, running off the page edge: the
- * supplied BSR map, played once as it enters (CoverageMap: Carpi → Italy →
- * the corridors → red destinations), over the aerial of the northern Italian
- * plain, dimmed and feathered. Decorative — every fact is real text.
+ * Pinned (≈ 3.8 viewports), on Carbon (the dusk of the departure):
+ *  0 → 0.2    the aerial of the plain at golden hour comes up, the camera
+ *             rising; the title is inked;
+ *  0.12 → 0.26 the aerial falls away into the map (scale and fade): the road
+ *             becomes the route;
+ *  0.2 → 0.92 four camera positions over the BSR map — the base (Carpi), the
+ *             north, Italy with the islands, Europe with the seven confirmed
+ *             corridors arriving on red — each with its words on the left;
+ *  0.93 → 1   the day comes back from below: the next act is on White.
+ *
+ * Unpinned: the aerial, the title, the four stages as a list, the whole map.
  */
 export function CoverageSection() {
   const titleId = `${coverage.id}-title`;
-  return (
-    <Chapter id={coverage.id} tone="carbon" labelledBy={titleId} {...coverage.chapter}>
-      <div className="ed-grid gap-y-10 lg:items-center">
-        <div className="col-span-4 flex flex-col gap-7 md:col-span-8 lg:col-span-7 xl:col-span-6">
-          <div data-reveal="rise" className="flex flex-col gap-5">
-            <Label>{coverage.label}</Label>
-            <h2 id={titleId} className="ed-h2 text-balance">
-              {coverage.title}
-            </h2>
-            <p className="max-w-[36rem] ed-body text-text-secondary">{coverage.body}</p>
-          </div>
+  const act = actOf(coverage.id);
+  const total = String(coverage.stages.length).padStart(2, "0");
+  const [italy, europe, countries] = coverage.facts;
 
-          <dl className="grid grid-cols-3 border-y border-hairline">
-            {coverage.facts.map((fact, i) => (
+  return (
+    <PinnedScene
+      id={coverage.id}
+      act={act}
+      tone="carbon"
+      labelledBy={titleId}
+      steps={coverage.stages.length}
+      stepRange={STEPS}
+      className="group/scene"
+    >
+      {/* The words: title, then what each camera position shows. */}
+      <div className="relative z-10 ed-frame flex flex-col gap-[clamp(1.25rem,3svh,2.25rem)] py-12 pin:h-full pin:justify-center pin:py-0 pin:pt-(--header-height) max-lg:pin:justify-end max-lg:pin:pb-24">
+        <div className="flex max-w-[34rem] flex-col gap-[clamp(1.25rem,3svh,2.25rem)]">
+          <ActLabel act={act.act} name={coverage.act.name} meta={coverage.act.meta} />
+          <InkTitle
+            id={titleId}
+            lines={coverage.titleLines}
+            className="cine-title"
+            from={0.02}
+            to={0.14}
+          />
+
+          <div className="grid gap-10">
+            {coverage.stages.map((stage, i) => (
               <div
-                key={fact.label}
-                className={`flex flex-col gap-1.5 py-4 ${i > 0 ? "border-l border-hairline pl-4" : "pr-4"}`}
+                key={stage.id}
+                data-step-item={i}
+                className="swap flex flex-col gap-3 border-t border-hairline-strong pt-4"
               >
-                <dt className="ed-meta text-text-secondary">{fact.label}</dt>
-                <dd className="flex items-baseline gap-1.5 whitespace-nowrap">
-                  <span className="ed-h3 tabular-nums">{fact.value}</span>
-                  {fact.unit && <span className="ed-label text-success">{fact.unit}</span>}
-                </dd>
-                <dd className="ed-small text-text-secondary">{fact.detail}</dd>
+                <p className="flex items-center gap-3 ed-label">
+                  <span className="text-success tabular-nums">
+                    {String(i + 1).padStart(2, "0")} / {total}
+                  </span>
+                  <span className="text-text-secondary">{stage.label}</span>
+                </p>
+                <h3 className="cine-h3 text-[clamp(1.625rem,1rem+1.8vw,2.75rem)]">
+                  {stage.headline}
+                </h3>
+                <p className="ed-body text-text-secondary">{stage.detail}</p>
+
+                {stage.id === "italia" && italy && (
+                  <p className="flex items-baseline gap-2">
+                    <span className="font-tech text-[clamp(2.5rem,1.5rem+2.4vw,4rem)] leading-none font-bold [font-stretch:112%]">
+                      {italy.value}
+                    </span>
+                    <span className="ed-label text-success">{italy.unit}</span>
+                    <span className="ed-meta text-text-secondary">· {italy.detail}</span>
+                  </p>
+                )}
+
+                {stage.id === "europa" && europe && countries && (
+                  <>
+                    <p className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+                      <span className="flex items-baseline gap-2">
+                        <span className="font-tech text-[clamp(2.25rem,1.5rem+2vw,3.5rem)] leading-none font-bold [font-stretch:112%]">
+                          {europe.value}
+                        </span>
+                        <span className="ed-label text-success">{europe.unit}</span>
+                      </span>
+                      <span className="flex items-baseline gap-2">
+                        <span className="font-tech text-[clamp(2.25rem,1.5rem+2vw,3.5rem)] leading-none font-bold [font-stretch:112%]">
+                          {countries.value}
+                        </span>
+                        <span className="ed-label text-success">{countries.label}</span>
+                      </span>
+                    </p>
+                    <ul className="grid grid-cols-2 gap-x-6 sm:grid-cols-3 lg:grid-cols-2">
+                      {coverage.europe.routes.map((route) => (
+                        <li key={route.country}>
+                          <a
+                            href={route.href}
+                            className="flex min-h-10 items-center justify-between gap-2 border-b border-hairline ed-small text-text-primary transition-colors duration-200 hover:border-success-graphic hover:text-success"
+                          >
+                            <span className="flex items-center gap-2">
+                              <span
+                                aria-hidden="true"
+                                className="size-1.5 rotate-45 bg-action-primary"
+                              />
+                              <span className="sr-only">{coverage.europe.linkHint} </span>
+                              {route.country}
+                            </span>
+                            <span className="ed-meta whitespace-nowrap text-text-secondary normal-case">
+                              {route.transit}
+                            </span>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="ed-meta text-text-secondary">{coverage.europe.note}</p>
+                  </>
+                )}
               </div>
             ))}
-          </dl>
-
-          <div className="flex flex-col gap-2">
-            <p className="flex items-baseline justify-between gap-4 ed-meta text-text-secondary">
-              <span className="text-text-primary">{coverage.europe.headline}</span>
-              <span>{coverage.europe.note}</span>
-            </p>
-            <ul className="grid grid-cols-2 gap-x-6 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
-              {coverage.europe.routes.map((route) => (
-                <li key={route.country}>
-                  <a
-                    href={route.href}
-                    className="flex min-h-10 items-center justify-between gap-2 border-b border-hairline ed-small text-text-primary transition-colors duration-200 hover:border-success-graphic hover:text-success"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span aria-hidden="true" className="size-1.5 rotate-45 bg-action-primary" />
-                      <span className="sr-only">{coverage.europe.linkHint} </span>
-                      {route.country}
-                    </span>
-                    <span className="ed-meta whitespace-nowrap normal-case text-text-secondary">{route.transit}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Label mark="green" className="text-text-secondary">
-              {coverage.base.label}: {coverage.base.place}
-            </Label>
-            <ActionLink href={coverage.action.href} variant="inverse">
-              {coverage.action.label}
-            </ActionLink>
-          </div>
-        </div>
-
-        <div className="relative isolate col-span-4 md:col-span-8 lg:col-span-9 lg:col-start-8 lg:ed-bleed-r xl:col-span-10 xl:col-start-7">
-          {/* Background layer: the aerial of the northern Italian plain behind the map —
-              dimmed and feathered into the surface. Aerial footage can replace it. */}
-          <div
-            aria-hidden="true"
-            className="absolute -inset-x-16 -inset-y-12 -z-10 [mask-image:radial-gradient(ellipse_60%_55%_at_50%_50%,black_25%,transparent_75%)]"
+          <ActionLink
+            href={coverage.action.href}
+            variant="inverse"
+            className="self-start max-lg:pin:hidden"
           >
-            <div className="parallax absolute inset-x-0 -inset-y-[4%]">
-              <MediaSlot name="coverage-background" media={coverage.media} aspect="fill" sizes="60vw" />
-            </div>
-            <div className="absolute inset-0 bg-background-primary/75" />
-          </div>
-          <CoverageMap className="-mx-(--spacing-edge) md:mx-0" />
+            {coverage.action.label}
+          </ActionLink>
         </div>
       </div>
-    </Chapter>
+
+      {/* The aerial: the camera rising off the road, then giving way to the map. */}
+      <div
+        aria-hidden="true"
+        className="relative h-[clamp(12rem,36svh,22rem)] overflow-clip seg pin:absolute pin:inset-0 pin:h-auto pinned:opacity-[calc(1-var(--e))]"
+        style={seg(0.14, 0.26)}
+      >
+        <div
+          className="absolute inset-0 seg pinned:[scale:calc(1.2-0.5*var(--e))] pinned:opacity-(--e)"
+          style={seg(0, 0.18)}
+        >
+          <MediaSlot
+            name="coverage-background"
+            media={coverage.media}
+            aspect="fill"
+            sizes="100vw"
+          />
+        </div>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(9_11_11/0.85)_0%,rgb(9_11_11/0.35)_55%,transparent_80%)]" />
+      </div>
+
+      {/* The map, arriving as the aerial falls away. */}
+      <div
+        className="relative h-[clamp(20rem,60svh,40rem)] seg pin:absolute pin:inset-y-0 pin:right-0 pin:h-auto pin:w-full max-lg:pin:top-(--header-height) max-lg:pin:bottom-auto max-lg:pin:h-[40svh] lg:pin:w-[70%] pinned:[scale:calc(1.25-0.25*var(--e))] pinned:opacity-(--e)"
+        style={seg(0.16, 0.28)}
+      >
+        <CoverageMap className="absolute inset-0 [mask-image:radial-gradient(ellipse_62%_62%_at_50%_50%,black_55%,transparent_100%)]" />
+      </div>
+
+      {/* Day comes back from below (the next act is on White). */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 z-20 hidden bg-white seg pinned:block pinned:[clip-path:inset(calc((1-var(--e))*100%)_0_0_0)]"
+        style={seg(0.94, 1)}
+      />
+    </PinnedScene>
   );
 }

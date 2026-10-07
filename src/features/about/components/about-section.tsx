@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { Chapter } from "@/components/editorial/chapter";
 import { Label } from "@/components/editorial/label";
+import { InkTitle } from "@/features/story/components/cine";
 import { MediaFrame } from "@/components/media/media-frame";
 import { siteConfig } from "@/config/site";
 
@@ -21,20 +22,29 @@ export function AboutSection() {
   const { address } = company;
   const titleId = `${about.id}-title`;
   return (
-    <Chapter id={about.id} tone="white" labelledBy={titleId} {...about.chapter}>
+    <Chapter
+      id={about.id}
+      tone="soft-white"
+      labelledBy={titleId}
+      className="bg-[linear-gradient(180deg,var(--color-white),var(--color-soft-white)_35%)]"
+      {...about.chapter}
+    >
       <div className="ed-grid gap-y-8 lg:grid-rows-[auto_auto]">
         <div className="col-span-4 md:col-span-8 lg:col-span-7 lg:row-start-1">
           <header data-reveal="rise" className="flex flex-col gap-5">
             <Label>{about.label}</Label>
-            <h2 id={titleId} className="ed-h2">
-              {about.title[0]} {about.title[1]}{" "}
-              <span className="text-success">{about.title[2]}</span>
-            </h2>
+            <InkTitle
+              id={titleId}
+              lines={about.title}
+              className="cine-title text-[clamp(2.25rem,1rem+3.6vw,5rem)]"
+              from={0.1}
+              to={0.32}
+            />
             <p className="max-w-[36rem] ed-body text-text-secondary">{about.intro}</p>
           </header>
         </div>
 
-        <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-9 lg:row-span-2 lg:row-start-1 lg:self-center lg:ed-bleed-r">
+        <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-9 lg:row-span-2 lg:row-start-1 lg:ed-bleed-r lg:self-center">
           <MediaFrame
             name="about-portrait"
             media={about.media}
@@ -46,8 +56,10 @@ export function AboutSection() {
         </div>
 
         <div className="col-span-4 flex flex-col gap-7 md:col-span-8 lg:col-span-7 lg:row-start-2">
-
-          <div id={about.contactId} className="flex scroll-mt-[calc(var(--header-height)+2rem)] flex-col">
+          <div
+            id={about.contactId}
+            className="flex scroll-mt-[calc(var(--header-height)+2rem)] flex-col"
+          >
             <h3 className="sr-only">{about.contact.heading}</h3>
             <p className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-hairline-strong py-3">
               <span className="ed-meta text-text-secondary">{about.contact.owner}</span>
@@ -105,7 +117,7 @@ function Channel({ label, href, children }: { label: string; href: string; child
         <ArrowUpRight
           aria-hidden="true"
           strokeWidth={1.75}
-          className="size-4 text-text-secondary transition-[translate,color] duration-200 group-hover/channel:text-success motion-safe:group-hover/channel:-translate-y-0.5 motion-safe:group-hover/channel:translate-x-0.5"
+          className="size-4 text-text-secondary transition-[translate,color] duration-200 group-hover/channel:text-success motion-safe:group-hover/channel:translate-x-0.5 motion-safe:group-hover/channel:-translate-y-0.5"
         />
       </a>
     </li>

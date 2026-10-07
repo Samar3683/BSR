@@ -162,3 +162,20 @@ the site's own policy, and none adds a promise:
 - "La prossima storia potrebbe essere la tua." — an invitation in place of reviews; no quote, name,
   rating or count.
 - The final call to action keeps "Ti ricontattiamo per definire la soluzione." (no response time).
+
+## Phase 2 — the film's new lines (October 2026)
+
+Act titles and narrative lines added by the cinematic recomposition. None states a fact beyond
+the verified ones; each is a title, a question or an image of the story.
+
+| Where | Line | Basis |
+| --- | --- | --- |
+| Act 01, the dawn | "Il viaggio parte da qui." · "Carpi (MO)" · "44.78° N · 10.88° E" | narrative; Carpi is the verified base, the coordinates are its geography |
+| Act 02 title | "Ogni carico ha la sua storia." | narrative title for the sectors (unchanged sector copy) |
+| Act 04 route | "Destinazione" after the four verified steps | the steps' own end |
+| Act 05 caption | "Carico fissato con cinghie e protezioni" | the verified principle "Protezione" |
+| Act 06 departure | "In viaggio" · "Carpi (MO) → Italia · Europa" · a decorative speed readout (00 → 90 km/h) | narrative; the readout is an animation, not a claim about speed |
+| Act 07 stages | "Base operativa — Carpi (MO)", "Da nord a sud" (+ the verified coverage sentence), "Tutta Italia, isole comprese", "Tratte europee" | the verified coverage copy, split per camera position |
+| Act 10 title | "Hai un carico da muovere?" · "La tua destinazione" | a question; replaces "Parliamo del tuo carico." |
+| Act 12 statement | "Il tuo carico. La nostra strada." (the question "Hai una spedizione da organizzare?" stays under it) | narrative close, no promise |
+| Act labels | "Atto 01 — Origine" … "Atto 12 — Arrivo" | structure |

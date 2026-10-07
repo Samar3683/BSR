@@ -16,7 +16,7 @@ export interface FaqItem {
 export const faqContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "faq",
-  chapter: { index: "12", name: "Domande frequenti", context: "Risposte verificate" },
+  chapter: { index: "11", name: "Domande", context: "Risposte verificate" },
   label: "Domande frequenti",
   title: "Hai delle domande?",
   /** The contact prompt beside the list. */

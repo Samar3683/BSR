@@ -18,9 +18,13 @@ export interface ProcessStep {
 export const requestProcessContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "come-funziona",
-  chapter: { index: "04", name: "Come funziona", context: "Quattro passaggi" },
   label: "Come funziona",
   title: "Dal ritiro alla consegna.",
+  /** The title as the act sets it, one entry per line (same words). */
+  titleLines: ["Dal ritiro", "alla consegna."] as const,
+  act: { act: "04", name: "Preparazione", meta: "Quattro passaggi" },
+  /** The route along the bottom of the scene: where the shipment ends. */
+  arrival: "Destinazione",
   /** The stage caption (mono), e.g. "02 / 04 · Passaggio · Valutazione". */
   stageLabel: "Passaggio",
   action: { label: "Richiedi un preventivo", href: siteConfig.routes.quoteRequest },

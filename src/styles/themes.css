@@ -36,6 +36,8 @@
   /* Editorial hairlines (1px): the technical line system below the hero. */
   --color-hairline: rgb(255 255 255 / 0.15);
   --color-hairline-strong: rgb(255 255 255 / 0.24);
+  /* An inked title's line before it is inked (≥ 3:1 for display sizes). */
+  --color-ink-muted: var(--color-pewter);
 
   --color-overlay-hover: transparent;
   --color-overlay-pressed: transparent;
@@ -99,6 +101,8 @@
   --color-border-interactive: var(--color-titanium);
   --color-hairline: rgb(255 255 255 / 0.15);
   --color-hairline-strong: rgb(255 255 255 / 0.24);
+  /* An inked title's line before it is inked (≥ 3:1 for display sizes). */
+  --color-ink-muted: var(--color-pewter);
 
   --color-overlay-hover: rgb(247 247 242 / 0.06);
   --color-overlay-pressed: rgb(247 247 242 / 0.1);
@@ -180,6 +184,8 @@
   --color-border-interactive: var(--color-carbon);
   --color-hairline: rgb(9 11 11 / 0.1);
   --color-hairline-strong: rgb(9 11 11 / 0.16);
+  /* An inked title's line before it is inked (≥ 3:1 for display sizes). */
+  --color-ink-muted: var(--color-pewter);
 
   --color-overlay-hover: rgb(9 11 11 / 0.05);
   --color-overlay-pressed: rgb(9 11 11 / 0.09);
@@ -262,6 +268,8 @@
   --color-border-interactive: var(--color-soft-white);
   --color-hairline: rgb(247 247 242 / 0.2);
   --color-hairline-strong: rgb(247 247 242 / 0.3);
+  /* An inked title's line before it is inked (≥ 3:1 for display sizes). */
+  --color-ink-muted: var(--color-green-200);
 
   --color-overlay-hover: rgb(247 247 242 / 0.08);
   --color-overlay-pressed: rgb(247 247 242 / 0.14);

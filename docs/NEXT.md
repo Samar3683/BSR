@@ -31,18 +31,19 @@ Where the project stands and what comes next. Update this file at the end of eve
   and the untouched baseline (`archive/hero-baseline-2026-09-28`) fails the same way under the
   same load. Re-run them on an idle machine or CI before treating a failure as a regression.
 
-**Phase 2B — full redesign below the hero: done, October 2026.** Everything below the locked
-hero was rebuilt as one editorial shipment story in twelve marked chapters (see "Page composition
-(below the hero)" in `docs/design-system.md`): new type voices (Saira display capitals, IBM Plex
-Mono labels; Archivo for reading), a 16-column full-width grid, hairlines instead of cards, pill
-actions, White-dominant surfaces (Carbon only for coverage, the close and the footer), a compact
-quote starter, a compact FAQ, a client logo framework and a review invitation that publish nothing
-until consent exists. The hero is untouched (only the approved `hero-content.ts` line differs from
-the baseline); the header over the hero keeps its behaviour with the new mono navigation.
+**Phase 2 — cinematic storytelling: done, October 2026.** Everything below the locked hero is now
+one continuous film of a shipment in twelve acts (docs/design-system.md, "Page composition"):
+Origine → Il carico → Il servizio → Preparazione → Sicurezza → Partenza → La rete → Fiducia → Le
+persone → Richiesta → Domande → Arrivo, then the credits. Five acts pin and play with the scroll
+(cargo, services, the loading bay, the fleet and departure, the network map) and the final frame
+pins briefly; the others scroll. The protagonist is the hero's own BSR truck, rendered from its
+models as cut-outs (`pnpm assets:truck-cutouts`); a journey indicator follows the acts. The hero
+is untouched (only the approved `hero-content.ts` line differs from the baseline).
 
-Waiting on BSR (the layout is ready, nothing is invented meanwhile): client logos with written
-consent, consented testimonials, real photography (each sector, fleet, loading, the Carpi base, a
-consented portrait), optional video loops for the media slots.
+Waiting on BSR (the film already plays with fallbacks; nothing is invented meanwhile): the P0
+media in docs/cinematic-media-manifest.md — real photography of the truck, the loading bay, the
+secured cargo, the fleet in one yard, the contact person, the departure — and the optional video
+loops and image sequences listed there; client logos and testimonials with written consent.
 
 **Do not start Phase 5 implementation until the items below are scheduled.**
 

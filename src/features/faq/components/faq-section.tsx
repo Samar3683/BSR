@@ -39,7 +39,7 @@ export function FaqSection() {
       <div className="ed-grid gap-y-10">
         <header className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
           <Label>{faq.label}</Label>
-          <h2 id={titleId} className="ed-h3">
+          <h2 id={titleId} className="cine-title text-[clamp(2rem,1rem+2.2vw,3.5rem)]">
             {faq.title}
           </h2>
           <p className="max-w-[24rem] ed-small text-text-secondary">{faq.intro.before}</p>
@@ -51,14 +51,17 @@ export function FaqSection() {
               key={item.question}
               name="faq"
               open={i === 0}
-              className="group disclosure relative border-b border-hairline"
+              className="group relative disclosure border-b border-hairline"
             >
               <span
                 aria-hidden="true"
                 className="absolute top-0 bottom-0 -left-px w-0.5 origin-top scale-y-0 bg-success-graphic transition-[scale] duration-300 group-open:scale-y-100 motion-reduce:transition-none"
               />
               <summary className="grid min-h-14 cursor-pointer list-none grid-cols-[2.5rem_1fr_1rem] items-center gap-3 py-3 pl-4 text-text-primary transition-colors duration-200 hover:text-success [&::-webkit-details-marker]:hidden">
-                <span aria-hidden="true" className="ed-meta text-text-secondary group-open:text-success">
+                <span
+                  aria-hidden="true"
+                  className="ed-meta text-text-secondary group-open:text-success"
+                >
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <span className="ed-body font-medium">{item.question}</span>
@@ -100,7 +103,7 @@ export function FaqSection() {
                   <ArrowUpRight
                     aria-hidden="true"
                     strokeWidth={1.75}
-                    className="size-4 text-success-graphic transition-transform duration-200 motion-safe:group-hover/channel:-translate-y-0.5 motion-safe:group-hover/channel:translate-x-0.5"
+                    className="size-4 text-success-graphic transition-transform duration-200 motion-safe:group-hover/channel:translate-x-0.5 motion-safe:group-hover/channel:-translate-y-0.5"
                   />
                 </a>
               </li>

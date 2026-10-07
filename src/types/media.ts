@@ -22,9 +22,40 @@ export type SlotMedia =
       blurDataURL?: string;
       /** Keeps the subject in frame when the slot crops. */
       position?: FocalPoint;
+      /**
+       * Moving media laid over the picture once it exists (the picture stays
+       * underneath: poster, fallback if the motion fails, reduced motion).
+       */
+      motion?: SceneMotion;
     }
   /**
    * Decorative loop (no audio, no information): autoplay, muted, loop,
    * playsInline. The poster is what reduced motion shows. Not used yet.
    */
   | { kind: "video"; src: string; poster: string; position?: FocalPoint };
+
+/**
+ * Moving media for a scene (components/media: VideoScene, MediaSequence) —
+ * declared on a picture's slot, never instead of it:
+ *
+ * - `video`: a muted loop, played only while on screen (paused off screen),
+ *   never under reduced motion; `mobileSrc` for a lighter 9:16 or 4:5 cut.
+ * - `sequence`: numbered frames drawn on a canvas, the frame chosen by the
+ *   scene's scroll progress (or played once as a loop when `scrub` is
+ *   false). `pattern` holds the frame number's place as `{0000}` (padding
+ *   by the braces' width), e.g. "/assets/video/sequences/departure/{0000}.webp";
+ *   `mobilePattern` / `mobileFrames` for a lighter set on phones.
+ *
+ * Every frame or clip covers the slot like the picture (same focal point).
+ */
+export type SceneMotion =
+  | { kind: "video"; src: string; mobileSrc?: string; type?: string }
+  | {
+      kind: "sequence";
+      pattern: string;
+      frames: number;
+      mobilePattern?: string;
+      mobileFrames?: number;
+      /** Scroll-scrubbed (default) or a timed loop. */
+      scrub?: boolean;
+    };

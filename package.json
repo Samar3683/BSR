@@ -17,7 +17,8 @@
     "assets:hero-placeholders": "node scripts/generate-hero-placeholders.mjs",
     "assets:decoders": "node scripts/sync-hero-decoders.mjs",
     "assets:validate-model": "node --experimental-strip-types --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-hero-model.mjs",
-    "assets:capture-hero": "node scripts/capture-hero-checkpoints.mjs"
+    "assets:capture-hero": "node scripts/capture-hero-checkpoints.mjs",
+    "assets:truck-cutouts": "node scripts/render-truck-cutouts.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

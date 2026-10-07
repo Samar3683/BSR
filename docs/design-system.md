@@ -215,96 +215,108 @@ Use `z-(--z-*)` only:
 | `toast`        | Transient notifications          |
 | `skip-link`    | Skip link, always on top         |
 
-## Page composition (below the hero) — the editorial system
+## Page composition (below the hero) — the film
 
-Phase 2B rebuilt everything below the locked hero as one continuous shipment story, told in twelve
-marked chapters, a close and a compact footer. The principles borrowed from the reference research
-(United Carriers and the supplied logistics references) are editorial composition, asymmetry,
-controlled type, hairlines, technical labels, large photographic moments and restrained motion —
-never their colours, layouts, wording or illustrations. BSR stays BSR: White dominates, Green is
-route and state, Red is the request and the destination, Carbon is rare.
+Everything below the locked hero is one shipment told as a film: twelve acts, then the credits.
+Every frame answers "where is the shipment now?" — origin, cargo, service, loading, security,
+departure, the network, then trust, the person, the request and the arrival. The principle is
+borrowed from the reference research (one journey, one visual system, large type, sparse frames,
+moving objects, scroll-controlled transitions); never its colours, wording or illustrations.
 
-### Story and surfaces
+The structure is `features/story/config/acts.ts`; the machinery is `features/story` and
+`styles/cinematic.css`; the media slots and the assets to supply are in
+`docs/cinematic-media-manifest.md`.
 
-| #  | Chapter (anchor)                   | Question it answers                     | Surface    | Composition                                                                                           |
-| -- | ---------------------------------- | --------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
-| —  | Route transition                   | (out of the hero)                       | Carbon     | Ritiro → Destinazione drawn on a hairline, diagonal cut into White                                    |
-| 01 | Chi è BSR (`bsr`)                  | What is BSR?                            | White      | Statement left; proof as technical data stacked right (count-up); route Carpi → Italia → Europa      |
-| 02 | Servizi (`servizi`)                | How does BSR transport?                 | Soft White | Two service stories beside one stage that crossfades to the service in play; Ritiro → Consegna route  |
-| 03 | Per chi lavoriamo (`settori`)      | Is BSR relevant to me?                  | White      | Large list (index, sector, line, arrow) beside a stage that reframes per row; accordion on phones    |
-| 04 | Come funziona (`come-funziona`)    | What happens after I contact you?       | Soft White | One photograph band, one green route through four steps, driven by the scroll (no pinning)            |
-| 05 | Flotta (`flotta`)                  | Which vehicle will handle it?           | White      | Photograph bleeding left, mono tabs with a sliding marker, verified figures only                      |
-| 06 | Copertura (`copertura`)            | Where can you take it?                  | Carbon     | Reach as three figures, routes with indicative times, the BSR map played once                         |
-| 07 | Sicurezza del carico (`sicurezza`) | Can I trust you with it?                | Soft White | Cargo photograph bleeding left; four principles on hairlines joined by a green route                  |
-| 08 | Clienti (`clienti`)                | Who already works with you?             | White      | Statement and consent policy; hairline logo grid with corner ticks (empty, labelled, until approved)  |
-| 09 | Recensioni (`recensioni`)          | What do customers say?                  | Soft White | Until consented reviews exist: "La prossima storia potrebbe essere la tua." + WhatsApp, request, call |
-| 10 | Chi siamo (`chi-siamo`)            | Who is behind the service?              | White      | Three-line statement, titolare, channels as a technical list, company data; photograph bleeding right |
-| 11 | Preventivo (`richiesta`)           | How do I request it?                    | Soft White | Three questions; quote starter: Partenza ● → Destinazione ◆, service pills, sector, red request       |
-| 12 | Domande frequenti (`faq`)          | What am I still unsure about?           | White      | Label + question left, numbered list centre, contact prompt right; no photograph                      |
-| —  | Close (`preventivo`)               | What should I do now?                   | Photograph | Departure at dawn under a controlled overlay; statement, red request, white WhatsApp, phone          |
-| —  | Footer                             | Where is everything?                    | Carbon     | Brand, contacts, site, company data; ≈ ⅓ viewport                                                     |
+### The acts
 
-### Grid, rhythm, height
+| Act | Section | Where the shipment is | Frame | Pinned (desktop / phone) |
+| --- | --- | --- | --- | --- |
+| 01 Origine | `bsr` | Carpi | The hero's night turns to dawn; the truck drives out of Carpi along Carpi → Italia → Europa, the route drawing behind it; the statement inked; four large data markers, staggered | no (scrolls) |
+| 02 Il carico | `settori` | the cargo | The cargo close-up fills the right half, the camera pulling back and reframing per sector; the four sectors in turn, the current one open | 3.4 / 3 viewports |
+| 03 Il servizio | `servizi` | the choice | The truck in three-quarter view; ESPRESSO then DEDICATO running behind it as giant words; the mode's photograph and route; scrolling is the switch | 3 / — (phones scroll) |
+| 04 Preparazione | `come-funziona` | the loading bay | A door opens on the bay, the camera walks in; the four steps over the picture with the route to the red destination; the frame turns green | 3.8 / 3.4 |
+| 05 Sicurezza | `sicurezza` | secured | BSR green as atmosphere: glow, faint grid, a route drawing down the principles; the cargo cut like a trailer's open side; morning light at the end | no |
+| 06 Partenza | `flotta` | the yard → the road | Van, rigid, articulated in turn; the camera pans to the road and the truck pulls away — far sheds, poplars, guardrail, lane markings sliding past, wheels turning, speed climbing; dusk | 4.6 / 4 |
+| 07 La rete | `copertura` | Italy → Europe | Night: the aerial rises and falls away into the map; the camera pulls back Carpi → north → Italy → Europe as the routes draw and the destinations arrive in red; day returns from below | 3.8 / 3.4 |
+| 08 Fiducia | `clienti`, `recensioni` | proof | The logo frame (consent only) and the invitation under a large quotation mark | no |
+| 09 Le persone | `chi-siamo` | the person | Calm: "Una persona. Un contatto. Ogni spedizione.", the contact and the channels | no |
+| 10 Richiesta | `richiesta` | the destination | The route arrives (the truck from above reaches the red pin); "Hai un carico da muovere?" and the quote starter | no |
+| 11 Domande | `faq` | — | Three zones: the question, the numbered answers, the contact | no |
+| 12 Arrivo | `preventivo` | arrived | The departure at dawn, pushing in; the whole route drawing to the red destination; "Il tuo carico. La nostra strada."; the request, WhatsApp, the phone | 2 / 1.8 |
+| Credits | footer | — | Compact (≈ ⅓ viewport) | — |
 
-- `ed-frame`: full width up to 110rem with an 18px → 64px page edge. `ed-grid`: 4 columns on phones,
-  8 from `md`, 16 from `lg`. Content sits far left, centre-left or right; pictures may run to the
-  viewport edge (`ed-bleed-l`, `ed-bleed-r`) — chapters clip horizontal overflow.
-- `Chapter` (components/editorial/chapter.tsx) gives every chapter the same rhythm
-  (`--spacing-chapter`) and opens it on the `ChapterMark`: a hairline whose green segment draws as
-  the chapter arrives, "04 / 12", the chapter's name, and technical context on the right.
-- Height at 1440 × 900 (measured): 0.46–1.06 viewport per chapter; footer 0.35. Tablets and phones
-  may run taller, never by stacking desktop compositions blindly: phones lead with the headline,
-  then the picture, then the detail.
+About 30 viewports at 1440 × 900 including the hero.
 
-### Type — three voices (styles/editorial.css)
+### Continuity — how one act becomes the next
 
-| Voice     | Face           | Utilities                                                      | Use                                    |
-| --------- | -------------- | -------------------------------------------------------------- | -------------------------------------- |
-| Display   | Saira, capitals | `ed-statement` (≈ 68px), `ed-h2` (≈ 53px), `ed-h3` (≈ 33px), `ed-h4`, `ed-stat` | statements, headings, figures |
-| Reading   | Archivo        | `ed-lede`, `ed-body` (15–17px), `ed-small` (14px)              | copy, forms                            |
-| Technical | IBM Plex Mono  | `ed-label` (12px), `ed-meta` (11px), `ed-action` (12px)        | labels, indices, metadata, actions     |
+- **Same object:** the hero's truck becomes the small truck on the dawn route (01), the truck
+  between the modes (03), the truck that departs (06); the cargo of 02 is the load of 04 and 05.
+- **Same line:** the route of 01 → the services' routes (03) → the steps' route (04) → the road's
+  lane markings (06) → the map's corridors (07) → the arrival (10) → the whole route (12).
+- **Same light:** night (hero) → dawn (01) → day (02–03) → dusk in the bay (04) → green (05) →
+  morning (06) → dusk and night (06 → 07) → day (08–11) → dawn (12).
+- **Camera and scale:** close cargo (02) → medium truck (03) → wide bay (04) → truck close (05) →
+  truck wide (06) → aerial and map (07).
+- **No hard edges:** each act ends in the next one's light (04 → green, 05 → morning, 06 → dusk,
+  07 → white from below, 09 → 10 soft gradients).
 
-The hero keeps its own `type-*` styles and fonts; the new faces are separate variables
-(`--font-tech`, `--font-label`) so nothing in the locked hero changes. Saira is not preloaded.
+### Colour in the film
 
-### Lines, marks, actions
+White and Soft White are the breathing space. Green is the story's signature: routes, progress,
+origin, the dawn, the security atmosphere, the map. Red is the destination and the action only
+(route ends, map destinations, the request). Carbon is the dramatic frame: the bay, the night map,
+the last frame, the credits. No other hues; gradients only as light (dawn, glow, dusk).
 
-- Hairlines are 1px: `border-hairline` / `border-hairline-strong` resolve per surface
-  (rgba(9,11,11,.10/.16) on light, rgba(255,255,255,.15/.24) on dark). `ed-ticks` draws corner
-  ticks (logo grid only). Form controls keep `border-strong` for 3:1 non-text contrast.
-- `Label`: mono capitals opened by a green dot (state, route) or a red diamond (destination).
-- `RouteLine`: a hairline with a green line drawing over it, green nodes, a red destination.
-- `ActionLink` / `ActionButton` (components/editorial/action.tsx): pills in mono capitals —
-  `primary` red (one per region), `outline`, `inverse` (soft white over photographs or Carbon),
-  `quiet` (text + arrow on a hairline). The hero keeps its own buttons.
-- No card grids, no shadows; radius 0–4px except pills.
+### Type in the film
+
+| Role | Utility | Size (phone → 1440) | Use |
+| --- | --- | --- | --- |
+| Statement | `cine-statement` | 42 → ≈ 93px (max 112) | the opening (01) and the close (12) |
+| Act title | `cine-title` | 40 → ≈ 86px (often set smaller per act) | one per act |
+| Step / scene heading | `cine-h3` | 30 → ≈ 56px | steps, modes, vehicles, stages |
+| Figures | `cine-stat` | 52 → ≈ 82px | data markers |
+| Giant word | `cine-giant` | 21vw | decorative, behind a scene (pinned only) |
+| Body | `ed-lede`, `ed-body` | 15–19px | explanations |
+| Technical | `ed-label`, `ed-meta` | 11–12px mono | act labels, indices, readouts, coordinates |
+
+Saira at wide settings (`font-stretch` 112–125%) for the display voice; Archivo for reading; IBM
+Plex Mono for the technical voice.
+
+**Ink titles** (`InkTitle`): each line is set in `ink-muted` (≥ 3:1 on its surface, display sizes
+only) and a darker copy is uncovered over it, left to right, as the act plays. Lines listed as
+`muted` stay muted (the two-tone title). Text is never faded from invisible.
 
 ### Motion
 
-Transform, clip-path and scale only for content; text never fades (axe checks contrast at load, and
-a mid-fade state fails it). Reveals (`rise`, `left`, `right`, `bottom`, `group` + `pending:`) play
-once per entry from the one IntersectionObserver (`RevealController`). Interaction: 180–300ms for
-controls, 500–900ms for picture crossfades and route lines. The process journey reads the scroll
-once per frame into `--p` (listener attached only near the chapter; nothing while the hero plays).
-The coverage map plays once; nothing loops. Reduced motion: no parallax, no counting, no route
-drawing, no crossfade — final states at once.
+- **One number per scene.** The `SceneDirector` writes `--p` (0 → 1); `seg` turns a share of it
+  into `--t` / `--e` (eased) for an element; transforms, clips and opacity of pictures follow.
+- **Steps** (`swap`): in a pinned act the items of each step share one place; the current one is
+  shown, the others clipped and moved — time-based transitions triggered by the step, so text is
+  never caught half-way.
+- **Physical motion only:** the truck rolls (wheels turn with the scroll), accelerates, leaves;
+  the camera pushes in, pulls back, pans; doors open; routes draw. No bounce, no floating loops; the
+  only repeating motion is a destination ring that pulses three times when it arrives.
+- **Visual silence:** after each pinned act a calmer frame (05 after 04, 08–11 after 07).
+- **Reduced motion, no JavaScript, short screens:** nothing pins or scrubs; each act is a plain
+  sequence at its final frame (all steps visible, titles inked, routes drawn).
+- **Performance:** compositor properties only; the director works only for scenes near the
+  viewport and never while the hero plays; no new library (Lenis and GSAP were already there; the
+  film uses neither).
 
-### Header and quick actions
+### Navigation in the film
 
-Transparent over the hero; elsewhere and once scrolled back up a White bar (64px, hairline, light
-blur) with mono navigation, a green underline on the chapter in view and a red pill. Without
-JavaScript it is solid. Phones: logo, menu, request (the full-screen menu is green with mono
-indices and pills). The quick actions are a White bar on phones (request + WhatsApp) and a small red
-pill on desktop, hidden over the request, the close and the footer.
+The header keeps its behaviour (transparent over the hero, hidden scrolling down, back on the way
+up). The **journey indicator** sits in the left margin on large screens (≥ 1280 × 640): one stop per
+act — done green, current green with its number, next a hairline — names on hover or focus, the
+shipment's state written vertically ("In viaggio"). Hidden over the hero.
 
-### Media
+### Rules that stay
 
-Every photograph is declared once in `src/config/site-media.ts` (11 in the live livery, all placed,
-each once — `site-media.test.ts`). The FAQ no longer uses a photograph, so the red-livery exception
-is gone. Media slots accept `kind: "video"` later without layout work. Slots waiting for real
-photography: each sector's own picture (the four share one stage, reframed per row), real fleet,
-loading, cargo, the Carpi base, a consented portrait (the current one is illustrative and captioned
-so).
+- No card grids, no shadows as decoration; hairlines, mono labels, pill actions.
+- Every fact on screen comes from the content files (docs/content-audit.md); act titles are
+  narrative, never claims.
+- Each photograph appears once; the truck cut-outs may recur (they are the protagonist).
+- Every act keeps its anchor and its single h2; steps are real lists or articles.
 
 ## Text over cinematic media
 

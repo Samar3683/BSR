@@ -8,12 +8,13 @@ import { FaqSection } from "@/features/faq/components/faq-section";
 import { VehiclesSection } from "@/features/fleet/components/vehicles-section";
 import { IdentitySection } from "@/features/home/components/identity-section";
 import { HeroInView } from "@/features/home/components/hero-in-view";
-import { RouteTransition } from "@/features/home/components/route-transition";
 import { ReviewsSection } from "@/features/reviews/components/reviews-section";
 import { CoverageSection } from "@/features/routes/components/coverage-section";
 import { SectorsSection } from "@/features/sectors/components/sectors-section";
 import { ServicesSection } from "@/features/services/components/services-section";
 import { QuickActions } from "@/features/site/components/quick-actions";
+import { JourneyIndicator } from "@/features/story/components/journey-indicator";
+import { SceneDirector } from "@/features/story/components/scene-director";
 import { NetworkSection } from "@/features/trust/components/network-section";
 import { ProtectionSection } from "@/features/trust/components/protection-section";
 import { jsonLdScript, organizationJsonLd } from "@/features/seo/structured-data";
@@ -37,14 +38,13 @@ export default function HomePage() {
     <>
       <main id={MAIN_CONTENT_ID} tabIndex={-1}>
         <HeroSection />
-        <RouteTransition />
         <IdentitySection />
-        <ServicesSection />
         <SectorsSection />
+        <ServicesSection />
         <RequestProcessSection />
+        <ProtectionSection />
         <VehiclesSection />
         <CoverageSection />
-        <ProtectionSection />
         <NetworkSection />
         <ReviewsSection />
         <AboutSection />
@@ -53,7 +53,9 @@ export default function HomePage() {
         <QuoteSection />
       </main>
       <QuickActions />
+      <JourneyIndicator />
       <HeroInView />
+      <SceneDirector />
       {/* The organisation as structured data (verified facts only). */}
       <script
         type="application/ld+json"

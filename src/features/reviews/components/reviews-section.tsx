@@ -3,6 +3,7 @@ import { MessageCircle, Phone } from "lucide-react";
 import { ActionLink } from "@/components/editorial/action";
 import { Chapter } from "@/components/editorial/chapter";
 import { Label } from "@/components/editorial/label";
+import { InkTitle } from "@/features/story/components/cine";
 import { siteConfig } from "@/config/site";
 
 import { approvedTestimonials, reviewsContent as reviews } from "../config/reviews-content";
@@ -10,7 +11,10 @@ import { approvedTestimonials, reviewsContent as reviews } from "../config/revie
 /** The editorial quotation mark: a large hairline glyph in BSR green. */
 function QuoteMark({ className }: { className?: string }) {
   return (
-    <span aria-hidden="true" className={`block font-tech text-[7rem] leading-[0.7] text-success-graphic ${className ?? ""}`}>
+    <span
+      aria-hidden="true"
+      className={`block font-tech text-[7rem] leading-[0.7] text-success-graphic ${className ?? ""}`}
+    >
       “
     </span>
   );
@@ -39,7 +43,10 @@ export function ReviewsSection() {
             {reviews.title}
           </h2>
         </div>
-        <figure data-reveal="rise" className="col-span-4 flex flex-col gap-6 md:col-span-8 lg:col-span-10 lg:col-start-7">
+        <figure
+          data-reveal="rise"
+          className="col-span-4 flex flex-col gap-6 md:col-span-8 lg:col-span-10 lg:col-start-7"
+        >
           <QuoteMark />
           <blockquote className="max-w-[30ch] ed-h3 normal-case">{lead.quote}</blockquote>
           <figcaption className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-hairline pt-4">
@@ -77,11 +84,26 @@ function Invitation() {
   return (
     <Chapter id={reviews.id} tone="soft-white" labelledBy={titleId} conversion {...reviews.chapter}>
       <div className="ed-grid gap-y-8 lg:items-end">
-        <div data-reveal="rise" className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-9">
+        <div
+          data-reveal="rise"
+          className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-9"
+        >
           <Label>{invitation.label}</Label>
-          <h2 id={titleId} className="ed-h2 text-balance">
-            {invitation.title[0]} <span className="text-success">{invitation.title[1]}</span>
-          </h2>
+          {/* One voice at a time: the quotation mark waits for the first consented review. */}
+          <span
+            aria-hidden="true"
+            className="-mb-6 font-tech text-[clamp(6rem,3rem+8vw,11rem)] leading-[0.7] font-bold text-success-graphic"
+          >
+            &ldquo;
+          </span>
+          <InkTitle
+            id={titleId}
+            lines={invitation.title}
+            muted={[1]}
+            className="cine-title text-[clamp(2.25rem,1rem+3.4vw,4.75rem)]"
+            from={0.12}
+            to={0.3}
+          />
         </div>
         <div className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-6 lg:col-start-11">
           <p className="flex flex-col gap-1 border-t border-hairline pt-4">

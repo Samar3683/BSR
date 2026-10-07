@@ -26,7 +26,7 @@ export const approvedTestimonials = (entries: readonly Testimonial[]) =>
 
 export const reviewsContent = {
   id: "recensioni",
-  chapter: { index: "09", name: "Recensioni", context: "Voce dei clienti" },
+  chapter: { index: "08", name: "Fiducia · Recensioni", context: "Voce dei clienti" },
   label: "Dicono di noi",
   title: "La parola a chi ci affida i trasporti.",
   testimonials: [] as Testimonial[],

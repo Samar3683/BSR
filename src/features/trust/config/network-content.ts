@@ -30,9 +30,11 @@ export const approvedClients = (entries: readonly ClientEntry[]) =>
 
 export const networkContent = {
   id: "clienti",
-  chapter: { index: "08", name: "Clienti", context: "Con il loro consenso" },
+  /** The act's mark (ACT 08 — Fiducia: clients and reviews). */
+  chapter: { index: "08", name: "Fiducia · Clienti", context: "Con il loro consenso" },
   label: "Clienti",
   title: "Aziende che scelgono BSR.",
+  titleLines: ["Aziende che", "scelgono BSR."] as const,
   intro:
     "Imprese che devono spedire con tempi chiari e un contatto diretto: dalla produzione ai punti vendita, fino all'e-commerce.",
   /** Stated where marks would be: names appear only with written consent. */

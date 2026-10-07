@@ -87,6 +87,8 @@ const BACKGROUNDS = [
 ];
 const TEXT_ROLES = ["text-primary", "text-secondary", "text-muted", "danger", "success"];
 const GRAPHIC_ROLES = ["border-strong", "focus", "danger-graphic", "success-graphic"];
+/** Display-size text only (≥ 24px, or 19px bold): the inked title's waiting line. */
+const LARGE_TEXT_ROLES = ["ink-muted"];
 
 /** [foreground, background, minimum] pairs that don't depend on the backdrop. */
 const FILL_PAIRS: Array<[string, string, number]> = [
@@ -115,6 +117,7 @@ describe.each(SURFACES)("surface %s", (tone) => {
   const cases = [
     ...BACKGROUNDS.flatMap((bg) => TEXT_ROLES.map((fg) => [fg, bg, 4.5] as const)),
     ...BACKGROUNDS.flatMap((bg) => GRAPHIC_ROLES.map((fg) => [fg, bg, 3] as const)),
+    ...BACKGROUNDS.flatMap((bg) => LARGE_TEXT_ROLES.map((fg) => [fg, bg, 3] as const)),
     ...FILL_PAIRS,
   ];
 

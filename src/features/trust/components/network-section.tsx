@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { Chapter } from "@/components/editorial/chapter";
 import { Label } from "@/components/editorial/label";
+import { InkTitle } from "@/features/story/components/cine";
 
 import { approvedClients, networkContent as network } from "../config/network-content";
 
@@ -24,11 +25,18 @@ export function NetworkSection() {
   return (
     <Chapter id={network.id} tone="white" labelledBy={titleId} {...network.chapter}>
       <div className="ed-grid gap-y-10 lg:items-end">
-        <div data-reveal="rise" className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-6">
+        <div
+          data-reveal="rise"
+          className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-6"
+        >
           <Label>{network.label}</Label>
-          <h2 id={titleId} className="ed-h2 text-balance">
-            {network.title}
-          </h2>
+          <InkTitle
+            id={titleId}
+            lines={network.titleLines}
+            className="cine-title text-[clamp(2.25rem,1rem+3.4vw,4.75rem)]"
+            from={0.12}
+            to={0.32}
+          />
           <p className="max-w-[34rem] ed-body text-text-secondary">{network.intro}</p>
           <p className="max-w-[34rem] border-l-2 border-success-graphic pl-4 ed-small text-text-primary">
             {network.policy}
@@ -61,7 +69,10 @@ export function NetworkSection() {
               })}
             </ul>
           ) : (
-            <div aria-hidden="true" className="grid grid-cols-2 border-t border-l border-hairline sm:grid-cols-4">
+            <div
+              aria-hidden="true"
+              className="grid grid-cols-2 border-t border-l border-hairline sm:grid-cols-4"
+            >
               {Array.from({ length: cells }, (_, i) => (
                 <div key={i} className={cell}>
                   <Index i={i} />

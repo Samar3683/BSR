@@ -28,6 +28,8 @@ export interface ServiceItem {
   /** What it is and where it runs, in one or two sentences. */
   body: string;
   facts: readonly ServiceFact[];
+  /** The route under the truck while the service is in play (decorative; said in the text). */
+  route: { stops: readonly string[]; note: string };
   action: { label: string; context: string; href: string };
   media?: SlotMedia;
 }
@@ -37,7 +39,6 @@ const request = (id: ServiceItem["id"]) => `${siteConfig.routes.quoteRequest}?se
 export const servicesContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "servizi",
-  chapter: { index: "02", name: "Servizi", context: "Espresso · Dedicato" },
   label: "I servizi",
   /** Two lines: the choice, then the constant. */
   title: ["Due modi di trasportare.", "Un solo referente."] as const,
@@ -47,6 +48,9 @@ export const servicesContent = {
   connector: ["Ritiro", "In viaggio", "Consegna"] as const,
   /** The stage caption (mono), e.g. "01 / 02 · Espresso". */
   stageLabel: "Servizio",
+  act: { act: "03", name: "Il servizio", meta: "Espresso · Dedicato" },
+  /** The mode switch under the stage (each moves the scroll to its service). */
+  switchLabel: "Scegli il servizio",
   items: [
     {
       id: "espresso",
@@ -60,7 +64,12 @@ export const servicesContent = {
         { label: "Ritiro", value: "Anche in giornata" },
         { label: "Area", value: "Tutta Italia" },
       ],
-      action: { label: "Richiedi un preventivo", context: "per il trasporto espresso", href: request("espresso") },
+      route: { stops: ["Ritiro", "In viaggio", "Consegna"], note: transit.italyExpress },
+      action: {
+        label: "Richiedi un preventivo",
+        context: "per il trasporto espresso",
+        href: request("espresso"),
+      },
       media: siteMedia.services.express,
     },
     {
@@ -75,7 +84,12 @@ export const servicesContent = {
         { label: "Trasbordi", value: "Nessuno" },
         { label: "Area", value: "Italia ed Europa" },
       ],
-      action: { label: "Richiedi un preventivo", context: "per il trasporto dedicato", href: request("dedicato") },
+      route: { stops: ["Partenza", "Destinazione"], note: "Nessun trasbordo" },
+      action: {
+        label: "Richiedi un preventivo",
+        context: "per il trasporto dedicato",
+        href: request("dedicato"),
+      },
       media: siteMedia.services.dedicated,
     },
   ] as ServiceItem[],

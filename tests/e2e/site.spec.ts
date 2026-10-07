@@ -4,9 +4,10 @@ import { expect, type Page, test } from "@playwright/test";
 /*
  * The site below the hero: page structure, the site header and mobile menu,
  * the request flow, and the rules below the hero — no WebGL or video outside
- * it, only the live livery's photographs (docs/hero-baseline.md). Reduced
- * motion keeps scrolling native (no smooth scroll) and shows the scroll
- * reveals in their final state.
+ * it, only the live livery's photographs and the truck's own cut-outs
+ * (docs/hero-baseline.md, docs/cinematic-media-manifest.md). Reduced motion
+ * keeps scrolling native (no smooth scroll), pins nothing, and shows every
+ * act's steps and reveals in their final state.
  */
 
 test.use({ contextOptions: { reducedMotion: "reduce" } });
@@ -66,11 +67,11 @@ test.describe("page structure", () => {
     expect(outside).toEqual([]);
   });
 
-  // The supplied image package: only the live livery and the coverage map reach
-  // public pages (never an alternative livery or an archived draft), every image
-  // has an alt (meaningful, or "" when decorative) and loads lazily.
-  // The one documented exception: the FAQ's background is the red-livery set.
-  test("images outside the hero: live livery only (FAQ: red), alt text, lazy loading", async ({
+  // The supplied image package: only the live livery, the coverage map and the
+  // cut-outs rendered from the hero's own truck model reach public pages (never
+  // an alternative livery or an archived draft); every image has an alt
+  // (meaningful, or "" when decorative) and loads lazily.
+  test("images outside the hero: live livery and truck cut-outs only, alt text, lazy loading", async ({
     page,
   }) => {
     await page.goto("/");
@@ -79,7 +80,6 @@ test.describe("page structure", () => {
         .filter((img) => !img.closest("[data-hero]"))
         .map((img) => ({
           src: decodeURIComponent(img.getAttribute("src") ?? ""),
-          inFaq: Boolean(img.closest("#faq")),
           alt: img.getAttribute("alt"),
           loading: img.getAttribute("loading"),
         })),
@@ -87,9 +87,7 @@ test.describe("page structure", () => {
     expect(images.length).toBeGreaterThanOrEqual(10);
     for (const image of images) {
       expect(image.src).toContain("/assets/images/content/");
-      expect(image.src).toMatch(
-        image.inFaq ? /\/scenes\/red\// : /\/(scenes\/final|maps)\//,
-      );
+      expect(image.src).toMatch(/\/(scenes\/final|maps|cutouts)\//);
       expect(image.alt, image.src).not.toBeNull();
       expect(image.loading, image.src).toBe("lazy");
     }
@@ -136,35 +134,31 @@ test.describe("page structure", () => {
     await expect(items.nth(1)).toHaveJSProperty("open", false);
   });
 
-  test("vehicle selector: tabs switch the type from the keyboard", async ({ page }) => {
+  test("the fleet: three types in turn, each with its own request", async ({ page }) => {
     await page.goto("/");
-    const tabs = page.getByRole("tablist", { name: "Tipo di mezzo" }).getByRole("tab");
-    await expect(tabs).toHaveCount(3);
-    await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
-    await tabs.first().focus();
-    await page.keyboard.press("ArrowRight");
-    await expect(tabs.nth(1)).toBeFocused();
-    await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
-    await expect(page.getByRole("tabpanel", { name: "Motrice" })).toBeVisible();
-    await page.keyboard.press("End");
-    await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "true");
-    await expect(
-      page.getByRole("heading", { level: 3, name: "Trattore + semirimorchio" }),
-    ).toBeVisible();
+    const types = page.locator("#flotta article");
+    await expect(types).toHaveCount(3);
+    for (const [i, name] of ["Furgone", "Motrice", "Trattore + semirimorchio"].entries()) {
+      await expect(types.nth(i).getByRole("heading", { level: 3, name })).toBeVisible();
+      await expect(
+        types.nth(i).getByRole("link", { name: /Richiedi un preventivo/ }),
+      ).toHaveAttribute("href", /\/preventivo\?mezzo=/);
+    }
     // Only the verified van figures exist; the other types show none.
-    await expect(page.getByRole("tabpanel", { name: "Articolato" })).not.toContainText("kg");
+    await expect(types.nth(0)).toContainText("kg");
+    await expect(types.nth(2)).not.toContainText("kg");
   });
 
   test("the journey marks the current step as the chapter is scrolled", async ({ page }) => {
     await page.goto("/");
     const steps = page.locator("#come-funziona ol > li");
     await expect(steps).toHaveCount(4);
-    // Progress runs from the journey block entering low in the viewport to its
-    // end passing above the middle: just entering → the first step; scrolled
-    // well past → the last.
+    // The act's progress is on the section; unpinned (reduced motion) the current
+    // step is the last whose top has passed the reading line: before the list
+    // reaches it → the first step; its last step at the top → the last.
+    await expect(page.locator("#come-funziona")).toHaveAttribute("style", /--p:/);
     const top = await page
-      .locator('#come-funziona [style*="--p"]')
-      .first()
+      .locator("#come-funziona ol")
       .evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
     await scrollTo(page, top - (await page.evaluate(() => window.innerHeight)) * 0.8);
     await expect(page.locator('#come-funziona li[aria-current="step"]')).toHaveCount(1);
@@ -230,15 +224,12 @@ test.describe("page structure", () => {
     expect(sources.filter((src, i) => sources.indexOf(src) !== i)).toEqual([]);
   });
 
-  test("a sector row opens the request with its sector noted", async ({ page, isMobile }) => {
+  test("a sector opens the request with its sector noted", async ({ page }) => {
     await page.goto("/");
-    const sectors = page.locator("#settori");
-    if (isMobile) {
-      await sectors.locator("summary", { hasText: "Retail" }).click();
-      await sectors.getByRole("link", { name: /Richiedi un preventivo per Retail/ }).click();
-    } else {
-      await sectors.getByRole("link", { name: /Retail/ }).click();
-    }
+    await page
+      .locator("#settori")
+      .getByRole("link", { name: /Richiedi un preventivo per Retail/ })
+      .click();
     await page.waitForURL(/\/preventivo\?settore=retail/);
     await expect(page.locator('[data-composer="url"]')).toBeVisible();
     await expect(page.getByLabel("Settore")).toHaveValue("retail");
@@ -365,16 +356,17 @@ test.describe("entry motion", () => {
   }) => {
     await page.goto("/");
     const hiddenInView = () =>
-      page.evaluate(() =>
-        [...document.querySelectorAll("[data-reveal]")].filter((el) => {
-          const box = el.getBoundingClientRect();
-          return (
-            box.height > 0 &&
-            box.top < innerHeight * 0.8 &&
-            box.bottom > innerHeight * 0.2 &&
-            !el.hasAttribute("data-inview")
-          );
-        }).length,
+      page.evaluate(
+        () =>
+          [...document.querySelectorAll("[data-reveal]")].filter((el) => {
+            const box = el.getBoundingClientRect();
+            return (
+              box.height > 0 &&
+              box.top < innerHeight * 0.8 &&
+              box.bottom > innerHeight * 0.2 &&
+              !el.hasAttribute("data-inview")
+            );
+          }).length,
       );
     const height = await page.evaluate(() => document.documentElement.scrollHeight);
     for (const share of [0.3, 0.9, 0.5, 0.2]) {

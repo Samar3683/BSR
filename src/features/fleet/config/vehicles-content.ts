@@ -44,9 +44,17 @@ const request = (id: VehicleId) => `${siteConfig.routes.quoteRequest}?mezzo=${id
 export const vehiclesContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "flotta",
-  chapter: { index: "05", name: "Flotta", context: "Furgone · Motrice · Articolato" },
   label: "La flotta",
   title: "Il mezzo giusto per ogni spedizione.",
+  /** The title as the act sets it, one entry per line (same words). */
+  titleLines: ["Il mezzo giusto", "per ogni spedizione."] as const,
+  act: { act: "06", name: "Partenza", meta: "Furgone · Motrice · Articolato" },
+  /** The departure that closes the act (decorative words; said elsewhere in text). */
+  departure: {
+    word: "In viaggio",
+    route: "Carpi (MO) → Italia · Europa",
+    speedUnit: "km/h",
+  },
   intro:
     "Mezzi di diverse dimensioni, dai furgoni ai bilici: in base a cosa devi spedire, ti assegniamo il mezzo più adatto.",
   selectorLabel: "Tipo di mezzo",
@@ -71,7 +79,11 @@ export const vehiclesContent = {
       kind: "van",
       media: siteMedia.fleet.van,
       useCase: "Per carichi contenuti e consegne rapide, anche in città.",
-      action: { label: "Richiedi un preventivo", context: "con il furgone", href: request("furgone") },
+      action: {
+        label: "Richiedi un preventivo",
+        context: "con il furgone",
+        href: request("furgone"),
+      },
       // No-break spaces (and a word joiner after the dash) keep each figure whole.
       specs: [
         { label: "Vano di carico (interno)", value: "circa 4\u00a0×\u00a02\u00a0×\u00a02\u00a0m" },
@@ -87,7 +99,11 @@ export const vehiclesContent = {
       kind: "rigid",
       media: siteMedia.fleet.rigid,
       useCase: "Per carichi che richiedono più spazio di un furgone.",
-      action: { label: "Richiedi un preventivo", context: "con la motrice", href: request("motrice") },
+      action: {
+        label: "Richiedi un preventivo",
+        context: "con la motrice",
+        href: request("motrice"),
+      },
     },
     {
       id: "articolato",
@@ -97,7 +113,11 @@ export const vehiclesContent = {
       kind: "tractor",
       media: siteMedia.fleet.articulated,
       useCase: "Il bilico, per carichi voluminosi e spedizioni industriali.",
-      action: { label: "Richiedi un preventivo", context: "con l'articolato", href: request("articolato") },
+      action: {
+        label: "Richiedi un preventivo",
+        context: "con l'articolato",
+        href: request("articolato"),
+      },
     },
   ] as VehicleCategory[],
 } as const;

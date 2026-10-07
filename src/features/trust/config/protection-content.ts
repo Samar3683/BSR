@@ -16,9 +16,13 @@ export interface Principle {
 
 export const protectionContent = {
   id: "sicurezza",
-  chapter: { index: "07", name: "Sicurezza del carico", context: "Ritiro · Viaggio · Consegna" },
   label: "Sicurezza del carico",
   title: "Il tuo carico, seguito con attenzione.",
+  /** The title as the act sets it, one entry per line (same words). */
+  titleLines: ["Il tuo carico,", "seguito con attenzione."] as const,
+  act: { act: "05", name: "Sicurezza", meta: "Ritiro · Viaggio · Consegna" },
+  /** Over the photograph (what it shows, in the principles' own words). */
+  caption: "Carico fissato con cinghie e protezioni",
   intro: "Come viene protetta la tua merce, dal ritiro alla consegna.",
   principles: [
     {
