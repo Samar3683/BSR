@@ -11,14 +11,16 @@ import type { SlotMedia } from "@/types/media";
 export const quoteContent = {
   /** In-page anchor; the navigation's "Preventivo" goes to the quote page itself. */
   id: "preventivo",
-  eyebrow: "Parliamone",
+  label: "Parliamone",
+  /** The route marked over the photograph (decorative). */
+  route: ["Carpi (MO)", "La tua destinazione"] as const,
   /** Two lines, deliberately — see services-content.ts. */
   // "da organizzare?" never breaks (no-break space): no stranded "da" on phones.
   title: ["Hai una spedizione", "da organizzare?"] as const,
   body: "Parlaci della tratta e del carico. Ti ricontattiamo per definire la soluzione.",
   primary: { label: "Richiedi un preventivo", href: siteConfig.routes.quoteRequest },
   whatsapp: {
-    label: "Scrivici su WhatsApp",
+    label: "WhatsApp",
     hint: "(apre WhatsApp)",
     href: siteConfig.contact.whatsappHref,
   },

@@ -37,12 +37,16 @@ const request = (id: ServiceItem["id"]) => `${siteConfig.routes.quoteRequest}?se
 export const servicesContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "servizi",
-  eyebrow: "Servizi",
-  title: "Espresso o dedicato?",
+  chapter: { index: "02", name: "Servizi", context: "Espresso · Dedicato" },
+  label: "I servizi",
+  /** Two lines: the choice, then the constant. */
+  title: ["Due modi di trasportare.", "Un solo referente."] as const,
   intro:
     "Scegli l'espresso se il carico è urgente, il dedicato se deve viaggiare da solo, senza trasbordi. In entrambi i casi ti confermiamo mezzo, tempi e prezzo prima della partenza.",
-  /** The route between the two services: pickup → movement → delivery (decorative). */
+  /** The route under the stage: pickup → movement → delivery (decorative). */
   connector: ["Ritiro", "In viaggio", "Consegna"] as const,
+  /** The stage caption (mono), e.g. "01 / 02 · Espresso". */
+  stageLabel: "Servizio",
   items: [
     {
       id: "espresso",

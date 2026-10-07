@@ -24,12 +24,9 @@ describe("site media", () => {
     }
   });
 
-  it("uses only the live livery — except the documented exceptions", () => {
-    // slot → the livery requested for it (see the comment on the slot).
-    const exceptions: Record<string, string> = { "faq.background": "red" };
+  it("uses only the live livery", () => {
     for (const [slot, media] of filled) {
-      const livery = exceptions[slot] ?? "final";
-      expect(srcOf(media), slot).toContain(`/scenes/${livery}/`);
+      expect(srcOf(media), slot).toContain("/scenes/final/");
     }
   });
 

@@ -1,28 +1,35 @@
-import { Container } from "@/components/layout/container";
-import { Eyebrow } from "@/components/layout/eyebrow";
-import { Section } from "@/components/layout/section";
+import { ActionLink } from "@/components/editorial/action";
+import { Chapter } from "@/components/editorial/chapter";
+import { Label } from "@/components/editorial/label";
 
 import { requestProcessContent as process } from "../config/request-process-content";
 import { ShipmentJourney } from "./shipment-journey";
 
 /**
- * How it works, on Soft White — the signature section: the shipment's journey
- * as a controlled system (ShipmentJourney). A statement heading, then a sticky
- * stage beside the four steps, driven by the reader's own scroll.
+ * Chapter 04 — "what happens after I contact you?", on Soft White. The
+ * heading on the left, the promise and the request on the right; then the
+ * journey: one photograph, one green route through the four steps, driven by
+ * the reader's own scroll (ShipmentJourney).
  */
 export function RequestProcessSection() {
+  const titleId = `${process.id}-title`;
   return (
-    <Section tone="soft-white" spacing="md" id={process.id} aria-labelledby={`${process.id}-title`}>
-      <Container className="flex flex-col gap-10 lg:gap-14">
-        <header data-reveal="editorial" className="flex max-w-[56rem] flex-col gap-5">
-          <Eyebrow>{process.eyebrow}</Eyebrow>
-          <h2 id={`${process.id}-title`} className="type-statement text-balance">
-            {process.title}
-          </h2>
-          <p className="max-w-text type-lede text-text-secondary">{process.intro}</p>
+    <Chapter id={process.id} tone="soft-white" labelledBy={titleId} {...process.chapter}>
+      <div className="flex flex-col gap-10 lg:gap-12">
+        <header className="ed-grid gap-y-5">
+          <div data-reveal="rise" className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-9">
+            <Label>{process.label}</Label>
+            <h2 id={titleId} className="ed-h2 text-balance">
+              {process.title}
+            </h2>
+          </div>
+          <div className="col-span-4 flex flex-col items-start gap-5 md:col-span-6 lg:col-span-5 lg:col-start-12 lg:self-end">
+            <p className="max-w-[38rem] ed-body text-text-secondary">{process.intro}</p>
+            <ActionLink href={process.action.href}>{process.action.label}</ActionLink>
+          </div>
         </header>
-        <ShipmentJourney steps={process.steps} media={process.media} />
-      </Container>
-    </Section>
+        <ShipmentJourney steps={process.steps} media={process.media} stageLabel={process.stageLabel} />
+      </div>
+    </Chapter>
   );
 }

@@ -100,6 +100,10 @@ voice. Reading styles stay at normal width.
 - **Line length:** body copy always sits in a measure (`max-w-text-narrow` 32rem, `max-w-text`
   40rem, `max-w-text-wide` 48rem).
 
+Below the hero the editorial system adds two faces and its own `ed-*` styles (Saira for
+display capitals, IBM Plex Mono for technical labels) — see "Page composition (below the hero)".
+The `type-*` styles above remain the hero's and the secondary pages'.
+
 ## Layout and spacing
 
 - **Containers** (`<Container size>` or `container-*`): `text-narrow`, `text`, `text-wide`,
@@ -211,134 +215,96 @@ Use `z-(--z-*)` only:
 | `toast`        | Transient notifications          |
 | `skip-link`    | Skip link, always on top         |
 
-## Page composition (below the hero)
+## Page composition (below the hero) — the editorial system
 
-One continuous transport story — cargo → request → planning → loading → transport → route →
-delivery → trust → contact — told in photographs, type, data, route lines, motion and a human
-contact. No WebGL, no pinning, no scroll hijacking, no snapping.
+Phase 2B rebuilt everything below the locked hero as one continuous shipment story, told in twelve
+marked chapters, a close and a compact footer. The principles borrowed from the reference research
+(United Carriers and the supplied logistics references) are editorial composition, asymmetry,
+controlled type, hairlines, technical labels, large photographic moments and restrained motion —
+never their colours, layouts, wording or illustrations. BSR stays BSR: White dominates, Green is
+route and state, Red is the request and the destination, Carbon is rare.
 
-- **Order.** Hero → route transition → who BSR is → Servizi → Per chi lavoriamo → Come funziona →
-  Flotta → Copertura → Sicurezza del carico → Clienti → Recensioni → Chi siamo → Preventivo (the
-  request form) → FAQ → final call to action → compact footer.
-- **One viewport per section.** 40–105 % of a 1440 × 900 viewport each (the two trust bands are
-  short interludes). Every section says its purpose at once: a green eyebrow, a headline of at
-  most two lines (`type-title` ≈ 52px, `type-title-lg` ≈ 60px for the company introduction and
-  the close; 32–40px on phones), one supporting sentence (`type-lede`, 17–19px), then the visual.
-- **A composition per chapter**, never the same card twice:
+### Story and surfaces
 
-  | Section              | Composition                                                           |
-  | -------------------- | --------------------------------------------------------------------- |
-  | Who BSR is           | Promise + operational dashboard (figures on thin dividers)            |
-  | Servizi              | Two split rows, photo ≈ 55% / promise ≈ 45%, mirrored, a route between |
-  | Per chi lavoriamo    | Interactive rows beside one preview stage (accordion on phones)      |
-  | Come funziona        | One wide photograph whose bottom edge is the 4-step progress route    |
-  | Flotta               | Dominant stage, small tabs, details beside                           |
-  | Copertura            | Facts beside the sequenced map, on Carbon                             |
-  | Sicurezza del carico | Green editorial: one large photograph, principles on white rules      |
-  | Clienti              | Trust statement, the sectors served as one route (logos when verified) |
-  | Recensioni           | Real testimonials only; until then, a short invitation to talk        |
-  | Chi siamo            | Documentary: large photograph, the person who answers, company facts  |
-  | Preventivo           | Functional form: flat white panel, neutral fields, green in use       |
-  | FAQ                  | Cinematic: motorway photograph fading into white, centred compact accordion, one open at a time (≈ 1 viewport) |
-  | Final call to action | Full-bleed photograph, light Carbon scrim                             |
-  | Footer               | Compact utility (≤ ⅓ viewport)                                        |
+| #  | Chapter (anchor)                   | Question it answers                     | Surface    | Composition                                                                                           |
+| -- | ---------------------------------- | --------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------- |
+| —  | Route transition                   | (out of the hero)                       | Carbon     | Ritiro → Destinazione drawn on a hairline, diagonal cut into White                                    |
+| 01 | Chi è BSR (`bsr`)                  | What is BSR?                            | White      | Statement left; proof as technical data stacked right (count-up); route Carpi → Italia → Europa      |
+| 02 | Servizi (`servizi`)                | How does BSR transport?                 | Soft White | Two service stories beside one stage that crossfades to the service in play; Ritiro → Consegna route  |
+| 03 | Per chi lavoriamo (`settori`)      | Is BSR relevant to me?                  | White      | Large list (index, sector, line, arrow) beside a stage that reframes per row; accordion on phones    |
+| 04 | Come funziona (`come-funziona`)    | What happens after I contact you?       | Soft White | One photograph band, one green route through four steps, driven by the scroll (no pinning)            |
+| 05 | Flotta (`flotta`)                  | Which vehicle will handle it?           | White      | Photograph bleeding left, mono tabs with a sliding marker, verified figures only                      |
+| 06 | Copertura (`copertura`)            | Where can you take it?                  | Carbon     | Reach as three figures, routes with indicative times, the BSR map played once                         |
+| 07 | Sicurezza del carico (`sicurezza`) | Can I trust you with it?                | Soft White | Cargo photograph bleeding left; four principles on hairlines joined by a green route                  |
+| 08 | Clienti (`clienti`)                | Who already works with you?             | White      | Statement and consent policy; hairline logo grid with corner ticks (empty, labelled, until approved)  |
+| 09 | Recensioni (`recensioni`)          | What do customers say?                  | Soft White | Until consented reviews exist: "La prossima storia potrebbe essere la tua." + WhatsApp, request, call |
+| 10 | Chi siamo (`chi-siamo`)            | Who is behind the service?              | White      | Three-line statement, titolare, channels as a technical list, company data; photograph bleeding right |
+| 11 | Preventivo (`richiesta`)           | How do I request it?                    | Soft White | Three questions; quote starter: Partenza ● → Destinazione ◆, service pills, sector, red request       |
+| 12 | Domande frequenti (`faq`)          | What am I still unsure about?           | White      | Label + question left, numbered list centre, contact prompt right; no photograph                      |
+| —  | Close (`preventivo`)               | What should I do now?                   | Photograph | Departure at dawn under a controlled overlay; statement, red request, white WhatsApp, phone          |
+| —  | Footer                             | Where is everything?                    | Carbon     | Brand, contacts, site, company data; ≈ ⅓ viewport                                                     |
 
-- **Surface rhythm.** Carbon hero and transition → Soft White (who BSR is) → White (services) →
-  Warm White (sectors) → Soft White (journey) → White (fleet) → Carbon (coverage) → Green
-  (security) → Warm White (clients) → White (reviews) → Soft White (who we are) → Warm White
-  (request) → Soft White (FAQ) → photograph (close) → Carbon footer. No gradients between them.
-- **Route motif — green is movement, red is arrival and action.** Each section owns its own
-  piece: the transition draws Ritiro → Destinazione out of the hero; the dashboard's indicators
-  switch on; the services are joined by Ritiro → In viaggio → Consegna; sector rows draw a green
-  line; the journey fills along its photograph and ends on red; the map draws out of Carpi to red
-  destinations; the clients' sectors run as one route; the close opens on a small route arriving
-  on red; the header's solid bar carries a green rule ending on red.
-- **CTA hierarchy.** Red only for the request: header, who BSR is, the reviews invitation, the
-  close, the quick actions, the form's "Continua", each vehicle's request. The services' actions
-  are outlined and turn red while the service is hovered or focused (red on touch screens).
-  WhatsApp is outlined, or white on the close. The quick actions hide over `data-conversion`
-  sections and the footer.
-- **Media.** Every photograph is declared once in `src/config/site-media.ts` (by section, with
-  alt text and a focal point per breakpoint) and appears once on the page — `site-media.test.ts`
-  fails on a repeat, on a non-live livery, or on an unplaced photograph of the live set. Pictures
-  are drawn by `MediaFrame` (frame → reveal → parallax → hover zoom → `MediaSlot`: responsive
-  srcset, lazy loading, blur placeholder). Replacing the generated package with real BSR
-  photography, or a picture with a video (`SlotMedia` `kind: "video"`: autoplay, muted, loop,
-  playsInline, poster, reduced-motion fallback — not used yet), is an edit to that file only.
-  Slots waiting for real photography: each sector's own preview (the four share one stage until
-  then); planned shots — real van, rigid and articulated truck, loading, cargo, driver, warehouse,
-  Italian motorway, the Carpi base, a consented portrait of the contact person (the current one
-  is illustrative and captioned so).
-- **Motion.** Transform, opacity and clip-path only; 150–250 ms for controls, 300–500 ms for
-  images and rows, 500–900 ms for entries; no bounce or overshoot. GSAP stays inside the hero.
-  - *Entries* (styles/motion.css, `RevealController`): one IntersectionObserver marks each
-    `[data-reveal]` element as it enters; the reveal then plays to completion (never scrubbed,
-    never left half-clipped) and replays after the element has left through the bottom — motion
-    reverses, never sticks. `rise` for text, `left`/`right`/`bottom` clip reveals for pictures
-    (one direction per section), `group` + the `pending:` variant for sequences (dashboard
-    indicators, principles, routes). Hidden states apply only once the controller runs and only
-    when motion is allowed; nothing is hidden without JavaScript or under reduced motion.
-  - *Sequences*: the coverage map plays once (≈ 2.5 s): Carpi (pulses once) → Italy → cities →
-    islands → European corridors → red destinations.
-  - *Scroll-linked*: the journey's progress (one position read per frame, React state only on a
-    step change); parallax ±3% on large screens only, never under reduced motion or on a
-    low-power device (`html[data-motion-lite]`), nor while the hero is on screen
-    (`html[data-hero-in-view]`: nothing below the hero may cost it frames); the hero transition's line.
-  - *Stateful*: counters count up once (`CountUp`), the sector preview, the vehicle crossfade
-    (500 ms, the new details fade in), the FAQ (exclusive `<details name>`, 360 ms, the plus
-    turns half a revolution into a red minus), the quick actions.
-- **Site header.** Fixed bar, `--header-height` (4.5rem). Transparent over the home hero (only
-  when scripts run); elsewhere and once scrolled, solid White with dark text and the green → red
-  route rule; hidden while scrolling down, back on scrolling up and on keyboard focus. The link
-  of the section in view carries a green underline (`aria-current="location"`); sections with no
-  link light nothing. Full navigation from `xl`, the menu below it.
-- **Phones.** Headline, one sentence, the picture, the action. Split rows stack; the sector rows
-  become an accordion (no hover-only content); the journey runs down the side; the dashboard is
-  2 × 2; no parallax.
+### Grid, rhythm, height
 
-## Cinematic pass (second iteration — supersedes the table and header notes above)
+- `ed-frame`: full width up to 110rem with an 18px → 64px page edge. `ed-grid`: 4 columns on phones,
+  8 from `md`, 16 from `lg`. Content sits far left, centre-left or right; pictures may run to the
+  viewport edge (`ed-bleed-l`, `ed-bleed-r`) — chapters clip horizontal overflow.
+- `Chapter` (components/editorial/chapter.tsx) gives every chapter the same rhythm
+  (`--spacing-chapter`) and opens it on the `ChapterMark`: a hairline whose green segment draws as
+  the chapter arrives, "04 / 12", the chapter's name, and technical context on the right.
+- Height at 1440 × 900 (measured): 0.46–1.06 viewport per chapter; footer 0.35. Tablets and phones
+  may run taller, never by stacking desktop compositions blindly: phones lead with the headline,
+  then the picture, then the detail.
 
-The same story, directed more tightly: THE ROAD → THE LOAD → THE PEOPLE → THE SYSTEM → THE FLEET →
-THE NETWORK → THE PROOF → THE PROMISE. Palette unchanged (Green is the brand, used much more; Red
-is action only). Large type only at statement moments.
+### Type — three voices (styles/editorial.css)
 
-- **Type.** `type-statement` (≈ 56–72px) for each chapter's statement, `type-figure` (64–96px)
-  for the trust numbers, `type-finale` (up to 96px) for the close. Everything else keeps the
-  existing scale.
-- **Compositions that changed.**
+| Voice     | Face           | Utilities                                                      | Use                                    |
+| --------- | -------------- | -------------------------------------------------------------- | -------------------------------------- |
+| Display   | Saira, capitals | `ed-statement` (≈ 68px), `ed-h2` (≈ 53px), `ed-h3` (≈ 33px), `ed-h4`, `ed-stat` | statements, headings, figures |
+| Reading   | Archivo        | `ed-lede`, `ed-body` (15–17px), `ed-small` (14px)              | copy, forms                            |
+| Technical | IBM Plex Mono  | `ed-label` (12px), `ed-meta` (11px), `ed-action` (12px)        | labels, indices, metadata, actions     |
 
-  | Section | Composition |
-  | --- | --- |
-  | Who BSR is | Soft White statement on a green marker; four figures that count up in sequence (200 ms apart) |
-  | Servizi | Two transport lanes (`LaneTrack`): express (diagonal cut, speed stripe) and dedicated (inset frame); enter from opposite sides; hover/focus widens a lane ≈ 10 % and the other recedes; phones swipe with pagination |
-  | Per chi lavoriamo | "The load": the stage bleeds to the right edge, opens like a bay door (`door` reveal), settles 1–2 % on scroll |
-  | Come funziona | Signature: sticky stage left (one photograph panned per step, horizontal wipe, green route with a moving marker), four steps right; stacked on phones |
-  | Flotta | Lateral mechanical track, swipe on phones |
-  | Copertura | Carbon; routes draw in sequence, then a slow pulse on Carpi and destinations (`breathe`) |
-  | Sicurezza | Green editorial: photograph bleeds left and rises across the carbon → green bridge, faint green grade |
-  | Preventivo | Progressive disclosure (`BookingFlow`): service → route → sector, green progress line, red "Continua" |
-  | Final CTA | Full-bleed, push-in, finale type, actions last |
+The hero keeps its own `type-*` styles and fonts; the new faces are separate variables
+(`--font-tech`, `--font-label`) so nothing in the locked hero changes. Saira is not preloaded.
 
-- **Section bridges.** `SectionBridge` is a short gradient between two surfaces (white → carbon,
-  carbon → green, green → warm white), so no section restarts the page.
-- **Motion vocabulary** (styles/motion.css). Reveals: `rise`, `editorial` (slow, text wiped in
-  line by line), `lane-left` / `lane-right`, `door`, `slide`, `left` / `right` / `bottom`,
-  `group` + `pending:`. Utilities: `scroll-settle`, `scroll-push` (view-timeline, gated by
-  `html:not([data-motion-lite]):not([data-hero-in-view])`), `breathe`, `stage-wipe`, `menu-in`.
-  Text never fades; hidden states apply only once the controller runs and only when motion is
-  allowed. No new library, no WebGL or canvas below the hero.
-- **Header.** Transparent over the hero, then a compact carbon bar with blur and the green → red
-  rule; the active link is green. The mobile menu is a full-screen green panel with a directional
-  reveal (`menu-in`); Escape closes it.
-- **Forms.** Closed steps are rendered closed from the server and are `invisible` + `inert`
-  (so hydration never shifts the page); a `<noscript>` rule shows every step without JavaScript.
-  Inputs are 48px tall, labels are always visible, errors are named and move focus to the first
-  missing field.
-- **No hydration shift.** The fleet selector's tabbed layout and the request form's closed steps
-  are server-rendered, so the page height is the same from first paint (13,925px at 1280 × 720).
-  Without JavaScript a `<noscript>` rule shows every vehicle's details and every form step.
-- **Text never fades.** Counting figures and headings change position or mask, never opacity:
-  a mid-fade state fails the contrast audit.
+### Lines, marks, actions
+
+- Hairlines are 1px: `border-hairline` / `border-hairline-strong` resolve per surface
+  (rgba(9,11,11,.10/.16) on light, rgba(255,255,255,.15/.24) on dark). `ed-ticks` draws corner
+  ticks (logo grid only). Form controls keep `border-strong` for 3:1 non-text contrast.
+- `Label`: mono capitals opened by a green dot (state, route) or a red diamond (destination).
+- `RouteLine`: a hairline with a green line drawing over it, green nodes, a red destination.
+- `ActionLink` / `ActionButton` (components/editorial/action.tsx): pills in mono capitals —
+  `primary` red (one per region), `outline`, `inverse` (soft white over photographs or Carbon),
+  `quiet` (text + arrow on a hairline). The hero keeps its own buttons.
+- No card grids, no shadows; radius 0–4px except pills.
+
+### Motion
+
+Transform, clip-path and scale only for content; text never fades (axe checks contrast at load, and
+a mid-fade state fails it). Reveals (`rise`, `left`, `right`, `bottom`, `group` + `pending:`) play
+once per entry from the one IntersectionObserver (`RevealController`). Interaction: 180–300ms for
+controls, 500–900ms for picture crossfades and route lines. The process journey reads the scroll
+once per frame into `--p` (listener attached only near the chapter; nothing while the hero plays).
+The coverage map plays once; nothing loops. Reduced motion: no parallax, no counting, no route
+drawing, no crossfade — final states at once.
+
+### Header and quick actions
+
+Transparent over the hero; elsewhere and once scrolled back up a White bar (64px, hairline, light
+blur) with mono navigation, a green underline on the chapter in view and a red pill. Without
+JavaScript it is solid. Phones: logo, menu, request (the full-screen menu is green with mono
+indices and pills). The quick actions are a White bar on phones (request + WhatsApp) and a small red
+pill on desktop, hidden over the request, the close and the footer.
+
+### Media
+
+Every photograph is declared once in `src/config/site-media.ts` (11 in the live livery, all placed,
+each once — `site-media.test.ts`). The FAQ no longer uses a photograph, so the red-livery exception
+is gone. Media slots accept `kind: "video"` later without layout work. Slots waiting for real
+photography: each sector's own picture (the four share one stage, reframed per row), real fleet,
+loading, cargo, the Carpi base, a consented portrait (the current one is illustrative and captioned
+so).
 
 ## Text over cinematic media
 

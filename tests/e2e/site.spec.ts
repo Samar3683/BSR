@@ -159,16 +159,17 @@ test.describe("page structure", () => {
     await page.goto("/");
     const steps = page.locator("#come-funziona ol > li");
     await expect(steps).toHaveCount(4);
-    // The current step is the one whose centre is nearest the middle of the
-    // viewport: put the first step there, then the last.
-    const centre = (index: number) =>
-      page.locator("#come-funziona ol > li").nth(index).evaluate(
-        (li) => li.getBoundingClientRect().top + window.scrollY + li.getBoundingClientRect().height / 2 - window.innerHeight / 2,
-      );
-    await scrollTo(page, await centre(0));
+    // Progress runs from the journey block entering low in the viewport to its
+    // end passing above the middle: just entering → the first step; scrolled
+    // well past → the last.
+    const top = await page
+      .locator('#come-funziona [style*="--p"]')
+      .first()
+      .evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    await scrollTo(page, top - (await page.evaluate(() => window.innerHeight)) * 0.8);
     await expect(page.locator('#come-funziona li[aria-current="step"]')).toHaveCount(1);
     await expect(steps.nth(0)).toHaveAttribute("aria-current", "step");
-    await scrollTo(page, await centre(3));
+    await steps.nth(3).evaluate((li) => li.scrollIntoView({ block: "start" }));
     await expect(steps.nth(3)).toHaveAttribute("aria-current", "step");
     await expect(steps.nth(0)).not.toHaveAttribute("aria-current", "step");
   });
@@ -188,12 +189,17 @@ test.describe("page structure", () => {
   test("the request form carries the route into the quote page's channels", async ({ page }) => {
     await page.goto("/");
     const form = page.locator("#richiesta form");
-    // Progressive disclosure: the route appears once a service is chosen.
-    await expect(form.getByLabel(/Partenza/)).toBeHidden();
-    await form.getByLabel("Trasporto dedicato", { exact: false }).check({ force: true });
+    const submit = form.getByRole("button", { name: "Richiedi un preventivo" });
+    // Nothing filled in: each missing field is named, focus goes to the first, the page stays.
+    await submit.click();
+    await expect(form.getByRole("alert")).toHaveCount(3);
+    await expect(form.getByLabel(/Partenza/)).toBeFocused();
+    await expect(form.getByLabel(/Partenza/)).toHaveAttribute("aria-invalid", "true");
+    expect(new URL(page.url()).pathname).toBe("/");
     await form.getByLabel(/Partenza/).fill("Carpi");
     await form.getByLabel(/Destinazione/).fill("Lione");
-    await form.getByRole("button", { name: "Continua" }).click();
+    await form.getByLabel("Trasporto dedicato", { exact: false }).check({ force: true });
+    await submit.click();
     await page.waitForURL((url) => {
       const q = url.searchParams;
       return (

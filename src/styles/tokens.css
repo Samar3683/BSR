@@ -41,6 +41,8 @@
   --color-soft-white: #f7f7f2;
   --color-warm-white: #ecede7;
   --color-white: #ffffff;
+  /* Stone: a quiet warm neutral for technical marks on light surfaces. */
+  --color-stone: #d8d2c4;
   /* Neutral line: rules and dividers on light surfaces. */
   --color-line: #d9ddda;
 
@@ -81,6 +83,10 @@
     sans-serif;
   --font-display: var(--font-sans);
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", "Segoe UI Mono", Menlo, monospace;
+  /* The editorial system below the hero (styles/editorial.css): a technical
+     display face and a mono label face. Never used by the locked hero. */
+  --font-tech: var(--font-saira), var(--font-sans);
+  --font-label: var(--font-plex-mono), var(--font-mono);
 
   /* Type sizes live in typography.css as composite `type-*` utilities. */
   --text-*: initial;
@@ -96,6 +102,11 @@
   --spacing-section-sm: clamp(2.5rem, 1.75rem + 2.5vw, 4rem);
   --spacing-section: clamp(3.5rem, 2.25rem + 4vw, 6rem);
   --spacing-section-lg: clamp(4.5rem, 2.75rem + 5vw, 8rem);
+  /* Editorial system: the page edge (18px phone → 64px desktop), the chapter
+     rhythm (a chapter is sized to fit about one viewport) and the grid gap. */
+  --spacing-edge: clamp(1.125rem, 0.4rem + 3vw, 4rem);
+  --spacing-chapter: clamp(3rem, 1.5rem + 3.6vw, 5.5rem);
+  --spacing-col-gap: clamp(1rem, 0.5rem + 1vw, 2rem);
 
   /* ---------------------------------------------------------------------- */
   /* Content widths (max-w-*). Text measures keep body copy at ~55–85ch.     */

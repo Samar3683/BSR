@@ -55,7 +55,7 @@ test.describe("prefill: every action that passes data", () => {
     await form.getByLabel(/Partenza/).fill("Carpi (MO)");
     await form.getByLabel(/Destinazione/).fill("Lione, Francia");
     await form.getByLabel(/Settore/).selectOption("e-commerce");
-    await form.getByRole("button", { name: "Continua" }).click();
+    await form.getByRole("button", { name: "Richiedi un preventivo" }).click();
     await page.waitForURL("**/preventivo?**");
     expect(await requestFrom(page, page.url())).toEqual({
       origin: "Carpi (MO)",
@@ -101,7 +101,8 @@ test.describe("contacts", () => {
       }
       expect([...whatsapp]).toEqual(["https://wa.me/393279427723"]);
       const text = await page.locator("body").innerText();
-      for (const phone of text.match(/\+39[\d\s]{9,}/g) ?? []) {
+      // A number within one line (labels and indices may follow on the next).
+      for (const phone of text.match(/\+39[\d ]{9,}/g) ?? []) {
         expect(phone.trim()).toBe("+39 327 942 7723");
       }
     });

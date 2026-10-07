@@ -35,8 +35,9 @@ const sector = (id: SectorId, code: string, body: string): Sector => ({
 
 export const sectorsContent = {
   id: "settori",
-  eyebrow: "Per chi lavoriamo",
-  title: "Chi si affida al trasporto BSR?",
+  chapter: { index: "03", name: "Per chi lavoriamo", context: "Quattro settori" },
+  label: "Per chi lavoriamo",
+  title: "Chi si affida a BSR?",
   intro:
     "Ogni settore ha tempi ed esigenze diversi. Scegli il tuo: la richiesta di preventivo si apre con il settore già indicato.",
   /** Each row's action (the sector's name is added for assistive technology). */

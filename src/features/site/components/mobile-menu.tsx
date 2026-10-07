@@ -4,8 +4,8 @@ import { ArrowRight, Menu, MessageCircle, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { BrandMark } from "@/components/brand/brand-mark";
-import { ButtonLink, IconButton } from "@/components/ui/button";
-import { TextLink } from "@/components/ui/text-link";
+import { ActionLink } from "@/components/editorial/action";
+import { IconButton } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 
 import { siteNavigation as nav } from "../config/site-navigation";
@@ -69,26 +69,25 @@ export function MobileMenu({
         data-surface="green"
         className="menu-in m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto overscroll-contain bg-green-800 text-text-primary backdrop:bg-transparent open:flex open:flex-col"
       >
-        <div className="container-content flex h-(--header-height) shrink-0 items-center justify-between">
+        <div className="ed-frame flex h-(--header-height) shrink-0 items-center justify-between">
           <BrandMark />
           <IconButton icon={X} label={nav.menu.close} variant="ghost" onClick={close} autoFocus />
         </div>
-        <div className="container-content flex flex-1 flex-col justify-between gap-12 pt-10 pb-12">
+        <div className="ed-frame flex flex-1 flex-col justify-between gap-12 pt-8 pb-12">
           <nav aria-label={nav.label}>
-            <ul className="flex flex-col border-t border-border-default">
-              {nav.links.map((link) => (
-                <li key={link.href} className="border-b border-border-default">
+            <ul className="flex flex-col border-t border-hairline">
+              {nav.links.map((link, i) => (
+                <li key={link.href} className="border-b border-hairline">
                   <a
                     href={link.href}
                     onClick={close}
                     aria-current={link.href === current ? "location" : undefined}
-                    className="group/link flex min-h-16 items-center justify-between gap-4 type-heading-lg transition-ui hover:text-success-graphic aria-[current=location]:text-success-graphic"
+                    className="group/link flex min-h-15 items-center justify-between gap-4 ed-h3 transition-colors duration-200 hover:text-success aria-[current=location]:text-success"
                   >
-                    <span className="flex items-center gap-4">
-                      <span
-                        aria-hidden="true"
-                        className="h-0.5 w-0 bg-success-graphic transition-[width] duration-300 group-aria-[current=location]/link:w-8"
-                      />
+                    <span className="flex items-baseline gap-4">
+                      <span aria-hidden="true" className="w-6 ed-meta text-text-secondary">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
                       {link.label}
                     </span>
                     <ArrowRight
@@ -103,26 +102,27 @@ export function MobileMenu({
           </nav>
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-3 sm:flex-row">
-              <ButtonLink href={nav.cta.href} size="lg" trailingIcon={ArrowRight} onClick={close}>
+              <ActionLink href={nav.cta.href} size="lg" onClick={close}>
                 {nav.cta.label}
-              </ButtonLink>
-              <ButtonLink
+              </ActionLink>
+              <ActionLink
                 href={siteConfig.contact.whatsappHref}
-                variant="secondary"
+                variant="inverse"
                 size="lg"
                 leadingIcon={MessageCircle}
+                icon={null}
               >
                 {nav.menu.whatsapp}
                 <span className="sr-only"> {nav.menu.whatsappHint}</span>
-              </ButtonLink>
+              </ActionLink>
             </div>
-            <div className="flex flex-col gap-1">
-              <TextLink variant="utility" href={siteConfig.contact.phoneHref}>
+            <div className="flex flex-col">
+              <a href={siteConfig.contact.phoneHref} className="inline-flex min-h-10 items-center ed-small tabular-nums">
                 {siteConfig.contact.phoneDisplay}
-              </TextLink>
-              <TextLink variant="utility" href={`mailto:${siteConfig.contact.email}`}>
+              </a>
+              <a href={`mailto:${siteConfig.contact.email}`} className="inline-flex min-h-10 items-center ed-small">
                 {siteConfig.contact.email}
-              </TextLink>
+              </a>
             </div>
           </div>
         </div>

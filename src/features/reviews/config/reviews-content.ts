@@ -26,16 +26,19 @@ export const approvedTestimonials = (entries: readonly Testimonial[]) =>
 
 export const reviewsContent = {
   id: "recensioni",
-  eyebrow: "Dicono di noi",
+  chapter: { index: "09", name: "Recensioni", context: "Voce dei clienti" },
+  label: "Dicono di noi",
   title: "La parola a chi ci affida i trasporti.",
   testimonials: [] as Testimonial[],
   /** Shown while there are no approved testimonials. */
   invitation: {
-    eyebrow: "Contatto diretto",
-    title: "Vuoi raccontarci cosa devi trasportare?",
-    body: "Un solo numero, nessun call center: chiamaci, scrivici su WhatsApp o richiedi un preventivo.",
+    label: "Dicono di noi",
+    /** Two lines: the empty space turned into an invitation. */
+    title: ["La prossima storia", "potrebbe essere la tua."] as const,
+    question: "Hai una spedizione da organizzare?",
+    body: "Parliamone direttamente: un solo numero, nessun call center.",
+    write: { label: "Scrivi a BSR", hint: "(apre WhatsApp)" },
     quote: { label: "Richiedi un preventivo", href: siteConfig.routes.quoteRequest },
-    whatsapp: { label: "Scrivici su WhatsApp", hint: "(apre WhatsApp)" },
     call: "Chiama",
   },
 } as const;

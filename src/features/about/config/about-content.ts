@@ -19,8 +19,10 @@ export const aboutContent = {
   id: "chi-siamo",
   /** The contact block's anchor (navigation: "Contatti"). */
   contactId: "contatti",
-  eyebrow: company.brand,
-  title: "Chi siamo e come contattarci.",
+  chapter: { index: "10", name: "Chi siamo", context: "Carpi · Modena" },
+  label: "Chi siamo",
+  /** Three short lines: the promise of the official site, made personal. */
+  title: ["Una persona.", "Un contatto.", "Ogni spedizione."] as const,
   intro: `${company.brand} è un'${company.activity} con sede a Carpi (MO), attiva in tutta Italia e sulle principali tratte europee. Per un preventivo, un aggiornamento o una domanda, contattaci direttamente.`,
   caption: "Immagine illustrativa",
   contact: {

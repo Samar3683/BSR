@@ -12,7 +12,7 @@ import { homeContent } from "../config/home-content";
  * - then a short Carbon band (≈ 11vh): the route line draws from the green
  *   origin (Ritiro) across to the red destination (Destinazione) — the hero's
  *   last line, "Dal ritiro alla destinazione.", made graphic;
- * - then a controlled diagonal cut into Soft White (the page's main surface),
+ * - then a controlled diagonal cut into White (the first chapter's surface),
  *   like the livery's cuts.
  *
  * Decorative (the hero states the same words); no layout depends on motion.
@@ -26,15 +26,15 @@ export function RouteTransition() {
       className="pointer-events-none relative z-(--z-content) bg-background-primary"
     >
       <div className="absolute inset-x-0 bottom-full h-24 bg-linear-to-b from-transparent via-background-primary/60 to-background-primary sm:h-48" />
-      <div className="container-content flex h-[clamp(4.5rem,11vh,7rem)] items-center gap-4 sm:gap-6">
-        <span className="flex shrink-0 items-center gap-3 type-label-sm text-text-secondary">
+      <div className="ed-frame flex h-[clamp(4.5rem,11vh,7rem)] items-center gap-4 sm:gap-6">
+        <span className="flex shrink-0 items-center gap-3 ed-label text-text-secondary">
           <RouteMarker />
           {origin}
         </span>
-        <span className="relative h-0.5 flex-1 bg-border-default">
+        <span className="relative h-px flex-1 bg-hairline">
           <span className="absolute inset-0 rule-draw bg-success-graphic" />
         </span>
-        <span className="flex shrink-0 items-center gap-3 type-label-sm text-text-primary">
+        <span className="flex shrink-0 items-center gap-3 ed-label text-text-primary">
           {destination}
           <RouteMarker
             variant="destination"
@@ -44,7 +44,7 @@ export function RouteTransition() {
       </div>
       {/* The cut: a solid Soft White band with the Carbon triangle clipped over it (reaching
           a pixel into the band above), so no antialiased edge meets the section below. */}
-      <div className="relative h-[clamp(1.5rem,4vw,3.5rem)] bg-soft-white">
+      <div className="relative h-[clamp(1.5rem,4vw,3.5rem)] bg-white">
         <div className="absolute inset-x-0 -top-px bottom-0 bg-background-primary [clip-path:polygon(0_0,100%_0,0_100%)]" />
       </div>
     </div>

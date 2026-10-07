@@ -21,7 +21,7 @@ export function scene(id: SceneId, alt: string, position?: FocalPoint): SlotMedi
 
 /**
  * A scene in a named livery — for a deliberate, documented exception to the
- * site livery (see `siteMedia.faq`, which asks for the red set). Falls back to
+ * site livery (none is in use at present). Falls back to
  * "final" for scenes the set does not include.
  */
 export function sceneIn(

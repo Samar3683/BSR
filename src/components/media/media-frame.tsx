@@ -5,7 +5,7 @@ import type { SlotMedia } from "@/types/media";
 
 import { MediaSlot } from "./media-slot";
 
-export type RevealDirection = "left" | "right" | "bottom" | "door" | "slide";
+export type RevealDirection = "left" | "right" | "bottom";
 
 interface MediaFrameProps {
   /** Stable slot name, e.g. "service-espresso" (see MediaSlot). */

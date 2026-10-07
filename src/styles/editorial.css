@@ -1,0 +1,203 @@
+/*
+ * The editorial system — everything below the locked hero.
+ *
+ * Three voices:
+ * - `ed-statement` / `ed-h2` / `ed-h3` / `ed-h4` / `ed-stat`: Saira, set in
+ *   capitals, compact leading — technical, modern, controlled (44–60px section
+ *   headings at 1440, 56–68px only for statements; 28–40px on phones);
+ * - `ed-lede` / `ed-body` / `ed-small`: Archivo at normal width, 15–18px;
+ * - `ed-label` / `ed-meta` / `ed-action`: IBM Plex Mono capitals, 10–12px,
+ *   tracked — indices, metadata, technical labels, the action buttons.
+ *
+ * Layout: `ed-frame` (full width up to 110rem, 18px → 64px page edge) and
+ * `ed-grid` (4 columns on phones, 8 from md, 16 from lg). Content may sit far
+ * left, centre-left or right, and pictures may run to the viewport edge
+ * (`ed-bleed-l` / `ed-bleed-r`).
+ *
+ * Lines: 1px hairlines (`border-hairline`, `border-hairline-strong`, from the
+ * surface's roles in themes.css), optional corner ticks (`ed-ticks`). Green for
+ * routes and state, red only for actions and destinations.
+ *
+ * None of these utilities is used by the hero, whose type keeps its own
+ * `type-*` styles (typography.css).
+ */
+
+/* -------------------------------------------------------------------------- */
+/* Display — Saira, capitals                                                   */
+/* -------------------------------------------------------------------------- */
+
+/* A statement moment: one per chapter at most (the company, the close). */
+@utility ed-statement {
+  font-family: var(--font-tech);
+  font-size: clamp(2.125rem, 1rem + 3.6vw, 4.25rem);
+  font-weight: 600;
+  font-stretch: 106%;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+/* A chapter's heading: 28px on phones, ≈ 53px at 1440. */
+@utility ed-h2 {
+  font-family: var(--font-tech);
+  font-size: clamp(1.75rem, 0.9rem + 2.7vw, 3.375rem);
+  font-weight: 600;
+  font-stretch: 106%;
+  line-height: 1;
+  letter-spacing: -0.008em;
+  text-transform: uppercase;
+}
+
+/* A block's heading (a service, a vehicle, a step): 22px → ≈ 33px. */
+@utility ed-h3 {
+  font-family: var(--font-tech);
+  font-size: clamp(1.375rem, 0.95rem + 1.25vw, 2.25rem);
+  font-weight: 600;
+  font-stretch: 104%;
+  line-height: 1.04;
+  letter-spacing: -0.004em;
+  text-transform: uppercase;
+}
+
+/* A row's title (a principle, a sector, a step in a list): 18–22px. */
+@utility ed-h4 {
+  font-family: var(--font-tech);
+  font-size: clamp(1.125rem, 1rem + 0.35vw, 1.375rem);
+  font-weight: 600;
+  font-stretch: 104%;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+/* Technical figures: 40px → ≈ 60px, tabular. */
+@utility ed-stat {
+  font-family: var(--font-tech);
+  font-size: clamp(2.5rem, 1.4rem + 2.6vw, 4rem);
+  font-weight: 500;
+  font-stretch: 104%;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Reading — Archivo                                                           */
+/* -------------------------------------------------------------------------- */
+
+@utility ed-lede {
+  font-family: var(--font-sans);
+  font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+@utility ed-body {
+  font-family: var(--font-sans);
+  font-size: clamp(0.9375rem, 0.9rem + 0.15vw, 1.0625rem);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+@utility ed-small {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Technical — IBM Plex Mono, capitals                                         */
+/* -------------------------------------------------------------------------- */
+
+@utility ed-label {
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@utility ed-meta {
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility ed-action {
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Layout                                                                      */
+/* -------------------------------------------------------------------------- */
+
+@utility ed-frame {
+  width: 100%;
+  max-width: 110rem;
+  margin-inline: auto;
+  padding-inline: var(--spacing-edge);
+}
+
+@utility ed-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: var(--spacing-col-gap);
+
+  @media (width >= 48rem) {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+  @media (width >= 64rem) {
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+  }
+}
+
+/* Vertical rhythm of a chapter: sized so a chapter fits about one viewport. */
+@utility ed-chapter {
+  padding-block: var(--spacing-chapter);
+}
+
+/* A picture running from its grid column to the viewport edge. The distance is
+   the page edge plus whatever the 110rem frame leaves on a very wide screen. */
+@utility ed-bleed-r {
+  margin-right: calc(-1 * (var(--spacing-edge) + (100vw - min(100vw, 110rem)) / 2));
+}
+
+@utility ed-bleed-l {
+  margin-left: calc(-1 * (var(--spacing-edge) + (100vw - min(100vw, 110rem)) / 2));
+}
+
+/* -------------------------------------------------------------------------- */
+/* Technical marks                                                             */
+/* -------------------------------------------------------------------------- */
+
+/* Corner ticks: four 9px angles at the corners of a box, in a quiet tone of
+   the text colour. Background images only (any background colour still applies) — no extra
+   elements, no layout. */
+@utility ed-ticks {
+  --tick: color-mix(in srgb, var(--color-text-primary) 38%, transparent);
+  background-image:
+    linear-gradient(var(--tick) 0 0),
+    linear-gradient(var(--tick) 0 0),
+    linear-gradient(var(--tick) 0 0),
+    linear-gradient(var(--tick) 0 0),
+    linear-gradient(var(--tick) 0 0),
+    linear-gradient(var(--tick) 0 0),
+    linear-gradient(var(--tick) 0 0),
+    linear-gradient(var(--tick) 0 0);
+  background-position:
+    top left, top left, top right, top right, bottom left, bottom left, bottom right, bottom right;
+  background-size: 9px 1px, 1px 9px, 9px 1px, 1px 9px, 9px 1px, 1px 9px, 9px 1px, 1px 9px;
+  background-repeat: no-repeat;
+}

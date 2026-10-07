@@ -138,10 +138,27 @@ Italian motorway, Carpi base, a consented portrait of the titolare (`src/config/
 **OPTIONAL** — video loops for services, process, fleet and the final call to action (slots
 accept `kind: "video"`).
 
-## FAQ background — livery exception
+## FAQ — no background photograph (Phase 2B)
 
-The FAQ's background (`siteMedia.faq.background`) is the motorway photograph in the **red** livery,
-at the client's request; every other photograph is the white "final" livery. Only the livery the real
-fleet carries may go live: confirm with BSR, or switch the slot back to `scene(...)`
-(`site-media.test.ts` names this one exception). The FAQ no longer asks "Quali tipologie di merci
-trasportate?" — BSR has not confirmed what goods it carries; add it when BSR supplies the answer.
+The FAQ is now a compact list with no photograph, so the red-livery exception is retired: every
+photograph on the site is the white "final" livery (`site-media.test.ts` allows no exception). The
+FAQ still does not ask "Quali tipologie di merci trasportate?" — BSR has not confirmed what goods it
+carries; add it when BSR supplies the answer.
+
+## Phase 2B headlines — rewordings, no new claims
+
+The redesign added headline and interface copy; each line restates a VERIFIED fact above or states
+the site's own policy, and none adds a promise:
+
+- "Trasporti espressi e dedicati. In Italia e sulle principali tratte europee." · "Due modi di
+  trasportare. Un solo referente." · "Una persona. Un contatto. Ogni spedizione." — services,
+  coverage and "un unico referente" (official site).
+- Figures "24–48 h Italia", "2–5 giorni Europa" (indicative), "7 Paesi europei" (the seven confirmed
+  routes), "1 Referente" — no "7+": exactly seven routes are confirmed.
+- "Disponibilità e configurazione in base alla spedizione." — for vehicles without published
+  figures (no tonnage or dimensions invented).
+- "Pubblichiamo nomi e loghi dei clienti solo con il loro consenso scritto." — the publication rule
+  of `network-content.ts`; the logo grid stays empty ("Spazio logo") until then.
+- "La prossima storia potrebbe essere la tua." — an invitation in place of reviews; no quote, name,
+  rating or count.
+- The final call to action keeps "Ti ricontattiamo per definire la soluzione." (no response time).

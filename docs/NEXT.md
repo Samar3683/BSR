@@ -31,11 +31,18 @@ Where the project stands and what comes next. Update this file at the end of eve
   and the untouched baseline (`archive/hero-baseline-2026-09-28`) fails the same way under the
   same load. Re-run them on an idle machine or CI before treating a failure as a regression.
 
-**Cinematic redesign pass (below the hero): done, October 2026.** See "Cinematic pass" in
-`docs/design-system.md`. Sections recomposed (lanes, the load, sticky process, fleet track,
-network pulse, green editorial, progressive request, finale), carbon header and green mobile menu,
-section bridges. The hero is untouched (only `hero-content.ts` differs from the baseline). Open
-item: visual review on real devices.
+**Phase 2B — full redesign below the hero: done, October 2026.** Everything below the locked
+hero was rebuilt as one editorial shipment story in twelve marked chapters (see "Page composition
+(below the hero)" in `docs/design-system.md`): new type voices (Saira display capitals, IBM Plex
+Mono labels; Archivo for reading), a 16-column full-width grid, hairlines instead of cards, pill
+actions, White-dominant surfaces (Carbon only for coverage, the close and the footer), a compact
+quote starter, a compact FAQ, a client logo framework and a review invitation that publish nothing
+until consent exists. The hero is untouched (only the approved `hero-content.ts` line differs from
+the baseline); the header over the hero keeps its behaviour with the new mono navigation.
+
+Waiting on BSR (the layout is ready, nothing is invented meanwhile): client logos with written
+consent, consented testimonials, real photography (each sector, fleet, loading, the Carpi base, a
+consented portrait), optional video loops for the media slots.
 
 **Do not start Phase 5 implementation until the items below are scheduled.**
 

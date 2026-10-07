@@ -1,98 +1,113 @@
-import { Section } from "@/components/layout/section";
-import { MediaSlot } from "@/components/media/media-slot";
-import { TextLink } from "@/components/ui/text-link";
-import { siteMedia } from "@/config/site-media";
+import { ArrowUpRight } from "lucide-react";
+
+import { Chapter } from "@/components/editorial/chapter";
+import { Label } from "@/components/editorial/label";
+import { siteConfig } from "@/config/site";
 
 import { faqContent as faq } from "../config/faq-content";
 
 /**
- * FAQ — a cinematic, one-viewport moment. A full-bleed photograph of the
- * motorway at sunrise is the environment: anchored to the bottom of the
- * section and fading up into white, so the headline sits in clear sky while
- * the red BSR truck fills the lower part, its cab peeking in from the right of
- * the centred UI. Over it, centred and small: a green eyebrow flanked by
- * rules, a one-line headline ("domande?" in red), one sentence, and a compact
- * accordion of white surfaces.
+ * Chapter 12 — "what am I still unsure about?", on White: compact, quiet, no
+ * photograph. Three columns from `lg`: the label, the question and one
+ * sentence on the left; the list in the centre (numbered, on hairlines, small
+ * type); a contact prompt on the right (phone, WhatsApp, email). One column on
+ * phones.
  *
- * Readability without hiding the photograph: no black scrim — the photograph
- * fades into white where the text is, and the accordion's surfaces are
- * near-opaque white (the photograph stays visible around and between them).
- * The photograph is a real, decorative image (MediaSlot: responsive srcset,
- * lazy loading, blur placeholder; focal point per breakpoint), static — no
- * script, no scroll-linked motion, nothing continuous.
- *
- * The accordion is native `<details name="faq">`: keyboard operable (Tab,
- * Enter, Space), the expanded state exposed by the platform (no ARIA to keep in
- * step), one answer open at a time, readable without JavaScript, answers
- * findable with in-page search. The first answer is open by default; opening
- * another closes it. The answer eases open in height and opacity
- * (`disclosure`, 360 ms) and the plus folds into a red minus — instantly under
- * reduced motion. State is never colour alone: plus → minus, and the open
- * surface gains a green edge.
+ * The list is native `<details name="faq">`: keyboard operable (Tab, Enter,
+ * Space), the expanded state exposed by the platform, one answer open at a
+ * time, readable without JavaScript, answers findable with in-page search. The
+ * first answer is open by default. The answer eases open (`disclosure`,
+ * 360 ms) and the green plus folds into a minus — instantly under reduced
+ * motion; the open row's index and edge turn green (never colour alone).
  */
 export function FaqSection() {
-  return (
-    <Section
-      tone="white"
-      spacing="none"
-      id={faq.id}
-      aria-labelledby={`${faq.id}-title`}
-      className="relative isolate flex min-h-[min(100svh,58rem)] items-center overflow-clip bg-white py-14 sm:py-16 lg:py-[6vh]"
-    >
-      {/* The photograph: bottom-anchored, its top edge dissolving into the white
-          of the section. Focal point per breakpoint (config/site-media.ts). */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 -z-10 h-[80%] [mask-image:linear-gradient(to_bottom,transparent,black_24%)] sm:h-[78%] lg:h-[76%]"
-      >
-        <MediaSlot
-          name="faq-background"
-          media={siteMedia.faq.background}
-          aspect="fill"
-          sizes="100vw"
-        />
-      </div>
+  const { contact } = siteConfig;
+  const titleId = `${faq.id}-title`;
+  const channels = [
+    { label: faq.prompt.phone, value: contact.phoneDisplay, href: contact.phoneHref },
+    {
+      label: faq.prompt.whatsapp,
+      value: contact.phoneDisplay,
+      href: contact.whatsappHref,
+      hint: faq.prompt.whatsappHint,
+    },
+    { label: faq.prompt.email, value: contact.email, href: `mailto:${contact.email}` },
+  ];
 
-      <div className="mx-auto flex w-full max-w-[52rem] flex-col items-center gap-8 px-4 sm:px-8">
-        <header className="flex flex-col items-center gap-3 text-center sm:gap-4">
-          <p className="flex items-center gap-4 type-label-sm text-success">
-            <span aria-hidden="true" className="h-px w-10 bg-success-graphic sm:w-14" />
-            {faq.eyebrow}
-            <span aria-hidden="true" className="h-px w-10 bg-success-graphic sm:w-14" />
-          </p>
-          <h2 id={`${faq.id}-title`} className="type-title text-balance">
-            {faq.title[0]} <span className="text-action-primary">{faq.title[1]}</span>
+  return (
+    <Chapter id={faq.id} tone="white" labelledBy={titleId} {...faq.chapter}>
+      <div className="ed-grid gap-y-10">
+        <header className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
+          <Label>{faq.label}</Label>
+          <h2 id={titleId} className="ed-h3">
+            {faq.title}
           </h2>
-          <p className="sm:text-base max-w-[38rem] text-[0.9375rem] leading-relaxed text-text-secondary">
-            {faq.intro.before} <br className="hidden sm:inline" />
-            {faq.intro.after} <TextLink href={faq.intro.link.href}>{faq.intro.link.label}</TextLink>
-            .
-          </p>
+          <p className="max-w-[24rem] ed-small text-text-secondary">{faq.intro.before}</p>
         </header>
 
-        <div className="flex w-full max-w-[46rem] flex-col gap-2 sm:gap-2.5">
+        <div className="col-span-4 border-t border-hairline-strong md:col-span-8 lg:col-span-8 lg:col-start-5">
           {faq.items.map((item, i) => (
             <details
               key={item.question}
               name="faq"
               open={i === 0}
-              className="group disclosure rounded-[0.875rem] border border-border-default bg-white/92 shadow-[0_8px_24px_-16px_rgb(9_11_11/0.45)] transition-[border-color,background-color] duration-300 hover:border-success-graphic/55 open:border-success-graphic/45 open:bg-white/97 motion-reduce:transition-none"
+              className="group disclosure relative border-b border-hairline"
             >
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-5 rounded-[0.875rem] px-4 py-3 text-text-primary sm:min-h-15 sm:px-6 [&::-webkit-details-marker]:hidden">
-                <span className="type-faq-question">{item.question}</span>
-                {/* Plus → minus: neutral when closed, red when open (never colour alone). */}
-                <span aria-hidden="true" className="relative size-4 shrink-0">
-                  <span className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-text-secondary transition-colors duration-300 group-open:bg-action-primary motion-reduce:transition-none" />
-                  <span className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 rounded-full bg-text-secondary transition-transform duration-300 ease-enter group-open:scale-y-0 motion-reduce:transition-none" />
+              <span
+                aria-hidden="true"
+                className="absolute top-0 bottom-0 -left-px w-0.5 origin-top scale-y-0 bg-success-graphic transition-[scale] duration-300 group-open:scale-y-100 motion-reduce:transition-none"
+              />
+              <summary className="grid min-h-14 cursor-pointer list-none grid-cols-[2.5rem_1fr_1rem] items-center gap-3 py-3 pl-4 text-text-primary transition-colors duration-200 hover:text-success [&::-webkit-details-marker]:hidden">
+                <span aria-hidden="true" className="ed-meta text-text-secondary group-open:text-success">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="ed-body font-medium">{item.question}</span>
+                {/* Plus → minus, in green. */}
+                <span aria-hidden="true" className="relative size-3.5">
+                  <span className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-success-graphic" />
+                  <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-success-graphic transition-transform duration-300 ease-enter group-open:scale-y-0 motion-reduce:transition-none" />
                 </span>
               </summary>
-              <p className="max-w-[40rem] px-4 pb-4 type-faq-answer text-text-secondary sm:px-6 sm:pb-5">
+              <p className="max-w-[60ch] pr-8 pb-5 pl-[calc(2.5rem+1.75rem)] ed-small text-text-secondary">
                 {item.answer}
               </p>
             </details>
           ))}
         </div>
+
+        <aside
+          aria-labelledby="faq-prompt"
+          className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-3 lg:col-start-14"
+        >
+          <h3 id="faq-prompt" className="ed-h4">
+            {faq.prompt.title}
+          </h3>
+          <p className="ed-small text-text-secondary">{faq.prompt.body}</p>
+          <ul className="flex flex-col border-t border-hairline">
+            {channels.map((channel) => (
+              <li key={channel.label} className="border-b border-hairline">
+                <a
+                  href={channel.href}
+                  className="group/channel flex min-h-12 items-center justify-between gap-3 transition-colors duration-200 hover:text-success"
+                >
+                  <span className="flex flex-col">
+                    <span className="ed-meta text-text-secondary">{channel.label}</span>
+                    <span className="ed-small font-medium">
+                      {channel.value}
+                      {channel.hint && <span className="sr-only"> {channel.hint}</span>}
+                    </span>
+                  </span>
+                  <ArrowUpRight
+                    aria-hidden="true"
+                    strokeWidth={1.75}
+                    className="size-4 text-success-graphic transition-transform duration-200 motion-safe:group-hover/channel:-translate-y-0.5 motion-safe:group-hover/channel:translate-x-0.5"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
-    </Section>
+    </Chapter>
   );
 }

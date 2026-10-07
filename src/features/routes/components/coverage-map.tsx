@@ -167,22 +167,6 @@ export function CoverageMap({ className }: { className?: string }) {
                 </text>
               ))}
             </g>
-            {/* The network breathes: once drawn, Carpi and each destination send out a
-                slow ring, one after another (paused while the hero is on screen). */}
-            {[
-              { id: "origin", x: ORIGIN.x, y: ORIGIN.y, r: 13 },
-              ...destinations.map(({ id, at: [x, y] }) => ({ id, x, y, r: 9 })),
-            ].map(({ id, x, y, r }, i) => (
-              <circle
-                key={`ring-${id}`}
-                cx={x}
-                cy={y}
-                r={r}
-                className="origin-center breathe fill-none stroke-success-graphic opacity-0 [transform-box:fill-box]"
-                strokeWidth="2"
-                style={{ animationDelay: `${3000 + i * 700}ms` }}
-              />
-            ))}
           </g>
         </svg>
       </div>

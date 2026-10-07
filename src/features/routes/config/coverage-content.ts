@@ -1,5 +1,5 @@
 import { siteConfig } from "@/config/site";
-import { coverage } from "@/config/site-content";
+import { coverage, transit } from "@/config/site-content";
 import { siteMedia } from "@/config/site-media";
 import type { SlotMedia } from "@/types/media";
 
@@ -14,8 +14,15 @@ import type { SlotMedia } from "@/types/media";
 export const coverageContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "copertura",
-  eyebrow: "Copertura",
-  title: "In tutta Italia e su sette tratte europee.",
+  chapter: { index: "06", name: "Copertura", context: "Italia → Europa" },
+  label: "Copertura",
+  title: "Dall'Italia all'Europa.",
+  /** The reach as technical data (indicative times, the confirmed countries). */
+  facts: [
+    { value: transit.italyExpress.replace(" h", ""), unit: "h", label: "Italia", detail: "Espressi, isole comprese" },
+    { value: transit.europeTypical.replace(" giorni", ""), unit: "giorni", label: "Europa", detail: "Secondo la tratta" },
+    { value: String(coverage.europe.length), unit: "", label: "Paesi europei", detail: "Tratte confermate" },
+  ],
   body: "Ritiri e consegne su tutto il territorio nazionale, da nord a sud e nelle isole. Verso l'Europa, trasporti dedicati pianificati porta a porta.",
   italy: {
     headline: coverage.italy,
@@ -35,6 +42,6 @@ export const coverageContent = {
     label: "Base operativa",
     place: coverage.base,
   },
-  action: { label: "Richiedi un preventivo per la tua tratta", href: "/#richiesta" },
+  action: { label: "Verifica la tua tratta", href: siteConfig.routes.quoteRequest },
   media: siteMedia.coverage.background as SlotMedia | undefined,
 } as const;

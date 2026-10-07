@@ -4,7 +4,7 @@ import { SkipLink } from "@/components/accessibility/skip-link";
 import { siteConfig } from "@/config/site";
 import { MAIN_CONTENT_ID } from "@/constants/landmarks";
 import { AppProviders } from "@/providers/app-providers";
-import { archivo } from "@/styles/fonts";
+import { archivo, plexMono, saira } from "@/styles/fonts";
 
 import "./globals.css";
 
@@ -45,7 +45,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang={siteConfig.lang} className={archivo.variable}>
+    <html lang={siteConfig.lang} className={`${archivo.variable} ${saira.variable} ${plexMono.variable}`}>
       <body>
         <SkipLink targetId={MAIN_CONTENT_ID} label={siteConfig.labels.skipToContent} />
         <AppProviders>{children}</AppProviders>

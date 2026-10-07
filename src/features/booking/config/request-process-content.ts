@@ -1,3 +1,4 @@
+import { siteConfig } from "@/config/site";
 import { siteMedia } from "@/config/site-media";
 import type { SlotMedia } from "@/types/media";
 
@@ -17,18 +18,22 @@ export interface ProcessStep {
 export const requestProcessContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "come-funziona",
-  eyebrow: "Come funziona",
+  chapter: { index: "04", name: "Come funziona", context: "Quattro passaggi" },
+  label: "Come funziona",
   title: "Dal ritiro alla consegna.",
+  /** The stage caption (mono), e.g. "02 / 04 · Passaggio · Valutazione". */
+  stageLabel: "Passaggio",
+  action: { label: "Richiedi un preventivo", href: siteConfig.routes.quoteRequest },
   intro:
     "Cosa succede dopo la tua richiesta, passo per passo — con la stessa persona dall'inizio alla fine.",
   steps: [
     { title: "Richiesta", body: "Ci dici cosa devi spedire, da dove, per dove e per quando." },
     {
-      title: "Analisi",
+      title: "Valutazione",
       body: "Scegliamo il mezzo adatto al carico e ti confermiamo tempi e prezzo.",
     },
     {
-      title: "Trasporto",
+      title: "Ritiro e trasporto",
       body: "Concordiamo l'orario del ritiro; il referente ti avvisa quando il mezzo è in arrivo e ti aggiorna in viaggio.",
     },
     { title: "Consegna", body: "Il carico arriva a destinazione e ti confermiamo la consegna." },

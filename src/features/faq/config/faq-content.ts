@@ -16,9 +16,18 @@ export interface FaqItem {
 export const faqContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "faq",
-  eyebrow: "Domande frequenti",
-  /** The second part is set in the brand red. */
-  title: ["Hai delle", "domande?"] as const,
+  chapter: { index: "12", name: "Domande frequenti", context: "Risposte verificate" },
+  label: "Domande frequenti",
+  title: "Hai delle domande?",
+  /** The contact prompt beside the list. */
+  prompt: {
+    title: "Non trovi la risposta?",
+    body: "Chiedi direttamente al referente: un solo numero, nessun call center.",
+    phone: "Telefono",
+    whatsapp: "WhatsApp",
+    whatsappHint: "(apre WhatsApp)",
+    email: "Email",
+  },
   intro: {
     before: "Qui trovi le risposte alle domande più comuni.",
     after: "Se non trovi quello che cerchi,",

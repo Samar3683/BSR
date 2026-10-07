@@ -33,6 +33,9 @@
   --color-border-default: transparent;
   --color-border-strong: var(--color-pewter);
   --color-border-interactive: var(--color-titanium);
+  /* Editorial hairlines (1px): the technical line system below the hero. */
+  --color-hairline: rgb(255 255 255 / 0.15);
+  --color-hairline-strong: rgb(255 255 255 / 0.24);
 
   --color-overlay-hover: transparent;
   --color-overlay-pressed: transparent;
@@ -94,6 +97,8 @@
   --color-border-default: rgb(247 247 242 / 0.16);
   --color-border-strong: var(--color-pewter);
   --color-border-interactive: var(--color-titanium);
+  --color-hairline: rgb(255 255 255 / 0.15);
+  --color-hairline-strong: rgb(255 255 255 / 0.24);
 
   --color-overlay-hover: rgb(247 247 242 / 0.06);
   --color-overlay-pressed: rgb(247 247 242 / 0.1);
@@ -173,6 +178,8 @@
   --color-border-default: var(--color-line);
   --color-border-strong: var(--color-shale);
   --color-border-interactive: var(--color-carbon);
+  --color-hairline: rgb(9 11 11 / 0.1);
+  --color-hairline-strong: rgb(9 11 11 / 0.16);
 
   --color-overlay-hover: rgb(9 11 11 / 0.05);
   --color-overlay-pressed: rgb(9 11 11 / 0.09);
@@ -253,6 +260,8 @@
   --color-border-default: rgb(247 247 242 / 0.26);
   --color-border-strong: var(--color-green-200);
   --color-border-interactive: var(--color-soft-white);
+  --color-hairline: rgb(247 247 242 / 0.2);
+  --color-hairline-strong: rgb(247 247 242 / 0.3);
 
   --color-overlay-hover: rgb(247 247 242 / 0.08);
   --color-overlay-pressed: rgb(247 247 242 / 0.14);

@@ -44,7 +44,8 @@ const request = (id: VehicleId) => `${siteConfig.routes.quoteRequest}?mezzo=${id
 export const vehiclesContent = {
   /** Navigation anchor (site-navigation.ts). */
   id: "flotta",
-  eyebrow: "Flotta",
+  chapter: { index: "05", name: "Flotta", context: "Furgone · Motrice · Articolato" },
+  label: "La flotta",
   title: "Il mezzo giusto per ogni spedizione.",
   intro:
     "Mezzi di diverse dimensioni, dai furgoni ai bilici: in base a cosa devi spedire, ti assegniamo il mezzo più adatto.",
@@ -52,11 +53,11 @@ export const vehiclesContent = {
   /** Shown where a vehicle has no published figures. */
   capacity: {
     label: "Capacità",
-    pending: "Configurazione in base alla spedizione.",
+    pending: "Disponibilità e configurazione in base alla spedizione.",
   },
   /** For visitors who don't know which vehicle they need. */
   undecided: {
-    question: "Quale mezzo mi serve?",
+    question: "Non sai quale mezzo serve?",
     answer: "Descrivici il carico: te lo indichiamo noi.",
     cta: "Richiedi un preventivo",
     href: request("da-valutare"),

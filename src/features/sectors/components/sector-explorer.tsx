@@ -2,7 +2,7 @@
 
 import { ArrowRight, Plus } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { type CSSProperties, useState } from "react";
 
 import { MediaSlot } from "@/components/media/media-slot";
 import { cx } from "@/lib/utils/cx";
@@ -11,18 +11,29 @@ import type { SlotMedia } from "@/types/media";
 import type { Sector } from "../config/sectors-content";
 
 /**
- * The sectors as horizontal rows beside one preview stage.
+ * Where the stage's camera sits for each sector while the sectors share one
+ * photograph: a different crop window of the same scene (scale, then a shift),
+ * so the stage still answers the row. A sector with its own picture
+ * (`siteMedia.sectors[id]`) shows that picture instead.
+ */
+const CROPS = [
+  { scale: 1, x: "0%", y: "0%" },
+  { scale: 1.14, x: "-5%", y: "3%" },
+  { scale: 1.12, x: "5%", y: "-3%" },
+  { scale: 1.1, x: "-2%", y: "-4%" },
+] as const;
+
+/**
+ * The sectors as a large list beside one photographic stage.
  *
- * - From `lg`: each row is a link (number, sector, line, arrow) to the
- *   request with its sector noted. Hovering or focusing a row expands it in
- *   place — a white panel slides in behind it, a green line draws along its
- *   top, the arrow moves on — and brings its picture onto the stage (its own
- *   if it has one, else the shared one) with its name as the caption. Nothing
- *   changes height: the layout never jumps.
- * - Below `lg`: the stage sits above a compact accordion (native <details>,
- *   one open at a time); each answer holds the line and the link. No
- *   hover-only content anywhere.
- * React state changes only when the previewed row changes.
+ * - From `lg`: each row is a link (index, sector, one line, arrow) to the
+ *   request with its sector noted. Hovering or focusing a row puts it in play:
+ *   a green line draws along its top, its index turns green, its title moves
+ *   a few pixels, the arrow moves on — and the stage reframes (or changes
+ *   picture) with the sector named in its caption. Nothing changes height.
+ * - Below `lg`: the stage above a compact accordion (native <details>, one
+ *   open at a time); each answer holds the line and the link.
+ * React state changes only when the row in play changes.
  */
 export function SectorExplorer({
   sectors,
@@ -35,28 +46,26 @@ export function SectorExplorer({
 }) {
   const [active, setActive] = useState(0);
   const current = sectors[active]!;
+  const crop = CROPS[active % CROPS.length]!;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12 lg:items-center lg:gap-x-(--spacing-grid-gap) lg:gap-y-0">
-      {/* The load: the picture breaks the grid, running off the right edge of the
-          page; it opens from the centre like a loading-bay door. */}
+    <div className="ed-grid gap-y-6">
       <div
         aria-hidden="true"
-        data-reveal="door"
-        className="relative -mx-(--spacing-gutter) aspect-[16/9] overflow-clip bg-surface-secondary lg:col-span-7 lg:col-start-6 lg:row-start-1 lg:mx-0 lg:mr-[calc(-1*(100vw-min(100vw-2*var(--spacing-gutter),80rem))/2)] lg:aspect-auto lg:h-[min(36rem,68svh)]"
+        data-reveal="right"
+        className="relative col-span-4 aspect-[16/10] md:col-span-8 lg:col-span-7 lg:col-start-10 lg:row-start-1 lg:ed-bleed-r lg:aspect-auto lg:h-[min(30rem,58svh)]"
       >
-        {/* One layer for the door; the previews change inside it. */}
-        <div className="absolute inset-0 scroll-settle">
-          <MediaSlot
-            name="sectors-stage"
-            media={stage}
-            aspect="fill"
-            sizes="(min-width: 64rem) 40vw, 100vw"
-            className={cx(
-              "transition-[scale] duration-700 ease-enter motion-reduce:transition-none",
-              active % 2 === 1 ? "scale-[1.03]" : "scale-100",
-            )}
-          />
+        <div className="absolute inset-0 overflow-clip bg-surface-secondary">
+          <div
+            className="absolute inset-0 transition-transform duration-[900ms] ease-cinematic motion-reduce:transition-none"
+            style={
+              {
+                transform: `translate(${crop.x}, ${crop.y}) scale(${crop.scale})`,
+              } as CSSProperties
+            }
+          >
+            <MediaSlot name="sectors-stage" media={stage} aspect="fill" sizes="(min-width: 64rem) 45vw, 100vw" />
+          </div>
           {sectors.map((sector, i) =>
             sector.media ? (
               <MediaSlot
@@ -64,67 +73,69 @@ export function SectorExplorer({
                 name={`sector-${sector.id}`}
                 media={sector.media}
                 aspect="fill"
-                sizes="(min-width: 64rem) 40vw, 100vw"
+                sizes="(min-width: 64rem) 45vw, 100vw"
                 className={cx(
-                  "transition-[opacity,clip-path] duration-500 ease-enter motion-reduce:transition-none",
-                  i === active
-                    ? "opacity-100 [clip-path:inset(0)]"
-                    : "opacity-0 [clip-path:inset(0_0_0_100%)]",
+                  "transition-opacity duration-500 ease-enter motion-reduce:transition-none",
+                  i === active ? "opacity-100" : "opacity-0",
                 )}
               />
             ) : null,
           )}
+          <p
+            data-surface="white"
+            className="absolute bottom-0 left-0 flex items-center gap-3 bg-background-primary px-4 py-3 ed-meta text-text-secondary"
+          >
+            <span className="text-success tabular-nums">{current.code}</span>
+            <span key={current.id} className="panel-in">
+              {current.title}
+            </span>
+          </p>
         </div>
       </div>
-      {/* Technical metadata, overlapping the picture's left edge. */}
-      <p
-        aria-hidden="true"
-        className="relative z-10 hidden items-center gap-3 bg-background-inverse px-4 py-3 type-label-sm text-text-inverse lg:col-span-1 lg:col-start-6 lg:row-start-1 lg:-ml-[calc(var(--spacing-grid-gap)+2.5rem)] lg:mb-0 lg:flex lg:self-end lg:justify-self-start lg:translate-y-[-3rem]"
-      >
-        <span className="h-0.5 w-6 bg-green-300" />
-        <span key={current.id} className="flex panel-in gap-2 whitespace-nowrap">
-          <span className="text-green-300 tabular-nums">{current.code}</span>
-          {current.title}
-        </span>
-      </p>
 
-      <ol className="hidden border-t border-border-strong lg:col-span-5 lg:row-start-1 lg:flex lg:flex-col">
+      <ol className="hidden border-b border-hairline lg:col-span-8 lg:row-start-1 lg:flex lg:flex-col lg:self-center">
         {sectors.map((sector, i) => {
           const on = i === active;
           return (
-            <li key={sector.id} className="border-b border-border-default">
+            <li key={sector.id} className="relative border-t border-hairline">
+              <span
+                aria-hidden="true"
+                className={cx(
+                  "absolute inset-x-0 -top-px h-px origin-left bg-success-graphic transition-[scale] duration-500 ease-enter motion-reduce:transition-none",
+                  on ? "scale-x-100" : "scale-x-0",
+                )}
+              />
               <Link
                 href={sector.href}
                 onMouseEnter={() => setActive(i)}
                 onFocus={() => setActive(i)}
-                data-active={on || undefined}
-                className="group/row relative flex items-center gap-8 px-5 py-5 outline-offset-[-2px] xl:py-6"
+                className="group/row flex items-center gap-6 py-4 outline-offset-[-2px] xl:gap-10"
               >
                 <span
                   aria-hidden="true"
-                  className="absolute inset-0 origin-left scale-x-0 bg-surface-secondary transition-[scale] duration-[400ms] ease-enter group-data-active/row:scale-x-100 motion-reduce:transition-none"
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-x-0 -top-px h-0.5 origin-left scale-x-0 bg-success-graphic transition-[scale] duration-500 ease-enter group-data-active/row:scale-x-100 motion-reduce:transition-none"
-                />
-                <span
-                  aria-hidden="true"
-                  className="relative type-metadata text-text-muted tabular-nums transition-colors duration-300 group-data-active/row:text-success"
+                  className={cx(
+                    "w-6 ed-label tabular-nums transition-colors duration-300",
+                    on ? "text-success" : "text-text-secondary",
+                  )}
                 >
                   {sector.code}
                 </span>
-                {/* Name over its line: a name never breaks. */}
-                <span className="relative flex flex-1 flex-col gap-1 transition-[translate] duration-[400ms] ease-enter group-data-active/row:translate-x-2 motion-reduce:transition-none">
-                  <h3 className="type-heading-lg whitespace-nowrap">{sector.title}</h3>
-                  <span className="max-w-[40ch] text-base leading-snug text-text-secondary">
-                    {sector.body}
-                  </span>
+                <span
+                  className={cx(
+                    "flex flex-1 flex-col gap-1 transition-[translate] duration-[400ms] ease-enter motion-reduce:transition-none",
+                    on && "translate-x-2",
+                  )}
+                >
+                  <h3 className="ed-h3 whitespace-nowrap">{sector.title}</h3>
+                  <span className="max-w-[40ch] ed-small text-text-secondary">{sector.body}</span>
                 </span>
                 <ArrowRight
                   aria-hidden="true"
                   strokeWidth={1.75}
-                  className="relative size-5 text-text-muted transition-[translate,color] duration-300 ease-enter group-data-active/row:translate-x-1 group-data-active/row:text-success motion-reduce:transition-none"
+                  className={cx(
+                    "size-5 shrink-0 transition-[translate,color] duration-300 ease-enter motion-reduce:transition-none",
+                    on ? "translate-x-1 text-success" : "text-text-secondary",
+                  )}
                 />
                 <span className="sr-only">
                   — {link.label} {link.for} {sector.title}
@@ -135,33 +146,33 @@ export function SectorExplorer({
         })}
       </ol>
 
-      <div className="border-t border-border-default lg:hidden">
+      <div className="col-span-4 border-t border-hairline md:col-span-8 lg:hidden">
         {sectors.map((sector, i) => (
           <details
             key={sector.id}
             name="settori"
             open={i === 0}
-            className="group disclosure border-b border-border-default"
+            onToggle={(event) => {
+              if (event.currentTarget.open) setActive(i);
+            }}
+            className="group disclosure border-b border-hairline"
           >
             <summary className="flex min-h-14 cursor-pointer list-none items-center gap-4 py-3 [&::-webkit-details-marker]:hidden">
-              <span
-                aria-hidden="true"
-                className="type-metadata text-text-muted tabular-nums group-open:text-success"
-              >
+              <span aria-hidden="true" className="w-6 ed-label text-text-secondary tabular-nums group-open:text-success">
                 {sector.code}
               </span>
-              <h3 className="flex-1 type-heading-md">{sector.title}</h3>
+              <h3 className="flex-1 ed-h4">{sector.title}</h3>
               <Plus
                 aria-hidden="true"
-                strokeWidth={2}
+                strokeWidth={1.75}
                 className="size-5 text-success-graphic transition-transform duration-300 group-open:rotate-45 motion-reduce:transition-none"
               />
             </summary>
-            <div className="flex flex-col gap-3 pb-5 pl-9">
-              <p className="type-body-md text-text-secondary">{sector.body}</p>
+            <div className="flex flex-col gap-2 pb-5 pl-10">
+              <p className="ed-body text-text-secondary">{sector.body}</p>
               <Link
                 href={sector.href}
-                className="inline-flex min-h-(--target-min) items-center gap-2 self-start type-label-md text-text-primary"
+                className="inline-flex min-h-(--target-min) items-center gap-2 self-start ed-action text-text-primary"
               >
                 <span>
                   {link.label}
@@ -170,7 +181,7 @@ export function SectorExplorer({
                     {link.for} {sector.title}
                   </span>
                 </span>
-                <ArrowRight aria-hidden="true" className="size-4 text-success" strokeWidth={2} />
+                <ArrowRight aria-hidden="true" className="size-4 text-success" strokeWidth={1.75} />
               </Link>
             </div>
           </details>

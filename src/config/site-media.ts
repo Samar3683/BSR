@@ -1,6 +1,6 @@
 import type { SlotMedia } from "@/types/media";
 
-import { scene, sceneIn } from "./media";
+import { scene } from "./media";
 
 /**
  * Every photograph on the public site, by section — the one place to swap the
@@ -66,22 +66,6 @@ export const siteMedia = {
       "Trattore con semirimorchio telonato e livrea BSR in un piazzale logistico.",
       { base: "58% center" },
     ),
-  },
-  faq: {
-    /**
-     * The FAQ's cinematic background (decorative): the motorway at sunrise in
-     * the RED livery — a deliberate exception to the site livery, requested
-     * for this section (the same photograph as `services.express`, in
-     * another colour). Only ever show the livery the real fleet carries:
-     * confirm it with BSR, or switch this slot back to `scene(...)`.
-     * Focal point: the cab peeks in from the right of the centred UI (a lower
-     * x shifts the picture right, bringing the truck's front into frame).
-     */
-    background: sceneIn("red", "express-motorway", "", {
-      base: "85% center",
-      md: "55% center",
-      lg: "40% center",
-    }),
   },
   coverage: {
     /** Background layer behind the map (decorative). */

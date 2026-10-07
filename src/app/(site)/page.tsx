@@ -1,4 +1,3 @@
-import { SectionBridge } from "@/components/layout/section-bridge";
 import { MAIN_CONTENT_ID } from "@/constants/landmarks";
 import { HeroSection } from "@/experiences/home/components/hero-section";
 import { AboutSection } from "@/features/about/components/about-section";
@@ -23,17 +22,15 @@ import { jsonLdScript, organizationJsonLd } from "@/features/seo/structured-data
  * Home page (composition only). The hero is a locked, replaceable module
  * (docs/hero-baseline.md); nothing below it imports it or any WebGL code.
  *
- * One continuous transport story — the road, the load, the people, the
- * system, the fleet, the network, the proof, the promise — in the approved
- * order: hero → who BSR is → services → who we work for (the load) → how it
- * works → fleet → coverage → cargo security → clients and reviews (verified
- * only; hidden until then) → who we are → the request → FAQ → the close.
+ * Below the hero, one continuous shipment story in twelve marked chapters
+ * (components/editorial: each opens on the same hairline, its green segment
+ * drawing as the route continues, "04 / 12"): who BSR is → services → who we
+ * work for → how it works → fleet → coverage → cargo security → clients →
+ * reviews → who we are → the request → FAQ, then the close and the footer.
  *
- * Surfaces: Soft White and White alternate as the page's base; Deep Green for
- * cargo security; Carbon only for the cinematic moments (the hero and its
- * transition, coverage, the close) and the compact footer. Where the weight
- * changes sharply a `SectionBridge` washes one surface into the next, so
- * nothing restarts on a hard edge.
+ * Surfaces: White and Soft White alternate and dominate; Carbon only for the
+ * hero and its transition, the coverage map, the close and the compact footer.
+ * Green is route and state; red is the request and the destination.
  */
 export default function HomePage() {
   return (
@@ -46,11 +43,8 @@ export default function HomePage() {
         <SectorsSection />
         <RequestProcessSection />
         <VehiclesSection />
-        <SectionBridge from="white" to="carbon" />
         <CoverageSection />
-        <SectionBridge from="carbon" to="green" />
         <ProtectionSection />
-        <SectionBridge from="green" to="warm-white" />
         <NetworkSection />
         <ReviewsSection />
         <AboutSection />

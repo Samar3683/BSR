@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowRight, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { ButtonLink } from "@/components/ui/button";
+import { ActionLink } from "@/components/editorial/action";
 import { siteConfig } from "@/config/site";
 import { cx } from "@/lib/utils/cx";
 
@@ -56,7 +56,7 @@ export function QuickActions() {
   return (
     <div
       data-quick-actions
-      data-surface="carbon"
+      data-surface="white"
       data-visible={visible || undefined}
       inert={!visible}
       className={cx(
@@ -65,26 +65,27 @@ export function QuickActions() {
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0",
       )}
     >
-      <div className="flex gap-2 border-t border-border-default bg-background-primary px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
-        <ButtonLink href={nav.cta.href} className="min-w-0 flex-1" trailingIcon={ArrowRight}>
+      <div className="flex gap-2 border-t border-hairline bg-background-primary/96 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <ActionLink href={nav.cta.href} className="min-w-0 flex-1">
           {nav.cta.label}
-        </ButtonLink>
+        </ActionLink>
         {/* Icon-only on the narrowest phones; the name stays for assistive technology. */}
-        <ButtonLink
+        <ActionLink
           href={siteConfig.contact.whatsappHref}
-          variant="secondary"
+          variant="outline"
           leadingIcon={MessageCircle}
+          icon={null}
           className="shrink-0 max-sm:px-3.5"
         >
           <span className="max-sm:sr-only">{nav.menu.whatsapp}</span>
           <span className="sr-only"> {nav.menu.whatsappHint}</span>
-        </ButtonLink>
+        </ActionLink>
       </div>
       <div className="hidden lg:block">
-        <ButtonLink href={nav.cta.href} size="sm" trailingIcon={ArrowRight} className="shadow-raised">
+        <ActionLink href={nav.cta.href}>
           <span className="sr-only">Richiedi un </span>
           {nav.cta.shortLabel}
-        </ButtonLink>
+        </ActionLink>
       </div>
     </div>
   );

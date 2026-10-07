@@ -16,8 +16,9 @@ export interface Principle {
 
 export const protectionContent = {
   id: "sicurezza",
-  eyebrow: "Sicurezza del carico",
-  title: "Ogni carico merita attenzione.",
+  chapter: { index: "07", name: "Sicurezza del carico", context: "Ritiro · Viaggio · Consegna" },
+  label: "Sicurezza del carico",
+  title: "Il tuo carico, seguito con attenzione.",
   intro: "Come viene protetta la tua merce, dal ritiro alla consegna.",
   principles: [
     {

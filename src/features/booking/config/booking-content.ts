@@ -5,7 +5,7 @@ const options = (names: Record<string, string>) =>
   Object.entries(names).map(([value, label]) => ({ value, label }));
 
 /**
- * The home page's request form ("Da dove parte il tuo carico?"). Route,
+ * The home page's quote starter ("Parliamo del tuo carico."). Route,
  * service and — optionally — sector, then the quote-request page (a plain GET
  * to `/preventivo`), where the message is prepared for WhatsApp or email.
  * Nothing is sent from here: no backend, no simulated submission, and no
@@ -14,10 +14,13 @@ const options = (names: Record<string, string>) =>
 export const bookingContent = {
   /** Navigation anchor ("Preventivo", site-navigation.ts). */
   id: "richiesta",
-  eyebrow: "Preventivo",
-  title: "Da dove parte il tuo carico?",
+  chapter: { index: "11", name: "Preventivo", context: "Partenza → Destinazione" },
+  label: "Richiesta di preventivo",
+  title: "Parliamo del tuo carico.",
+  /** The three questions the starter answers. */
+  questions: ["Da dove parte?", "Dove deve arrivare?", "Di quale servizio hai bisogno?"] as const,
   intro:
-    "Tre passaggi brevi: il servizio, il percorso, il settore. Poi aggiungi i dettagli e scegli come inviarci la richiesta.",
+    "Compila i tre campi: nella pagina successiva aggiungi i dettagli e scegli come inviarci la richiesta.",
   action: siteConfig.routes.quoteRequest,
   fields: {
     origin: { name: "partenza", label: "Partenza", placeholder: "Es. Carpi (MO)" },
@@ -44,13 +47,6 @@ export const bookingContent = {
       options: options(sectors),
     },
   },
-  /** The three steps; each appears once the one before has an answer. */
-  steps: {
-    service: "Che trasporto ti serve?",
-    route: "Il percorso",
-    details: "Ultimo passaggio",
-  },
-  progress: "Passaggio",
   errors: {
     service: "Scegli il servizio.",
     origin: "Indica da dove parte il carico.",
@@ -60,7 +56,7 @@ export const bookingContent = {
     origin: "Città o CAP di ritiro.",
     destination: "Città o paese di consegna.",
   },
-  submit: "Continua",
+  submit: "Richiedi un preventivo",
   note: "Ti ricontattiamo per confermare mezzo, tempi e prezzo.",
   privacy: "Il modulo non invia la richiesta: il messaggio lo invii tu, su WhatsApp o per email.",
   alternative: "Preferisci scriverci subito?",

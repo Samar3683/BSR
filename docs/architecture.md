@@ -247,7 +247,7 @@ video. Everything else is built so that swap touches one line.
   | Section (anchor)                  | Feature                                                          |
   | --------------------------------- | ---------------------------------------------------------------- |
   | Hero → page, who BSR is (`bsr`)   | `features/home` (`RouteTransition`, `IdentitySection`)           |
-  | Servizi (`servizi`)               | `features/services` (`LaneTrack`: two lanes, swipe + dots on phones) |
+  | Servizi (`servizi`)               | `features/services` (`ServiceStage`)                              |
   | Per chi lavoriamo (`settori`)     | `features/sectors`                                               |
   | Come funziona (`come-funziona`)   | `features/booking` (`ShipmentJourney`)                           |
   | Flotta (`flotta`)                 | `features/fleet` (`VehicleSelector`, technical schematics)       |
@@ -256,7 +256,7 @@ video. Everything else is built so that swap touches one line.
   | Clienti (`clienti`)               | `features/trust` (`NetworkSection`; logos only when verified)    |
   | Recensioni (`recensioni`)         | `features/reviews` (an invitation until real testimonials exist) |
   | Chi siamo (`chi-siamo`)           | `features/about`                                                 |
-  | Preventivo (`richiesta`)          | `features/booking` (`BookingSection` → `BookingFlow`; `/preventivo`) |
+  | Preventivo (`richiesta`)          | `features/booking` (`BookingSection` → `BookingFlow` quote starter) |
   | FAQ (`faq`)                       | `features/faq` (native `<details>` disclosures)                  |
   | Final CTA (`preventivo`)          | `features/contact` (`QuoteSection`)                              |
   | Header, menu, footer, quick       | `features/site` (`QuickActions`)                                 |
@@ -272,16 +272,17 @@ video. Everything else is built so that swap touches one line.
 - **Server first.** Every section is a Server Component. The client code below the hero is small
   and self-contained: the header's scroll state (pure logic in `features/site/lib/header-state.ts`,
   unit-tested), the mobile menu (a native modal `<dialog>`), the journey's current step (one
-  rAF-throttled scroll measurement, attached only while the block is near the screen), the vehicle selector (WAI-ARIA tabs, server-rendered; a `<noscript>` rule lists every type without JS), the request flow (`BookingFlow`: three steps that open in turn, closed steps rendered closed and `inert`), the service lanes (`LaneTrack`), the
+  rAF-throttled scroll measurement, attached only while the block is near the screen), the vehicle selector (WAI-ARIA tabs, server-rendered; a `<noscript>` rule lists every type without JS), the quote starter (`BookingFlow`: route, service, sector; named errors, focus on the first missing field), the service stage (`ServiceStage`: the picture follows the service in play), the
   metric count-up (`CountUp`: final value server-rendered, counting copy written to its own text
   node), the quote page's URL draft, the sector preview (`SectorExplorer`), the header's section
   in view, the entry motion (`RevealController`: one IntersectionObserver for the page — see
   docs/design-system.md, "Motion") and the quick actions (IntersectionObservers; `inert` while
   hidden, stepping aside for any `data-conversion` section and the footer). None of it uses GSAP, so the
   hero's ScrollTrigger setup stays isolated.
-- **Section bridges.** `components/layout/section-bridge.tsx` is a server component: a gradient
-  between two surface tokens, placed between sections whose backgrounds differ strongly (white →
-  carbon, carbon → green, green → warm white).
+- **Editorial components.** `components/editorial/`: `Chapter` (surface, rhythm, the chapter mark
+  "04 / 12"), `Label` (mono label with a state mark), `RouteLine`, `ActionLink` / `ActionButton`
+  (pill actions). Server components; every chapter below the hero is built from them and the
+  `ed-*` utilities in `styles/editorial.css`.
 - **No layout shift on hydration.** Anything that appears or collapses after the page becomes
   interactive must be rendered in its final state from the server (fleet tabs, closed form steps);
   the no-JavaScript fallback is a `<noscript>` style, not a different DOM.

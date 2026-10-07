@@ -1,49 +1,63 @@
-import { ArrowRight, MessageCircle, Phone } from "lucide-react";
+import { MessageCircle, Phone } from "lucide-react";
 
-import { Container } from "@/components/layout/container";
-import { Eyebrow } from "@/components/layout/eyebrow";
-import { Section } from "@/components/layout/section";
-import { SectionHeader } from "@/components/layout/section-header";
-import { ButtonLink } from "@/components/ui/button";
+import { ActionLink } from "@/components/editorial/action";
+import { Chapter } from "@/components/editorial/chapter";
+import { Label } from "@/components/editorial/label";
 import { siteConfig } from "@/config/site";
 
 import { approvedTestimonials, reviewsContent as reviews } from "../config/reviews-content";
 
+/** The editorial quotation mark: a large hairline glyph in BSR green. */
+function QuoteMark({ className }: { className?: string }) {
+  return (
+    <span aria-hidden="true" className={`block font-tech text-[7rem] leading-[0.7] text-success-graphic ${className ?? ""}`}>
+      “
+    </span>
+  );
+}
+
 /**
- * Reviews, on White.
- * - With real, consented testimonials: the first as a large quote on a green
- *   rule (author, company, the route or service), any others in a ruled row.
- * - Until then: a short invitation to talk — one question, one sentence, the
- *   request (red), WhatsApp and the phone. No invented quote, person or rating.
+ * Chapter 09 — "what do customers say?", on Soft White.
+ * - With real, consented testimonials (reviews-content.ts): the first as an
+ *   editorial quotation (a large green quotation mark, the quote in display
+ *   capitals, the person, the company and the route on a hairline), any others
+ *   in a ruled row. No stars unless a rating is genuinely provided.
+ * - Until then: the empty space becomes an invitation — "La prossima storia
+ *   potrebbe essere la tua." — with WhatsApp (red), the request and the phone.
+ *   No invented quote, person or rating.
  */
 export function ReviewsSection() {
   const [lead, ...others] = approvedTestimonials(reviews.testimonials);
+  const titleId = `${reviews.id}-title`;
   if (!lead) return <Invitation />;
   return (
-    <Section tone="white" spacing="md" id={reviews.id} aria-labelledby={`${reviews.id}-title`}>
-      <Container className="flex flex-col gap-10 lg:gap-12">
-        <SectionHeader id={`${reviews.id}-title`} eyebrow={reviews.eyebrow} title={reviews.title} />
-        <figure
-          data-reveal="rise"
-          className="flex flex-col gap-6 border-l-4 border-success-graphic pl-6 sm:pl-10"
-        >
-          <blockquote className="max-w-[32ch] type-heading-lg">“{lead.quote}”</blockquote>
-          <figcaption className="flex flex-col gap-0.5">
-            <span className="type-label-lg">{lead.person}</span>
+    <Chapter id={reviews.id} tone="soft-white" labelledBy={titleId} {...reviews.chapter}>
+      <div className="ed-grid gap-y-10">
+        <div className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-5">
+          <Label>{reviews.label}</Label>
+          <h2 id={titleId} className="ed-h2 text-balance">
+            {reviews.title}
+          </h2>
+        </div>
+        <figure data-reveal="rise" className="col-span-4 flex flex-col gap-6 md:col-span-8 lg:col-span-10 lg:col-start-7">
+          <QuoteMark />
+          <blockquote className="max-w-[30ch] ed-h3 normal-case">{lead.quote}</blockquote>
+          <figcaption className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-hairline pt-4">
+            <span className="ed-label text-text-primary">{lead.person}</span>
             {(lead.role || lead.company) && (
-              <span className="type-body-sm text-text-secondary">
+              <span className="ed-small text-text-secondary">
                 {[lead.role, lead.company].filter(Boolean).join(", ")}
               </span>
             )}
-            {lead.context && <span className="type-caption text-success">{lead.context}</span>}
+            {lead.context && <span className="ed-meta text-success">{lead.context}</span>}
           </figcaption>
         </figure>
         {others.length > 0 && (
-          <ul className="grid gap-x-(--spacing-grid-gap) border-t border-border-default md:grid-cols-3">
+          <ul className="col-span-4 grid gap-x-(--spacing-col-gap) border-t border-hairline md:col-span-8 md:grid-cols-3 lg:col-span-16">
             {others.map((item) => (
               <li key={item.person} className="flex flex-col gap-4 py-6">
-                <blockquote className="type-body-lg">“{item.quote}”</blockquote>
-                <p className="type-label-md">
+                <blockquote className="ed-body">“{item.quote}”</blockquote>
+                <p className="ed-label">
                   {item.person}
                   {item.company && <span className="text-text-secondary"> · {item.company}</span>}
                 </p>
@@ -51,55 +65,48 @@ export function ReviewsSection() {
             ))}
           </ul>
         )}
-      </Container>
-    </Section>
+      </div>
+    </Chapter>
   );
 }
 
 function Invitation() {
   const { invitation } = reviews;
   const { contact } = siteConfig;
+  const titleId = `${reviews.id}-title`;
   return (
-    <Section
-      tone="white"
-      spacing="sm"
-      id={reviews.id}
-      data-conversion
-      aria-labelledby={`${reviews.id}-title`}
-    >
-      <Container
-        data-reveal="rise"
-        className="flex flex-col gap-6 border-y border-border-default py-8 lg:py-10 xl:layout-grid xl:items-center"
-      >
-        <div className="flex flex-col gap-3 xl:col-span-6">
-          <Eyebrow>{invitation.eyebrow}</Eyebrow>
-          <h2 id={`${reviews.id}-title`} className="type-heading-lg">
-            {invitation.title}
+    <Chapter id={reviews.id} tone="soft-white" labelledBy={titleId} conversion {...reviews.chapter}>
+      <div className="ed-grid gap-y-8 lg:items-end">
+        <div data-reveal="rise" className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-9">
+          <Label>{invitation.label}</Label>
+          <h2 id={titleId} className="ed-h2 text-balance">
+            {invitation.title[0]} <span className="text-success">{invitation.title[1]}</span>
           </h2>
-          <p className="max-w-text type-lede text-text-secondary">{invitation.body}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 xl:col-span-6 xl:justify-end">
-          <ButtonLink href={invitation.quote.href} trailingIcon={ArrowRight}>
-            {invitation.quote.label}
-          </ButtonLink>
-          <ButtonLink href={contact.whatsappHref} variant="secondary" leadingIcon={MessageCircle}>
-            {invitation.whatsapp.label}
-            <span className="sr-only"> {invitation.whatsapp.hint}</span>
-          </ButtonLink>
-          <a
-            href={contact.phoneHref}
-            className="group/call inline-flex min-h-(--target-min) items-center gap-2 px-2 type-label-md tabular-nums text-text-primary transition-ui hover:text-success"
-          >
-            <Phone
-              aria-hidden="true"
-              strokeWidth={2}
-              className="size-4 transition-transform duration-200 motion-safe:group-hover/call:-rotate-12"
-            />
-            <span className="sr-only">{invitation.call} </span>
-            {contact.phoneDisplay}
-          </a>
+        <div className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-6 lg:col-start-11">
+          <p className="flex flex-col gap-1 border-t border-hairline pt-4">
+            <span className="ed-h4">{invitation.question}</span>
+            <span className="ed-body text-text-secondary">{invitation.body}</span>
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <ActionLink href={contact.whatsappHref} leadingIcon={MessageCircle}>
+              {invitation.write.label}
+              <span className="sr-only"> {invitation.write.hint}</span>
+            </ActionLink>
+            <ActionLink href={invitation.quote.href} variant="outline">
+              {invitation.quote.label}
+            </ActionLink>
+            <a
+              href={contact.phoneHref}
+              className="inline-flex min-h-(--target-min) items-center gap-2 px-1 ed-action text-text-primary transition-colors duration-200 hover:text-success"
+            >
+              <Phone aria-hidden="true" strokeWidth={1.75} className="size-4 text-success" />
+              <span className="sr-only">{invitation.call} </span>
+              <span className="tabular-nums">{contact.phoneDisplay}</span>
+            </a>
+          </div>
         </div>
-      </Container>
-    </Section>
+      </div>
+    </Chapter>
   );
 }
