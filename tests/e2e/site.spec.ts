@@ -4,7 +4,7 @@ import { expect, type Page, test } from "@playwright/test";
 /*
  * The site below the hero: page structure, the site header and mobile menu,
  * the request flow, and the rules below the hero — no WebGL or video outside
- * it, only the live livery's photographs and the truck's own cut-outs
+ * it, only the background set and the truck's own cut-outs
  * (docs/hero-baseline.md, docs/cinematic-media-manifest.md). Reduced motion
  * keeps scrolling native (no smooth scroll), pins nothing, and shows every
  * act's steps and reveals in their final state.
@@ -67,11 +67,11 @@ test.describe("page structure", () => {
     expect(outside).toEqual([]);
   });
 
-  // The supplied image package: only the live livery, the coverage map and the
+  // The supplied image package: only the background set, the coverage map and the
   // cut-outs rendered from the hero's own truck model reach public pages (never
   // an alternative livery or an archived draft); every image has an alt
   // (meaningful, or "" when decorative) and loads lazily.
-  test("images outside the hero: live livery and truck cut-outs only, alt text, lazy loading", async ({
+  test("images outside the hero: the background set, maps and truck cut-outs only, alt text, lazy loading", async ({
     page,
   }) => {
     await page.goto("/");
@@ -87,7 +87,7 @@ test.describe("page structure", () => {
     expect(images.length).toBeGreaterThanOrEqual(10);
     for (const image of images) {
       expect(image.src).toContain("/assets/images/content/");
-      expect(image.src).toMatch(/\/(scenes\/final|maps|cutouts)\//);
+      expect(image.src).toMatch(/\/(backgrounds|maps|cutouts)\//);
       expect(image.alt, image.src).not.toBeNull();
       expect(image.loading, image.src).toBe("lazy");
     }
@@ -217,7 +217,7 @@ test.describe("page structure", () => {
       [...document.querySelectorAll("img")]
         .filter((img) => !img.closest("[data-hero]"))
         .map((img) => decodeURIComponent(img.getAttribute("src") ?? ""))
-        .filter((src) => src.includes("/scenes/")),
+        .filter((src) => src.includes("/backgrounds/")),
     );
     // The fleet selector renders its three pictures once; nothing else repeats.
     expect(sources.length).toBeGreaterThan(0);

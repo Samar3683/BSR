@@ -1,15 +1,17 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import type { SlotMedia } from "@/types/media";
 
-import { SCENES } from "./media-manifest";
 import { siteMedia } from "./site-media";
 
 type Slot = [name: string, media: SlotMedia];
 
 const filled: Slot[] = Object.entries(siteMedia).flatMap(([section, group]) =>
-  Object.entries(group as Record<string, SlotMedia | undefined>).flatMap(
-    ([slot, media]): Slot[] => (media ? [[`${section}.${slot}`, media]] : []),
+  Object.entries(group as Record<string, SlotMedia | undefined>).flatMap(([slot, media]): Slot[] =>
+    media ? [[`${section}.${slot}`, media]] : [],
   ),
 );
 const srcOf = (media: SlotMedia) => (media.kind === "image" ? media.src : media.poster);
@@ -24,18 +26,16 @@ describe("site media", () => {
     }
   });
 
-  it("uses only the live livery", () => {
+  it("uses only the background set", () => {
     for (const [slot, media] of filled) {
-      expect(srcOf(media), slot).toContain("/scenes/final/");
+      expect(srcOf(media), slot).toContain("/content/backgrounds/");
     }
   });
 
-  it("places every photograph of the live livery", () => {
-    const used = new Set(filled.map(([, media]) => srcOf(media)));
-    const unused = Object.values(SCENES.final)
-      .map((asset) => asset!.src)
-      .filter((src) => !used.has(src));
-    expect(unused).toEqual([]);
+  it("ships every picture it names", () => {
+    for (const [slot, media] of filled) {
+      expect(existsSync(join("public", srcOf(media))), slot).toBe(true);
+    }
   });
 
   it("describes every photograph shown as content", () => {
