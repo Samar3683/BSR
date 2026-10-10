@@ -1,14 +1,18 @@
 import { assetUrl } from "@/config/assets";
 import type { RealtimeQuality } from "@/lib/performance/quality";
 
+import { HERO_CAPTURES } from "./hero-captures";
+
 /*
  * Hero asset manifest — the single place hero asset paths are declared.
  *
- * ⚠ DEVELOPMENT PLACEHOLDERS: every still and clip below is a generated,
- * clearly labelled placeholder (scripts/generate-hero-placeholders.mjs).
- * Real-time models are `null`, which makes the runtime build contract-
- * compliant placeholder geometry in code. Phase 2 replaces these entries with
- * approved production assets without code changes.
+ * Stills and phone clips are captured from the real-time scene itself
+ * (scripts/capture-hero-stills.mjs): the poster and the ladder show exactly
+ * the frames the real-time hero takes over from. Re-capture them whenever the
+ * scene, the truck or the camera changes; the script also writes the hashed file
+ * names (./hero-captures.ts) read here. Real-time models are the production
+ * GLBs below; a `null` model makes the runtime build contract-compliant
+ * placeholder geometry in code (tests, missing assets).
  */
 
 export type HeroStillId = "S1" | "S2" | "S3" | "S4";
@@ -32,23 +36,24 @@ export interface HeroStill {
 }
 
 function still(id: HeroStillId, checkpoint: HeroStill["checkpoint"]): HeroStill {
-  const base = `fallback/hero/hero-${id.toLowerCase()}-${checkpoint}`;
+  const files = HERO_CAPTURES.stills[id];
   return {
     id,
     checkpoint,
     wide: {
-      src: assetUrl("images", `${base}-wide.dev.png`),
+      src: assetUrl("images", `fallback/hero/${files.wide}`),
       width: 2560,
       height: 1440,
       objectPosition: "62% 50%",
     },
     compact: {
-      src: assetUrl("images", `${base}-compact.dev.png`),
+      src: assetUrl("images", `fallback/hero/${files.compact}`),
       width: 1080,
       height: 1920,
-      objectPosition: "50% 30%",
+      // Captured in the portrait framing bucket: centred, the truck stays clear of the copy.
+      objectPosition: "50% 50%",
     },
-    placeholder: true,
+    placeholder: false,
   };
 }
 
@@ -74,24 +79,20 @@ export interface HeroClip {
   placeholder: boolean;
 }
 
-// Production clips will list AV1 (MP4) first and H.264 (MP4) as fallback.
+/** Portrait 720 × 1280, 30 fps, rendered from the real-time scene: AV1 first, H.264 fallback. */
+function clip(id: HeroClipId) {
+  const files = HERO_CAPTURES.clips[id];
+  return [
+    { src: assetUrl("video", `hero/${files.av1}`), type: 'video/mp4; codecs="av01.0.05M.08"' },
+    { src: assetUrl("video", `hero/${files.h264}`), type: 'video/mp4; codecs="avc1.640032"' },
+  ];
+}
+
 export const HERO_CLIPS: Record<HeroClipId, HeroClip> = {
-  A: {
-    id: "A",
-    sources: [
-      { src: assetUrl("video", "hero/hero-clip-a.dev.webm"), type: 'video/webm; codecs="vp8"' },
-    ],
-    finalStill: "S2",
-    placeholder: true,
-  },
-  B: {
-    id: "B",
-    sources: [
-      { src: assetUrl("video", "hero/hero-clip-b.dev.webm"), type: 'video/webm; codecs="vp8"' },
-    ],
-    finalStill: "S4",
-    placeholder: true,
-  },
+  // S1 (opening) → S2 (reveal hold).
+  A: { id: "A", sources: clip("A"), finalStill: "S2", placeholder: false },
+  // S2 (hold) → departure → road → S4 (Italy).
+  B: { id: "B", sources: clip("B"), finalStill: "S4", placeholder: false },
 };
 
 export interface HeroModelSet {

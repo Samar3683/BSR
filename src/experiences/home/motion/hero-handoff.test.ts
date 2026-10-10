@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { handoffCheckpoint, ladderIndex } from "./hero-handoff";
+import { handoffCheckpoint, ladderIndex, withinHandoffWindow } from "./hero-handoff";
 
 describe("real-time handoff checkpoints", () => {
   it("H1: at the opening (progress ≤ 0.10), matching the poster", () => {
@@ -16,10 +16,28 @@ describe("real-time handoff checkpoints", () => {
     expect(handoffCheckpoint(0.42, 500)).toBe("H2");
   });
 
+  it("H3/H4: on the open road and the Italy overview, once the road world is loaded", () => {
+    expect(handoffCheckpoint(0.77, 500, true)).toBe("H3");
+    expect(handoffCheckpoint(0.97, 500, true)).toBe("H4");
+    expect(handoffCheckpoint(1, 500, true)).toBe("H4");
+    expect(handoffCheckpoint(0.77, 199, true)).toBeNull();
+    // Without the road world there is nothing to show there.
+    expect(handoffCheckpoint(0.77, 10_000, false)).toBeNull();
+    expect(handoffCheckpoint(0.97, 10_000, false)).toBeNull();
+  });
+
   it("never allows a takeover anywhere else", () => {
-    for (const progress of [0.2, 0.3, 0.45, 0.6, 0.72, 0.97]) {
-      expect(handoffCheckpoint(progress, 10_000)).toBeNull();
+    for (const progress of [0.2, 0.3, 0.45, 0.6, 0.62, 0.85, 0.92]) {
+      expect(handoffCheckpoint(progress, 10_000, true)).toBeNull();
     }
+  });
+
+  it("keeps validation only inside a handoff window", () => {
+    expect(withinHandoffWindow(0.05, false)).toBe(true);
+    expect(withinHandoffWindow(0.39, false)).toBe(true);
+    expect(withinHandoffWindow(0.77, true)).toBe(true);
+    expect(withinHandoffWindow(0.77, false)).toBe(false);
+    expect(withinHandoffWindow(0.5, true)).toBe(false);
   });
 });
 

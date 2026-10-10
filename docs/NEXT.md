@@ -2,7 +2,29 @@
 
 Where the project stands and what comes next. Update this file at the end of every phase.
 
-## Where we are (1 October 2026)
+## Where we are (10 October 2026, evening)
+
+**The hero is now a scroll-scrubbed video** (the generated 15 s footage) instead of the
+real-time 3D scene: [hero-video.md](hero-video.md). Scrolling down advances it, up reverses it,
+stopping holds the frame; the copy and two cues are HTML placed on the footage; the poster is the
+video's first frame; reduced motion, no JavaScript, Save-Data and a missing or slow video give a
+static one-viewport hero. Re-encode with `pnpm assets:hero-video` after replacing the footage.
+Open: Safari/iOS on real devices; the production host's MIME type and range support; removing
+the unmounted 3D hero code and assets once the video hero is approved.
+
+## Earlier the same day
+
+**Hero and film upgrade: done** — see [hero-upgrade/README.md](hero-upgrade/README.md) for the
+baseline, every change, the measurements and the evidence. In short: the hero's stills and phone
+clips are now captured from the real-time scene (no placeholder art ships); the road kit loads
+after the first 3D frame (fast 4G: 6.1 s → 3.7 s); real-time can also take over on the road and
+the Italy map; the story scrolls over 300svh; truck materials, the Reach and the map transition,
+the portrait framing and the coverage map were reworked; the CC BY credit for the truck models is
+in the footer. The hero lock was lifted for this work at the owner's request and re-verified (unit,
+e2e incl. software WebGL, real-GPU benchmark). Re-capture stills and cut-outs after any scene
+change (`node scripts/capture-hero-stills.mjs`, `pnpm assets:truck-cutouts`).
+
+## Earlier (1 October 2026)
 
 **Phase 4 — content accuracy, business clarity, trust, conversion, production readiness: done.**
 
@@ -49,15 +71,9 @@ loops and image sequences listed there; client logos and testimonials with writt
 
 ## Launch blockers
 
-1. **Hero placeholder art.** The hero's stills and phone clips are labelled development
-   placeholders: the text "DEVELOPMENT PLACEHOLDER — NOT FINAL ART" and a magenta dashed
-   "TRUCK ZONE" box are drawn into the images themselves (`scripts/generate-hero-placeholders.mjs`,
-   `src/experiences/home/config/hero-assets.ts`, `docs/hero-baseline.md` → open items) — they are
-   in the production build, not a test overlay. Visitors on the stills path (no WebGL, weak
-   devices, reduced motion, and while the 3D scene loads) would see them. Replace them with the approved
-   stills captured from the real-time scene through the hero asset pipeline
-   (`docs/hero-asset-pipeline.md`) — a change inside the locked hero, done under its change policy
-   and re-verified against the baseline.
+1. **Tractor geometry (quality, not a functional blocker).** The production tractor has 37.5k
+   triangles against the approved 150–250k high-tier target (round lamps are 8-sided, the grille
+   has no slats). Specification: [hero-upgrade/README.md](hero-upgrade/README.md), "Remaining".
 2. **Legal review of `/privacy`**, and its hosting paragraph (provider, server logs) once the site
    is deployed.
 3. **Domain.** Canonical URLs, Open Graph and the sitemap point to https://bsrtrasporti.com — right
@@ -89,20 +105,20 @@ Every photograph is placed once in `src/config/site-media.ts` (by section, alt t
 per breakpoint); `site-media.test.ts` fails on repeats, a non-live livery or an unplaced file.
 Replacing a picture is an edit to that file only — no layout work.
 
-| Slot (`siteMedia.…`)        | Real shot needed                                         | Today (generated)  |
-| --------------------------- | -------------------------------------------------------- | ------------------ |
-| `fleet.van`                 | BSR van, three-quarter front, in the real livery          | van                |
-| `fleet.rigid`               | BSR rigid truck (motrice), same framing                   | rigid-truck        |
-| `fleet.articulated`         | BSR tractor + semi-trailer, same framing                  | articulated-truck  |
-| `services.express`          | A BSR truck on an Italian motorway (dawn/dusk)            | express-motorway   |
-| `services.dedicated`        | A dedicated load at a dock, vehicle reserved              | dedicated-dock     |
-| `process.main`              | Real loading: forklift or pallet going on a BSR vehicle   | forklift-loading   |
-| `security.main`             | Cargo strapped and protected inside a BSR vehicle         | secured-cargo      |
-| `sectors.stage` + 4 sectors | Goods ready to ship; one picture per sector if available  | wrapped-pallet     |
-| `about.portrait`            | The titolare or a driver, with consent (drop the caption)  | direct-contact     |
-| `coverage.background`       | Aerial of the base area / northern plain                 | coverage-aerial    |
-| `finalCta.background`       | A BSR departure (dawn), vehicle on the right third        | truck-departure    |
-| new: Carpi base             | The operational base in Carpi, if BSR wants it shown      | —                  |
+| Slot (`siteMedia.…`)        | Real shot needed                                          | Today (generated) |
+| --------------------------- | --------------------------------------------------------- | ----------------- |
+| `fleet.van`                 | BSR van, three-quarter front, in the real livery          | van               |
+| `fleet.rigid`               | BSR rigid truck (motrice), same framing                   | rigid-truck       |
+| `fleet.articulated`         | BSR tractor + semi-trailer, same framing                  | articulated-truck |
+| `services.express`          | A BSR truck on an Italian motorway (dawn/dusk)            | express-motorway  |
+| `services.dedicated`        | A dedicated load at a dock, vehicle reserved              | dedicated-dock    |
+| `process.main`              | Real loading: forklift or pallet going on a BSR vehicle   | forklift-loading  |
+| `security.main`             | Cargo strapped and protected inside a BSR vehicle         | secured-cargo     |
+| `sectors.stage` + 4 sectors | Goods ready to ship; one picture per sector if available  | wrapped-pallet    |
+| `about.portrait`            | The titolare or a driver, with consent (drop the caption) | direct-contact    |
+| `coverage.background`       | Aerial of the base area / northern plain                  | coverage-aerial   |
+| `finalCta.background`       | A BSR departure (dawn), vehicle on the right third        | truck-departure   |
+| new: Carpi base             | The operational base in Carpi, if BSR wants it shown      | —                 |
 
 Brief for the shoot: landscape ≥ 2560 px plus a 4:5 crop of each; the real livery only; no
 heavy grading; people only with written consent; subjects kept clear of the left text column

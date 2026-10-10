@@ -220,7 +220,10 @@ export const BUCKET_ADJUSTMENTS: Record<AspectBucket, BucketAdjustment> = {
   // Narrower frames keep the same left text zone, so the truck needs more room, not less shift.
   standard: { fovScale: 1.08, distanceScale: 1.15, lensShiftXScale: 1, lensShiftYOffset: 0 },
   narrow: { fovScale: 1.2, distanceScale: 1.4, lensShiftXScale: 1, lensShiftYOffset: 0 },
-  portrait: { fovScale: 1.45, distanceScale: 1.5, lensShiftXScale: 0, lensShiftYOffset: 0.2 },
+  // Portrait (phones' stills and clips, portrait tablets): the copy fills the lower ~70 %, so
+  // the truck is lifted into the band above it (≈ 12–31 % of the height) and shifted right
+  // enough to keep the trailer's wordmark in frame.
+  portrait: { fovScale: 1.45, distanceScale: 1.5, lensShiftXScale: 0.32, lensShiftYOffset: 0.45 },
 };
 
 export const OCCLUSION_MAX_FOV = 55;

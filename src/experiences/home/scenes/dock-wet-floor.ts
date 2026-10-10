@@ -66,8 +66,10 @@ const SHADER = {
       }
       c /= total;
       vec3 view = normalize(cameraPosition - vWorld);
-      float fres = pow(1.0 - clamp(view.y, 0.0, 1.0), 3.0);
-      float alpha = clamp((0.4 + 0.9 * fres) * smoothstep(0.04, 0.5, damp) * (0.5 + 0.5 * sharp), 0.0, 0.85);
+      // Schlick-like: a few per cent looking down, strong only towards grazing. A flat 0.4
+      // floor made the steep near-field views (departure) glow with lamp streaks.
+      float fres = pow(1.0 - clamp(view.y, 0.0, 1.0), 4.0);
+      float alpha = clamp((0.08 + 0.92 * fres) * smoothstep(0.04, 0.5, damp) * (0.5 + 0.5 * sharp), 0.0, 0.85);
       gl_FragColor = vec4(c * color, alpha);
       #include <tonemapping_fragment>
       #include <colorspace_fragment>
@@ -93,7 +95,12 @@ export function createWetFloor(mask: DataTexture, size = 264, textureSize = 512)
   floor.renderOrder = 1;
   const material = floor.material as ShaderMaterial;
   material.uniforms.dampMap!.value = mask;
-  material.uniforms.dampBounds!.value = new Vector4(DAMP_BOUNDS.x0, DAMP_BOUNDS.z0, DAMP_BOUNDS.size, 0);
+  material.uniforms.dampBounds!.value = new Vector4(
+    DAMP_BOUNDS.x0,
+    DAMP_BOUNDS.z0,
+    DAMP_BOUNDS.size,
+    0,
+  );
   material.transparent = true;
   material.depthWrite = false;
   // The reflection is already blurred/broken by the shader above, so it never needs

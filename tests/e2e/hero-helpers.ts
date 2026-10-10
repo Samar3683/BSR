@@ -3,96 +3,71 @@ import type { Page } from "@playwright/test";
 /*
  * Shared helpers for the hero browser tests. They run against the production
  * test build (NEXT_PUBLIC_BSR_HERO_TEST_HOOKS=true), which exposes
- * window.__BSR_HERO__ and the ?hero-* overrides.
+ * window.__BSR_HERO_VIDEO__ (components/hero-video.tsx).
  */
 
-export const REALTIME = "/?hero-path=realtime&hero-allow-software&hero-tier=low";
-
-/**
- * Headless Chromium has no GPU; software WebGL (SwiftShader) needs this flag.
- * Only suites that deliberately exercise rendering opt in — without it the
- * browser behaves like a real machine without hardware WebGL.
- */
-export const SOFTWARE_WEBGL = { launchOptions: { args: ["--enable-unsafe-swiftshader"] } };
 export const HEADLINE = /Trasporti espressi e dedicati/;
 
-export type Snapshot = {
-  path: string;
-  realtime: string;
-  phase: string | null;
-  ladderIndex: number;
-  scrollTriggers: number;
-  media: {
-    active: { clip: string; userPaused: boolean } | null;
-    played: { A: boolean; B: boolean };
-  };
-  metrics: {
-    storyProgress: number;
-    world: string;
-    mode: string;
-    dockDistance: number;
-    dockSpeed: number;
-    roadSpeed: number;
-  } | null;
-  audit: {
-    violations: string[];
-    rebases: Array<{ progress: number; coverage: number }>;
-    switches: Array<{ to: string; progress: number; coverage: number }>;
-  } | null;
+export type HeroVideoSnapshot = {
+  mode: "pending" | "video" | "static";
+  reason: string | null;
+  ready: boolean;
+  src: string;
+  frame: number;
+  targetFrame: number;
+  progress: { raw: number; displayed: number };
+  heroScrollTriggers: number;
 };
 
-export async function hero(page: Page): Promise<Snapshot> {
+export function heroVideo(page: Page): Promise<HeroVideoSnapshot | null> {
   return page.evaluate(() => {
-    const h = window.__BSR_HERO__!;
+    const h = window.__BSR_HERO_VIDEO__;
+    if (!h) return null;
     return {
-      path: h.path,
-      realtime: h.realtime,
-      phase: h.phase,
-      ladderIndex: h.ladderIndex,
-      scrollTriggers: h.heroScrollTriggers,
-      media: h.media,
-      metrics: h.runtime?.metrics() ?? null,
-      audit: h.runtime?.audit ?? null,
+      mode: h.mode,
+      reason: h.reason,
+      ready: h.ready,
+      src: h.src,
+      frame: h.frame,
+      targetFrame: h.targetFrame,
+      progress: h.progress,
+      heroScrollTriggers: h.heroScrollTriggers,
     };
   });
 }
 
-export async function waitForHero(page: Page) {
-  await page.waitForFunction(() => window.__BSR_HERO__ && window.__BSR_HERO__.path !== "pending");
+/** Waits until the hero has settled on a path: the video revealed, or static. */
+export async function waitForHeroVideo(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => window.__BSR_HERO_VIDEO__?.ready || window.__BSR_HERO_VIDEO__?.mode === "static",
+    null,
+    { timeout: 30_000 },
+  );
 }
 
-export async function waitForRealtime(page: Page, status: "active" | "failed" = "active") {
-  try {
-    await page.waitForFunction((s) => window.__BSR_HERO__?.realtime === s, status, {
-      timeout: 45_000,
-    });
-  } catch (error) {
-    // Say where it stopped (loading, compiling, a readiness failure…), not just "timeout".
-    const state = await page
-      .evaluate(() => {
-        const h = window.__BSR_HERO__;
-        return h && { realtime: h.realtime, phase: h.phase, failure: h.failure, tier: h.tier };
-      })
-      .catch(() => null);
-    throw new Error(`real-time never became "${status}": ${JSON.stringify(state)}`, {
-      cause: error,
-    });
-  }
-}
-
-/** Scrolls so the hero story sits at `progress` (0–1). */
-export async function scrollHero(page: Page, progress: number) {
+/** Scrolls to hero progress p and waits until the displayed frame is the target. */
+export async function scrubTo(page: Page, p: number): Promise<HeroVideoSnapshot> {
   await page.evaluate((p) => {
     const section = document.querySelector<HTMLElement>("[data-hero]")!;
     const range = section.offsetHeight - window.innerHeight;
     window.scrollTo({ top: section.offsetTop + p * range, behavior: "instant" });
-  }, progress);
+  }, p);
+  await page.waitForFunction(
+    (p) => Math.abs((window.__BSR_HERO_VIDEO__?.progress.displayed ?? -1) - p) < 0.01,
+    p,
+  );
+  await page.waitForFunction(() => {
+    const h = window.__BSR_HERO_VIDEO__;
+    return h !== undefined && h.frame === h.targetFrame;
+  });
+  return (await heroVideo(page))!;
 }
 
-/** Scrolls gradually (like a visitor), one frame-ish step at a time. */
-export async function glideHero(page: Page, from: number, to: number, steps = 24) {
-  for (let i = 1; i <= steps; i++) {
-    await scrollHero(page, from + ((to - from) * i) / steps);
-    await page.waitForTimeout(60);
-  }
+export function heroHeightInViewports(page: Page): Promise<number> {
+  return page.evaluate(
+    () =>
+      Math.round(
+        (document.querySelector<HTMLElement>("[data-hero]")!.offsetHeight / innerHeight) * 100,
+      ) / 100,
+  );
 }

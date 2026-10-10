@@ -1,13 +1,6 @@
 import { contact, europeList, transit } from "@/config/site-content";
 
-/**
- * Frequently asked questions — real customer concerns, answered only with
- * VERIFIED facts (docs/content-audit.md; most restate the official site's
- * own FAQ). Timings stay indicative; updates are the contact person's, by
- * WhatsApp or phone (no online or GPS tracking); insurance exactly as
- * published; no response-time promise. Contacts and countries come from
- * config/site-content.ts, never retyped here.
- */
+
 export interface FaqItem {
   question: string;
   answer: string;

@@ -1,4 +1,12 @@
-import { Group, type Object3D, type WebGLRenderer } from "three";
+import {
+  DirectionalLight,
+  Group,
+  HemisphereLight,
+  MeshBasicMaterial,
+  type Object3D,
+  Vector3,
+  type WebGLRenderer,
+} from "three";
 
 import type { RealtimeQuality } from "@/lib/performance/quality";
 import { createGltfLoader, type GltfAssetLoader } from "@/lib/three/gltf-loader";
@@ -25,7 +33,14 @@ export interface HeroWorldParts {
   root: Group;
   rig: TruckRigBinding;
   dock: DockWorld;
+  /**
+   * The road world — or, while the road kit is still downloading, an empty stand-in
+   * (`roadKitUrl` set): the kit is only needed from the trailer wipe on, so it never
+   * delays the first frame. See `buildRoadWorld` and `HeroRuntime.attachRoad`.
+   */
   road: RoadWorld;
+  /** Road kit still to load after the first frame (null: `road` is final). */
+  roadKitUrl: string | null;
   sky: SkyDome;
   /** Measured cost of what was loaded (debug panel, tests). */
   stats: HeroAssetStats;
@@ -57,19 +72,21 @@ export async function buildHeroWorld(options: {
   renderer: WebGLRenderer;
   models: HeroModelSet;
   tier: RealtimeQuality;
+  /** Shared with `buildRoadWorld` (one transcoder); owned — and disposed — by the caller. */
+  loader?: GltfAssetLoader;
 }): Promise<HeroWorldParts> {
   const { renderer, models, tier } = options;
-  const needsLoader = Boolean(models.tractor || models.trailer || models.dock || models.roadKit);
-  const loader = needsLoader ? createGltfLoader(renderer) : null;
+  // Only what the opening needs: the road kit (about half of the tier's bytes) loads
+  // after the first frame (buildRoadWorld), so it never competes for bandwidth with it.
+  const needsLoader = Boolean(models.tractor || models.trailer || models.dock);
+  const ownLoader = needsLoader && !options.loader ? createGltfLoader(renderer) : null;
+  const loader = options.loader ?? ownLoader;
   try {
-    const [tractor, trailer, dockKit, roadKitScene] = await Promise.all([
+    const [tractor, trailer, dockKit] = await Promise.all([
       models.tractor ? loadRoot(loader!, models.tractor, "Tractor") : createPlaceholderTractor(),
       models.trailer ? loadRoot(loader!, models.trailer, "Trailer") : createPlaceholderTrailer(),
       models.dock ? loader!.load(models.dock).then((gltf) => gltf.scene) : null,
-      // Road kit (Gate B): impostor atlases, card metadata and the baked road surface.
-      models.roadKit ? loader!.load(models.roadKit).then((gltf) => gltf.scene) : null,
     ]);
-    const roadKit = roadKitScene ? readRoadKit(roadKitScene) : null;
     // Dock photo-backdrop (dock-backdrop.ts): built but not wired in yet — the
     // low-resolution, truck-filled source crops didn't produce a clean result
     // (see the module's own notes). Left in place for a future attempt with
@@ -111,12 +128,13 @@ export async function buildHeroWorld(options: {
       ],
       fold: false,
     });
-    const dock = createDockWorld(roadKit?.interior ?? null);
+    const dock = createDockWorld();
     if (dockKit) {
       dock.blocking.visible = false;
       dock.group.add(dockKit);
     }
-    const road = createRoadWorld(roadKit);
+    // No kit in the manifest: the procedural road is final at once.
+    const road = models.roadKit ? createRoadStandIn() : createRoadWorld(null);
     const sky = createSkyDome();
     const root = new Group();
     root.name = "HeroWorld";
@@ -126,13 +144,51 @@ export async function buildHeroWorld(options: {
       rig,
       dock,
       road,
+      roadKitUrl: models.roadKit,
       sky,
       stats,
       production,
     };
   } finally {
-    loader?.dispose();
+    ownLoader?.dispose();
   }
+}
+
+/**
+ * Loads the road kit (Gate B: impostor atlases, card metadata, the baked road
+ * surface) and builds the road world from it. Runs after the first frame; the
+ * runtime swaps it in for the stand-in (`HeroRuntime.attachRoad`).
+ */
+export async function buildRoadWorld(options: {
+  loader: GltfAssetLoader;
+  url: string;
+}): Promise<RoadWorld> {
+  const gltf = await options.loader.load(options.url);
+  return createRoadWorld(readRoadKit(gltf.scene));
+}
+
+/**
+ * Empty road world held by the runtime until the real one arrives. Never shown:
+ * the runtime does not enter the road while it is bound (`HeroRuntime.waitingForRoad`).
+ * Its lights live in an invisible group, so they are not part of any program key.
+ */
+function createRoadStandIn(): RoadWorld {
+  const group = new Group();
+  group.name = "RoadWorldPending";
+  group.visible = false;
+  const sun = new DirectionalLight();
+  const ambient = new HemisphereLight();
+  group.add(sun, ambient);
+  return {
+    group,
+    ambient,
+    sun,
+    sunDirection: new Vector3(0, 1, 0),
+    ridge: new MeshBasicMaterial(),
+    farRidge: new MeshBasicMaterial(),
+    update: () => {},
+    prepare: () => {},
+  };
 }
 
 async function loadRoot(loader: GltfAssetLoader, url: string, name: string): Promise<Object3D> {

@@ -1,4 +1,12 @@
-import { Color, Fog, Matrix4, type PerspectiveCamera, type Scene, type WebGLRenderer } from "three";
+import {
+  Color,
+  Fog,
+  type LightShadow,
+  Matrix4,
+  type PerspectiveCamera,
+  type Scene,
+  type WebGLRenderer,
+} from "three";
 
 import { SCENE_COLORS } from "@/lib/three/brand-colors";
 
@@ -48,7 +56,10 @@ export interface HeroSceneBindings {
   renderer: WebGLRenderer;
   rig: TruckRigBinding;
   dock: DockWorld;
+  /** The road world, or its stand-in until `attachRoad` (see `roadPending`). */
   road: RoadWorld;
+  /** `road` is a stand-in: the road kit is still loading. */
+  roadPending?: boolean;
   sky: SkyDome;
   environment: HeroEnvironment;
 }
@@ -85,6 +96,20 @@ export interface HeroMetrics {
 
 const ROUTE_SKY = new Color(SCENE_COLORS.carbon);
 const scratchColor = new Color();
+
+function smoothstep(a: number, b: number, t: number): number {
+  const x = Math.min(1, Math.max(0, (t - a) / (b - a)));
+  return x * x * (3 - 2 * x);
+}
+
+/** Shadow map resolution for a light (the map is reallocated on its next use). */
+function configureShadow(light: { shadow: LightShadow }, size: number): void {
+  const resolution = Math.max(1, size);
+  if (light.shadow.mapSize.x === resolution && light.shadow.map) return;
+  light.shadow.mapSize.set(resolution, resolution);
+  light.shadow.map?.dispose();
+  light.shadow.map = null;
+}
 
 /**
  * One runtime per hero mount. Owns every high-frequency value in plain
@@ -126,6 +151,8 @@ export class HeroRuntime {
   private readonly world = new Matrix4();
   private readonly fog = new Fog(ROUTE_SKY.getHex(), 40, 220);
   private appliedShadowSize = -1;
+  private roadReady = true;
+  private readonly roadListeners = new Set<() => void>();
 
   constructor(
     private readonly progress: ProgressController,
@@ -144,10 +171,57 @@ export class HeroRuntime {
 
   bind(bindings: HeroSceneBindings): void {
     this.bindings = bindings;
+    this.roadReady = !bindings.roadPending;
     bindings.rig.root.matrixAutoUpdate = false;
     bindings.scene.fog = this.fog;
     this.appliedShadowSize = -1;
     this.dirty = true;
+  }
+
+  /**
+   * The story has reached the trailer wipe but the road world is not there yet
+   * (slow connection). The frame driver stops rendering and the still ladder
+   * covers the hero until `attachRoad`; the story itself waits at the wipe.
+   */
+  get waitingForRoad(): boolean {
+    return !this.roadReady && this.progress.displayed >= HERO_MARKS.wipeStart;
+  }
+
+  get hasRoad(): boolean {
+    return this.roadReady;
+  }
+
+  /**
+   * Swaps the loaded road world in for its stand-in. Called while the dock is on
+   * screen (the stand-in is never shown), or while the ladder covers a waiting
+   * hero — then the story snaps to the visitor's position, unseen.
+   */
+  attachRoad(road: RoadWorld): void {
+    const bindings = this.bindings;
+    if (!bindings || this.roadReady) return;
+    const previous = bindings.road.group;
+    const parent = previous.parent;
+    if (parent) parent.children.splice(parent.children.indexOf(previous), 1, road.group);
+    road.group.parent = parent;
+    previous.parent = null;
+    this.bindings = { ...bindings, road, roadPending: false };
+    configureShadow(road.sun, this.appliedShadowSize);
+    const waiting = this.waitingForRoad;
+    this.roadReady = true;
+    if (waiting) this.snapToProgress();
+    this.dirty = true;
+    for (const listener of [...this.roadListeners]) listener();
+    this.roadListeners.clear();
+  }
+
+  /** Runs `listener` once the road world is attached (at once if it already is). */
+  onRoadReady(listener: () => void): () => void {
+    if (this.roadReady) {
+      listener();
+      return () => {};
+    }
+    this.roadListeners.add(listener);
+    return () => this.roadListeners.delete(listener);
   }
 
   unbind(): void {
@@ -223,7 +297,12 @@ export class HeroRuntime {
     this.lastNow = now;
 
     const previousProgress = this.storyProgress;
-    const next = gateProgress(this.control, previousProgress, this.progress.displayed);
+    // Without the road world the story holds just short of the dock → road switch
+    // (unseen: the ladder covers a waiting hero) and resumes with a snap on attach.
+    const target = this.roadReady
+      ? this.progress.displayed
+      : Math.min(this.progress.displayed, HERO_MARKS.wipeSwitchForward - 1e-3);
+    const next = gateProgress(this.control, previousProgress, target);
     const progressChanged = next !== previousProgress;
     this.storyProgress = next;
     if (progressChanged) this.timeline.progress(next);
@@ -531,7 +610,10 @@ export class HeroRuntime {
     road.farRidge.color.copy(sky.horizon).multiplyScalar(0.8 * (1 - 0.6 * v.routeBlend));
     // The route end keeps the sunrise horizon: the physical world recedes under
     // the route language instead of cutting to a void.
-    sky.setOpacity(onRoad ? (1 - v.routeBlend * 0.45) * (1 - v.mapBlend) : 1);
+    // The sunrise leaves the frame as the map forms: by mid-blend the sea around Italy is
+    // carbon (at 1 − mapBlend the dome and clear colour kept a brown cast until the very end).
+    const mapSea = smoothstep(0, 0.45, v.mapBlend);
+    sky.setOpacity(onRoad ? (1 - v.routeBlend * 0.45) * (1 - mapSea) : 1);
     const envChanged = environment.update({
       dawn: v.dawn,
       routeBlend: onRoad ? v.routeBlend : 0,
@@ -544,7 +626,7 @@ export class HeroRuntime {
     if (envChanged) scene.environment = environment.texture;
     scratchColor.copy(sky.horizon);
     if (onRoad) {
-      scratchColor.lerp(ROUTE_SKY, Math.max(v.routeBlend * 0.55, v.mapBlend));
+      scratchColor.lerp(ROUTE_SKY, Math.max(v.routeBlend * 0.55, mapSea));
       // Long, soft morning haze: distant sheds and tree lines stay as silhouettes.
       // As the camera rises the haze recedes with it (never swallowing the view).
       // Capped: during the reach → Italy shot blend cameraParams.distance grows
@@ -580,17 +662,17 @@ export class HeroRuntime {
     road.sun.castShadow = size > 0 && onRoad;
     if (size === this.appliedShadowSize) return;
 
+    const toggled = this.appliedShadowSize < 0 || size > 0 !== this.appliedShadowSize > 0;
     renderer.shadowMap.enabled = size > 0;
-    for (const light of [dock.dockLight, road.sun]) {
-      light.shadow.mapSize.set(size || 1, size || 1);
-      light.shadow.map?.dispose();
-      light.shadow.map = null;
+    for (const light of [dock.dockLight, road.sun]) configureShadow(light, size);
+    // Only switching shadows on or off changes shader programs (the map size is not part
+    // of a program's key): a step-down between two shadowed levels recompiles nothing.
+    if (toggled) {
+      scene.traverse((object) => {
+        const material = (object as { material?: { needsUpdate: boolean } }).material;
+        if (material) material.needsUpdate = true;
+      });
     }
-    // Shadow toggles change shader programs.
-    scene.traverse((object) => {
-      const material = (object as { material?: { needsUpdate: boolean } }).material;
-      if (material) material.needsUpdate = true;
-    });
     this.appliedShadowSize = size;
   }
 

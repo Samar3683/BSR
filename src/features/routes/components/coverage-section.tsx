@@ -9,21 +9,7 @@ import { CoverageMap } from "./coverage-map";
 
 const STEPS = [0.2, 0.92] as const;
 
-/**
- * ACT 07 — La rete. The journey expanding across the country, at night.
- *
- * Pinned (≈ 3.8 viewports), on Carbon (the dusk of the departure):
- *  0 → 0.2    the aerial of the plain at golden hour comes up, the camera
- *             rising; the title is inked;
- *  0.12 → 0.26 the aerial falls away into the map (scale and fade): the road
- *             becomes the route;
- *  0.2 → 0.92 four camera positions over the BSR map — the base (Carpi), the
- *             north, Italy with the islands, Europe with the seven confirmed
- *             corridors arriving on red — each with its words on the left;
- *  0.93 → 1   the day comes back from below: the next act is on White.
- *
- * Unpinned: the aerial, the title, the four stages as a list, the whole map.
- */
+
 export function CoverageSection() {
   const titleId = `${coverage.id}-title`;
   const act = actOf(coverage.id);

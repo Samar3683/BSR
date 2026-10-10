@@ -110,6 +110,8 @@ export function HeroCinematic() {
   const [realtime, setRealtime] = useState<RealtimeStatus>("idle");
   const [phase, setPhase] = useState<HeroRealtimePhase | null>(null);
   const [failure, setFailure] = useState<HeroRealtimeFailure | null>(null);
+  /** Real-time is past the wipe and waits for the road world: the stills cover it. */
+  const [waiting, setWaiting] = useState(false);
   const [ladder, setLadder] = useState(0);
   const [warm, setWarm] = useState(false);
   const [media, dispatchMedia] = useReducer(mediaReducer, INITIAL_MEDIA_STATE);
@@ -180,7 +182,10 @@ export function HeroCinematic() {
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] },
     );
-    observer.observe(section);
+    // The sticky stage (one viewport tall), not the section: its ratio is how much of the
+    // screen the hero fills, whatever the story length. The section's own ratio fell below
+    // the clips' 0.5 start threshold once the story grew past one viewport.
+    observer.observe(anchor.current ?? section);
     void document.fonts?.ready.then(() => ScrollTrigger.refresh());
 
     return () => {
@@ -250,7 +255,8 @@ export function HeroCinematic() {
   }, []);
 
   const realtimeMounted = path === "realtime" && (realtime === "loading" || realtime === "active");
-  const ladderMode = realtime === "active" && path === "realtime" ? "standby" : "primary";
+  const realtimeShown = realtime === "active" && path === "realtime" && !waiting;
+  const ladderMode = realtimeShown ? "standby" : "primary";
   const stillIndex = path === "media" ? STILL_INDEX[mediaStill(media)] : ladder;
 
   // Inspector for the debug panel and test hooks (never in production builds).
@@ -349,7 +355,7 @@ export function HeroCinematic() {
         {realtimeMounted && (
           <div
             className="absolute inset-0 transition-opacity duration-(--duration-slow) ease-ui"
-            style={{ opacity: realtime === "active" ? 1 : 0 }}
+            style={{ opacity: realtimeShown ? 1 : 0 }}
             data-hero-canvas
           >
             <HeroRealtime
@@ -365,6 +371,7 @@ export function HeroCinematic() {
               onPhase={setPhase}
               onActive={onActive}
               onFailed={onFailed}
+              onWaiting={setWaiting}
             />
           </div>
         )}

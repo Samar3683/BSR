@@ -1,92 +1,192 @@
 /*
- * Hero layout geometry (CSS only, independent of the rendering path — so it
- * never shifts after hydration).
+ * Video hero layout and type (CSS only, so it never shifts after hydration).
  *
- *   height = one viewport (the sticky stage) + the story scroll distance
- *   compact layout: 70svh of story · standard/wide: 120svh
+ *   height = one viewport (the sticky stage) + the pinned scroll distance
+ *   (--hero-story-*, set from config/hero-video.ts on the section).
  *
- * The copy stays sticky through the reveal (progress ≤ 0.42) and then
- * scrolls away naturally; the stage stays sticky for the whole story.
+ * The footage carries the image; the copy is a compact block in the left third,
+ * in the header's own page container (ed-frame), vertically centred in the
+ * space below the navigation, the truck's cab clear on the right.
+ *
+ * Static hero — reduced motion, no JavaScript (a <noscript> rule), Save-Data,
+ * very short screens, or media that failed or did not load in time
+ * (data-hero-mode="static"): no pinned distance, and the stage grows with its
+ * content instead of clipping it.
+ *
+ * Compact layouts (narrower than 48rem, or portrait screens taller than 5:4):
+ * a full portrait crop would put the truck behind the copy, so the footage is a
+ * band above a text area; once the headline has left, the band opens to the
+ * full screen with the cues at the bottom.
  */
 
 .hero {
-  --hero-story: 70svh;
+  --hero-story: var(--hero-story-compact, 240svh);
+  --hero-framing: var(--hero-framing-compact, 66% 50%);
+  /* Warm white text, in three strengths. */
+  --hero-ink: var(--color-soft-white);
+  --hero-ink-soft: color-mix(in srgb, var(--color-soft-white) 86%, transparent);
+  --hero-ink-muted: color-mix(in srgb, var(--color-soft-white) 70%, transparent);
+  /* Main headline size: ~36–44 px on phones. */
+  --hero-title: clamp(2.125rem, 9.2vw, 2.75rem);
+  --hero-edge: max(1.5rem, var(--spacing-edge));
   position: relative;
   isolation: isolate;
   height: calc(100svh + var(--hero-story));
   background-color: var(--color-background-primary);
 }
 
-@media (width >= 48rem) {
+@media (width >= 48rem) and (aspect-ratio >= 4 / 5) {
   .hero {
-    --hero-story: 120svh;
+    --hero-story: var(--hero-story-regular, 320svh);
+    --hero-framing: var(--hero-framing-regular, 60% 50%);
+    /* ~40–72 px, following the width — and the height on short laptop screens. */
+    --hero-title: clamp(2.5rem, min(4.2vw, 7.4svh), 4.5rem);
+    --hero-edge: var(--spacing-edge);
   }
 }
 
-/* Visual stage: sticky for the full story, beneath the copy. */
-.stageTrack {
-  position: absolute;
-  inset: 0;
-  z-index: var(--z-canvas);
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    --hero-story: 0px;
+  }
 }
+
+/* Too short to pin a full-screen scene without clipping the copy (landscape phones). */
+@media (max-height: 34rem) {
+  .hero {
+    --hero-story: 0px;
+  }
+}
+
+.hero[data-hero-mode="static"] {
+  --hero-story: 0px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Stage                                                                       */
+/* -------------------------------------------------------------------------- */
 
 .stage {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  overflow: hidden;
-}
-
-/* Readability insurance on top of the visuals (composition comes first). */
-.scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  /* Eases with the copy; the floor keeps the state 5 line legible (no JS: full). */
-  opacity: calc(0.45 + 0.55 * var(--hero-copy-opacity, 1));
-  background-image: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--color-scrim) 82%, transparent) 0%,
-    color-mix(in srgb, var(--color-scrim) 45%, transparent) 38%,
-    transparent 62%
-  );
-}
-
-@media (width < 48rem) {
-  .scrim {
-    background-image: linear-gradient(
-      0deg,
-      color-mix(in srgb, var(--color-scrim) 88%, transparent) 0%,
-      color-mix(in srgb, var(--color-scrim) 55%, transparent) 42%,
-      transparent 64%
-    );
-  }
-}
-
-/* Copy: sticky while the truck is revealed, then released at the departure. */
-.copyTrack {
-  position: relative;
-  z-index: var(--z-content);
-  height: calc(100svh + var(--hero-story) * 0.42);
-  pointer-events: none;
-}
-
-.copy {
-  /* Faded out during the departure by the client island (opacity only). */
-  opacity: var(--hero-copy-opacity, 1);
   position: sticky;
   top: 0;
   display: flex;
   height: 100svh;
   flex-direction: column;
-  justify-content: flex-end;
-  padding-block: calc(var(--spacing-gutter) + 4.5rem) var(--spacing-gutter);
+  overflow: hidden;
 }
 
-@media (width >= 48rem) {
-  .copy {
-    justify-content: center;
+/* Static: the stage grows with its content; it is never clipped to one screen. */
+.hero[data-hero-mode="static"] .stage {
+  position: relative;
+  height: auto;
+  min-height: 100svh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage {
+    position: relative;
+    height: auto;
+    min-height: 100svh;
   }
+}
+
+@media (max-height: 34rem) {
+  .stage {
+    position: relative;
+    height: auto;
+    min-height: 100svh;
+  }
+}
+
+/* Footage: poster underneath, the video over it once a frame is presented. */
+.media {
+  position: relative;
+  z-index: var(--z-canvas);
+  min-height: 34svh;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.poster,
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* One framing for both: the handoff never jumps. */
+  object-position: var(--hero-framing);
+}
+
+.videoLayer {
+  position: absolute;
+  inset: 0;
+}
+
+.video {
+  opacity: 0;
+  transition: opacity 320ms var(--ease-ui);
+}
+
+[data-video="ready"] .video {
+  opacity: 1;
+}
+
+/* Readability where text sits, following its opacity (compact: the band's lower edge). */
+.scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: calc(0.3 + 0.7 * var(--hero-scrim, 1));
+  background-image: linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--color-carbon) 58%, transparent) 0%,
+    transparent 42%
+  );
+}
+
+/* Header protection on top, and a soft edge into the Carbon that follows. */
+.shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--color-carbon) 50%, transparent) 0,
+      transparent 6rem
+    ),
+    linear-gradient(0deg, var(--color-background-primary) 0, transparent 28%);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Copy and cues: one grid cell, so the panel never changes height             */
+/* -------------------------------------------------------------------------- */
+
+.panel {
+  position: relative;
+  z-index: var(--z-content);
+  display: grid;
+  padding-block: 1rem max(1.75rem, calc(env(safe-area-inset-bottom) + 1rem));
+}
+
+.panel > * {
+  grid-area: 1 / 1;
+}
+
+.frame {
+  padding-inline: max(var(--hero-edge), env(safe-area-inset-left))
+    max(var(--hero-edge), env(safe-area-inset-right));
+}
+
+/* The text block: layout primitives only (normal flow, flex for the actions). */
+.block {
+  max-width: 34rem;
+}
+
+/* The headline block leaves as the footage moves on (GSAP-ticker-owned value). */
+.copy {
+  opacity: var(--hero-copy-opacity, 1);
 }
 
 /* Keyboard focus always brings the copy back: focus is never on something invisible. */
@@ -94,23 +194,288 @@
   opacity: 1;
 }
 
-/* The copy layer lets clicks through to the stage only in its empty space:
-   text stays selectable and every control stays operable. */
-.copy :where(h1, p, a, button) {
-  pointer-events: auto;
-}
-
 /* Fully faded copy stays in the accessibility tree but ignores the pointer. */
 .hero[data-copy-hidden] .copy :where(h1, p, a, button) {
   pointer-events: none;
 }
 
-/* State 5 line (HTML, semantic). */
-.roadLine {
+/* -------------------------------------------------------------------------- */
+/* Type                                                                        */
+/* -------------------------------------------------------------------------- */
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hero-ink-muted);
+}
+
+.title {
+  font-family: var(--font-sans);
+  font-size: var(--hero-title);
+  font-weight: 620;
+  font-stretch: 100%;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--hero-ink);
+  text-wrap: balance;
+}
+
+/* Compact: the service reads as one balanced phrase; wide: two set lines. */
+.titleMain {
+  display: block;
+}
+
+.titleSub {
+  display: block;
+  margin-top: 0.3em;
+  font-size: 0.68em;
+  font-weight: 460;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--hero-ink);
+}
+
+.lead {
+  max-width: 24.5rem;
+  margin-top: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--hero-ink-soft);
+  text-wrap: pretty;
+}
+
+.cueText {
+  max-width: 17ch;
+  font-family: var(--font-sans);
+  font-size: calc(var(--hero-title) * 0.72);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  color: var(--hero-ink);
+  text-wrap: balance;
+}
+
+.rule {
+  width: 1.5rem;
+  height: 2px;
+  background-color: var(--color-success-graphic);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Actions                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.875rem 1.75rem;
+  margin-top: 1.5rem;
+}
+
+.primary {
+  display: inline-flex;
+  min-height: 3.125rem;
+  align-items: center;
+  gap: 0.625rem;
+  padding-inline: 1.375rem 1.25rem;
+  border-radius: 5px;
+  background-color: var(--color-red-500);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--color-white);
+  transition: background-color var(--duration-fast, 150ms) var(--ease-ui);
+}
+
+.primary:hover {
+  background-color: var(--color-red-600);
+}
+
+.primary:active {
+  background-color: var(--color-red-700);
+}
+
+.arrow {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  transition: translate var(--duration-fast, 150ms) var(--ease-ui);
+}
+
+.primary:hover .arrow {
+  translate: 2px 0;
+}
+
+/* A quiet text action: no outlined box competing with the primary. */
+.secondary {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--hero-ink-soft);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in srgb, var(--color-soft-white) 35%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  transition:
+    color var(--duration-fast, 150ms) var(--ease-ui),
+    text-decoration-color var(--duration-fast, 150ms) var(--ease-ui);
+}
+
+.secondary:hover {
+  color: var(--hero-ink);
+  text-decoration-color: currentColor;
+}
+
+.glyph {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .primary:hover .arrow {
+    translate: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Cues                                                                        */
+/* -------------------------------------------------------------------------- */
+
+/* Written per frame (opacity, inert); a short fade keeps them calm. */
+.cue {
+  align-self: start;
+  opacity: 0;
+  transition: opacity 160ms linear;
+}
+
+.hero[data-hero-mode="static"] .cue {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cue {
+    display: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Compact, scrubbing                                                          */
+/* -------------------------------------------------------------------------- */
+
+/* HeroVideo measures the copy into --hero-copy-h: the band fills what the copy leaves,
+   then opens to the whole screen once the copy has faded. Wide layouts reset this. */
+.hero[data-hero-band] .media {
   position: absolute;
-  z-index: var(--z-content);
-  inset-inline: 0;
-  /* One viewport below the road state's start: it scrolls in naturally only once
-     the road begins (p ≈ 0.62) and leaves with the stage. */
-  top: calc(100svh + var(--hero-story) * 0.62);
+  inset: 0 0 auto;
+  height: max(34svh, calc(100svh - var(--hero-copy-h, 60svh) + 1.5rem));
+  min-height: 0;
+  transition: height 560ms var(--ease-cinematic);
+}
+
+.hero[data-hero-band][data-copy-hidden] .media {
+  height: 100svh;
+}
+
+.hero[data-hero-band] .panel {
+  position: absolute;
+  inset: auto 0 0;
+}
+
+.hero[data-hero-band] .cue {
+  align-self: end;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Wide                                                                        */
+/* -------------------------------------------------------------------------- */
+
+@media (width >= 48rem) and (aspect-ratio >= 4 / 5) {
+  .media,
+  .hero[data-hero-band] .media {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    min-height: 0;
+    transition: none;
+  }
+
+  /* Directional: strongest at the far left, fading by the centre, clear over the cab. */
+  .scrim {
+    opacity: calc(0.25 + 0.75 * var(--hero-scrim, 1));
+    background-image: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-carbon) 70%, transparent) 0%,
+      color-mix(in srgb, var(--color-carbon) 48%, transparent) 24%,
+      color-mix(in srgb, var(--color-carbon) 16%, transparent) 44%,
+      transparent 58%
+    );
+  }
+
+  .shade {
+    background-image:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-carbon) 45%, transparent) 0,
+        transparent 7rem
+      ),
+      linear-gradient(0deg, var(--color-background-primary) 0, transparent 7rem);
+  }
+
+  /* The block sits in the space below the navigation, centred, with bottom clearance. */
+  .panel,
+  .hero[data-hero-band] .panel {
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    padding-block: calc(var(--header-height) + 1.5rem) clamp(3rem, 9svh, 6rem);
+  }
+
+  .block {
+    max-width: clamp(27rem, 38vw, 35rem);
+  }
+
+  /* Two set lines: "Trasporti espressi" / "e dedicati." */
+  .titleLine {
+    display: block;
+  }
+
+  .lead {
+    margin-top: 1.5rem;
+    font-size: clamp(1rem, 0.9rem + 0.2vw, 1.0625rem);
+  }
+
+  .actions {
+    margin-top: 1.75rem;
+  }
+
+  .cue,
+  .hero[data-hero-band] .cue {
+    align-self: center;
+  }
+}
+
+/* Static on a wide screen: the copy in flow, so a short screen scrolls instead of clipping. */
+@media (width >= 48rem) and (aspect-ratio >= 4 / 5) and (max-height: 34rem) {
+  .panel,
+  .hero[data-hero-band] .panel {
+    position: relative;
+    min-height: 100svh;
+  }
 }

@@ -64,4 +64,25 @@ export const siteFooter = {
   reaLabel: "REA",
   copyright: company.brand,
   legalName: company.legalName,
+  /**
+   * Attribution required by the CC BY 4.0 licences of the hero's 3D truck
+   * (assets/source/truck/ATTRIBUTION.md): title, author, source, licence, "modified".
+   */
+  credits: {
+    lead: "Modelli 3D adattati da",
+    works: [
+      {
+        title: "MAN TGX 2010 V8 – High-Detail Semi-Truck",
+        author: "DevPoly3D",
+        href: "https://sketchfab.com/3d-models/man-tgx-2010-v8-high-detail-semi-truck-34ce748d9a4b4de7b035cfe5cb97f5d1",
+      },
+      {
+        title: "Truck Trailer FREE",
+        author: "NLM",
+        href: "https://sketchfab.com/3d-models/truck-trailer-free-575958a53e3d4e9f8bcfb1ee2cef67bf",
+      },
+    ],
+    licence: { label: "CC BY 4.0", href: "https://creativecommons.org/licenses/by/4.0/" },
+    modified: "Modificati.",
+  },
 } as const;

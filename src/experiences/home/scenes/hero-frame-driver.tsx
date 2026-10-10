@@ -2,7 +2,14 @@
 
 import { useThree } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
-import { type Material, type Mesh, type Object3D, type Texture, Vector2, WebGLRenderTarget } from "three";
+import {
+  type Material,
+  type Mesh,
+  type Object3D,
+  type Texture,
+  Vector2,
+  WebGLRenderTarget,
+} from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
@@ -19,8 +26,7 @@ import {
 } from "@/lib/performance/frame-monitor";
 
 import { HERO_LADDER, resolveDpr } from "../config/hero-quality";
-import { HERO_MARKS } from "../config/hero-states";
-import { H1_MAX_PROGRESS, handoffCheckpoint } from "../motion/hero-handoff";
+import { handoffCheckpoint, withinHandoffWindow } from "../motion/hero-handoff";
 import type { ProgressController } from "../motion/hero-progress";
 import type { HeroRuntime } from "../runtime/hero-runtime";
 
@@ -69,14 +75,8 @@ interface HeroFrameDriverProps {
   onDpr: (dpr: number) => void;
   onActive: () => void;
   onFailure: (reason: HeroFailureReason) => void;
-}
-
-/** Real-time may only take over while the story matches a captured still. */
-function withinHandoffWindow(progress: number): boolean {
-  return (
-    progress <= H1_MAX_PROGRESS ||
-    (progress >= HERO_MARKS.holdStart && progress <= HERO_MARKS.holdEnd)
-  );
+  /** The hero is past the wipe and waits for the road world (the stills cover it). */
+  onWaiting?: (waiting: boolean) => void;
 }
 
 /**
@@ -104,6 +104,7 @@ export function HeroFrameDriver({
   onDpr,
   onActive,
   onFailure,
+  onWaiting,
 }: HeroFrameDriverProps) {
   const { gl, scene, camera, size } = useThree();
   const sizeRef = useRef(size);
@@ -113,9 +114,9 @@ export function HeroFrameDriver({
   // Ratio the current level asked for: it takes effect one React render later (the Canvas
   // `dpr` prop), so readiness frames only count once the canvas is actually there.
   const targetDpr = useRef(0);
-  const callbacks = useRef({ onPhase, onDpr, onActive, onFailure });
+  const callbacks = useRef({ onPhase, onDpr, onActive, onFailure, onWaiting });
   useEffect(() => {
-    callbacks.current = { onPhase, onDpr, onActive, onFailure };
+    callbacks.current = { onPhase, onDpr, onActive, onFailure, onWaiting };
   });
 
   useEffect(() => {
@@ -176,7 +177,12 @@ export function HeroFrameDriver({
     if (HERO_LADDER[level]!.bloom) {
       composer = new EffectComposer(gl);
       composer.addPass(new RenderPass(scene, camera));
-      bloom = new UnrealBloomPass(new Vector2(sizeRef.current.width, sizeRef.current.height), 0.12, 0.5, 1.15);
+      bloom = new UnrealBloomPass(
+        new Vector2(sizeRef.current.width, sizeRef.current.height),
+        0.12,
+        0.5,
+        1.15,
+      );
       composer.addPass(bloom);
       composer.addPass(new OutputPass());
     }
@@ -231,7 +237,8 @@ export function HeroFrameDriver({
         root.traverse((object) => {
           const material = (object as Mesh).material as Material | Material[] | undefined;
           for (const m of Array.isArray(material) ? material : material ? [material] : []) {
-            for (const value of Object.values(m)) if ((value as Texture)?.isTexture) textures.add(value as Texture);
+            for (const value of Object.values(m))
+              if ((value as Texture)?.isTexture) textures.add(value as Texture);
           }
         });
       }
@@ -242,7 +249,11 @@ export function HeroFrameDriver({
     };
     // After the handoff, in idle time: the road world's on-demand buildings, its lighting's
     // programs, then its textures — so the dock → road switch never compiles or uploads.
-    const warmups: Array<() => Promise<unknown>> = [
+    // The road world arrives after the first frame (its kit loads late), so its steps are
+    // queued when it is attached; bloom levels can step down to straight rendering, so
+    // their straight variants come last.
+    const warmups: Array<() => Promise<unknown>> = composer ? [() => compileWith(null)] : [];
+    const roadWarmups = (): Array<() => Promise<unknown>> => [
       () => {
         runtime.prepareRoad();
         return Promise.resolve();
@@ -254,32 +265,62 @@ export function HeroFrameDriver({
           return Promise.resolve();
         }),
     ];
-    // Bloom levels can step down to straight rendering: its variants come last.
-    if (composer) {
-      warmups.push(
-        () => compileWith(null),
-        () => runtime.compileWorld("road", (staged) => compileWith(null, [staged])),
-      );
-    }
     let cancelWarmup = () => {};
+    /** A warm-up step is scheduled or running. */
+    let warming = false;
+    /** Warm-ups start once the opening has compiled (dormant), never before. */
+    let warmupAllowed = false;
+    /** The road world's programs and textures are ready (H3/H4 handoffs need them). */
+    let roadWarm = false;
     const warmNext = () => {
-      const next = warmups.shift();
-      if (!next || cancelled) return;
+      if (cancelled) return;
+      if (warmups.length === 0) {
+        warming = false;
+        return;
+      }
+      warming = true;
       cancelWarmup = onIdle(() => {
         if (cancelled) return;
+        // Never during a readiness check: it would count as a slow frame.
+        if (phase === "validating") {
+          warmNext();
+          return;
+        }
+        const next = warmups.shift()!;
         // Deliberate one-off work between frames: the next interval is not a frame time.
         continuous = false;
         next().then(warmNext, warmNext);
       }, 3000);
     };
+    const startWarmups = () => {
+      if (warmupAllowed && !warming) warmNext();
+    };
+    const stopRoadListener = runtime.onRoadReady(() => {
+      // Road first: the wipe needs it, and may come soon. The marker runs after the
+      // texture uploads, which the third road step queues in front of it.
+      warmups.unshift(...roadWarmups(), () => {
+        roadWarm = true;
+        return Promise.resolve();
+      });
+      if (composer)
+        warmups.push(() => runtime.compileWorld("road", (staged) => compileWith(null, [staged])));
+      startWarmups();
+    });
+    const roadHandoff = () => roadWarm && runtime.hasRoad;
+    let waiting = false;
 
     // The starting level (and its render scale) applies before anything is compiled.
     applyLevel(level);
     setPhase("compiling");
     runtime.update(performance.now());
-    Promise.all(composer ? [compileWith(compileTarget)] : [compileWith(null), compileWith(compileTarget)])
+    Promise.all(
+      composer ? [compileWith(compileTarget)] : [compileWith(null), compileWith(compileTarget)],
+    )
       .then(() => {
-        if (!cancelled && phase === "compiling") setPhase("dormant");
+        if (cancelled || phase !== "compiling") return;
+        setPhase("dormant");
+        warmupAllowed = true;
+        startWarmups();
       })
       .catch(() => fail("compile"));
 
@@ -294,7 +335,7 @@ export function HeroFrameDriver({
       }
 
       if (phase === "dormant") {
-        if (!handoffCheckpoint(progress.displayed, progress.idleMs(now))) return;
+        if (!handoffCheckpoint(progress.displayed, progress.idleMs(now), roadHandoff())) return;
         // Snap in this (unmeasured) tick: one-off work such as regenerating the
         // environment for the checkpoint's light never counts as a frame time.
         runtime.snapToProgress();
@@ -305,7 +346,7 @@ export function HeroFrameDriver({
       }
 
       if (phase === "validating") {
-        if (!withinHandoffWindow(progress.displayed)) {
+        if (!withinHandoffWindow(progress.displayed, roadHandoff())) {
           setPhase("dormant"); // the visitor moved on: never take over mid-story
           return;
         }
@@ -328,7 +369,6 @@ export function HeroFrameDriver({
           continuous = true;
           setPhase("active");
           callbacks.current.onActive();
-          warmNext();
           return;
         }
         // Too slow behind the poster: retry once (a transient hitch), then one level down
@@ -339,7 +379,20 @@ export function HeroFrameDriver({
         return;
       }
 
-      // Active.
+      // Active. Past the wipe without the road world (slow connection): nothing renders,
+      // the still ladder covers the hero, and the story resumes once the road is attached.
+      // A wait ends only once the road is warm too: its first frame must not compile.
+      const shouldWait = runtime.waitingForRoad || (waiting && !roadWarm);
+      if (shouldWait !== waiting) {
+        waiting = shouldWait;
+        callbacks.current.onWaiting?.(waiting);
+        continuous = false;
+        if (!waiting) runtime.markDirty();
+      }
+      if (waiting) {
+        runtime.pause();
+        return;
+      }
       if (!runtime.update(now)) {
         continuous = false;
         return;
@@ -368,6 +421,7 @@ export function HeroFrameDriver({
     return () => {
       cancelled = true;
       cancelWarmup();
+      stopRoadListener();
       compileTarget.dispose();
       composer?.dispose();
       gsap.ticker.remove(tick);
@@ -377,7 +431,12 @@ export function HeroFrameDriver({
   // A scaled level holds a pixel budget: the ratio follows the canvas size.
   useEffect(() => {
     if (!ready) return;
-    targetDpr.current = resolveDpr(runtime.settings, size.width, size.height, window.devicePixelRatio || 1);
+    targetDpr.current = resolveDpr(
+      runtime.settings,
+      size.width,
+      size.height,
+      window.devicePixelRatio || 1,
+    );
     callbacks.current.onDpr(targetDpr.current);
   }, [ready, runtime, size.width, size.height]);
 

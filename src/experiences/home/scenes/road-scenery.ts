@@ -151,22 +151,59 @@ function slots(): SlotSpec[] {
       z0: i * 23.3,
       window: 600,
       choices: {
-        A: [["", 1], ["shrub", 3], ["tree_a", 3], ["tree_b", 2], ["hedge", 3], ["poplar_a", 1]],
+        A: [
+          ["", 1],
+          ["shrub", 3],
+          ["tree_a", 3],
+          ["tree_b", 2],
+          ["hedge", 3],
+          ["poplar_a", 1],
+        ],
         B1: [["", 3], ...TREES],
         B2: [["", 3], ...TREES],
         C: [["", 2], ...TREES, ["poplar_a", 3]],
-        Reach: [["", 8], ["shrub", 1], ["tree_a", 1]],
+        Reach: [
+          ["", 8],
+          ["shrub", 1],
+          ["tree_a", 1],
+        ],
       },
       scale: [0.85, 1.2],
     });
   }
   // Mid band: buildings and yards (mostly on the visible left side).
   const mid: Choices = {
-    A: [["warehouse_long", 3], ["distribution", 3], ["yard_trailers", 2], ["low_shed", 1], ["pylon", 1], ["tree_group", 2]],
-    B1: [["truck_parking", 2], ["tree_group", 2], ["", 1]],
-    B2: [["restaurant", 2], ["truck_parking", 1], ["tree_group", 2]],
-    C: [["farm_shed", 3], ["farmhouse", 3], ["poplar_row", 3], ["tree_group", 3], ["low_shed", 1], ["", 1]],
-    Reach: [["", 5], ["poplar_row", 1], ["tree_group", 1]],
+    A: [
+      ["warehouse_long", 3],
+      ["distribution", 3],
+      ["yard_trailers", 2],
+      ["low_shed", 1],
+      ["pylon", 1],
+      ["tree_group", 2],
+    ],
+    B1: [
+      ["truck_parking", 2],
+      ["tree_group", 2],
+      ["", 1],
+    ],
+    B2: [
+      ["restaurant", 2],
+      ["truck_parking", 1],
+      ["tree_group", 2],
+    ],
+    C: [
+      ["farm_shed", 3],
+      ["farmhouse", 3],
+      ["poplar_row", 3],
+      ["tree_group", 3],
+      ["low_shed", 1],
+      ["", 1],
+    ],
+    Reach: [
+      ["", 5],
+      ["poplar_row", 1],
+      ["tree_group", 1],
+    ],
   };
   const midX = [85, -80, 120, 70, -115, 150, 95, 130];
   midX.forEach((x, i) =>
@@ -174,11 +211,27 @@ function slots(): SlotSpec[] {
   );
   // Far band: skylines, towns, tree masses (slow parallax).
   const far: Choices = {
-    A: [["skyline", 3], ["pylon", 1]],
-    B1: [["skyline", 1], ["tree_group", 2]],
-    B2: [["tree_group", 2], ["village", 1]],
-    C: [["village", 2], ["poplar_row", 3], ["tree_group", 2]],
-    Reach: [["", 4], ["poplar_row", 1]],
+    A: [
+      ["skyline", 3],
+      ["pylon", 1],
+    ],
+    B1: [
+      ["skyline", 1],
+      ["tree_group", 2],
+    ],
+    B2: [
+      ["tree_group", 2],
+      ["village", 1],
+    ],
+    C: [
+      ["village", 2],
+      ["poplar_row", 3],
+      ["tree_group", 2],
+    ],
+    Reach: [
+      ["", 4],
+      ["poplar_row", 1],
+    ],
   };
   const farX = [210, -220, 260, 180, -260, 240];
   farX.forEach((x, i) => out.push({ x, z0: 100 + i * 205, window: 1200, choices: far }));
@@ -274,9 +327,14 @@ function cardMaterial(atlas: Texture): MeshBasicMaterial {
       );
     shader.fragmentShader = shader.fragmentShader
       .replace("#include <common>", "#include <common>\nvarying float vFade;")
-      .replace("#include <alphatest_fragment>", "diffuseColor.a *= vFade;\n#include <alphatest_fragment>");
+      .replace(
+        "#include <alphatest_fragment>",
+        // Partial-alpha fringe texels carry the bake's pale background: darkened towards the
+        // silhouette, so foliage against the sunrise has no bright halo.
+        "diffuseColor.rgb *= mix(0.5, 1.0, smoothstep(0.3, 0.92, diffuseColor.a));\ndiffuseColor.a *= vFade;\n#include <alphatest_fragment>",
+      );
   };
-  material.customProgramCacheKey = () => "bsr-road-card";
+  material.customProgramCacheKey = () => "bsr-road-card-v2";
   return material;
 }
 
@@ -443,7 +501,10 @@ export function createHorizonPlates(kit: RoadKit): HorizonPlates {
     group,
     update(journey, fadeWorld) {
       for (const entry of entries) {
-        const weight = Math.max(0, 1 - Math.abs(journey - centres[entry.chapter]) / halfWidths[entry.chapter]);
+        const weight = Math.max(
+          0,
+          1 - Math.abs(journey - centres[entry.chapter]) / halfWidths[entry.chapter],
+        );
         entry.material.opacity = weight * fadeWorld;
       }
     },
@@ -453,7 +514,10 @@ export function createHorizonPlates(kit: RoadKit): HorizonPlates {
 // ---------------------------------------------------------------- scenery
 export interface RoadScenery {
   group: Group;
-  update(offset: number, story: { journey: number; routeBlend: number; mapBlend: number; active: boolean }): void;
+  update(
+    offset: number,
+    story: { journey: number; routeBlend: number; mapBlend: number; active: boolean },
+  ): void;
   /** Builds every building type now (idle time), instead of on first sight mid-scroll. */
   prepare(): void;
 }
@@ -464,7 +528,11 @@ export function createRoadScenery(kit: RoadKit, options: { behind: number }): Ro
   const specs = slots();
   const layers = {
     RK_Atlas_Built: cardLayer(kit.atlases.RK_Atlas_Built, specs.length, "Road_Cards_Built"),
-    RK_Atlas_Nature: cardLayer(kit.atlases.RK_Atlas_Nature, specs.length + TRAFFIC.length, "Road_Cards_Nature"),
+    RK_Atlas_Nature: cardLayer(
+      kit.atlases.RK_Atlas_Nature,
+      specs.length + TRAFFIC.length,
+      "Road_Cards_Nature",
+    ),
   };
   group.add(layers.RK_Atlas_Built.mesh, layers.RK_Atlas_Nature.mesh);
 
@@ -525,7 +593,10 @@ export function createRoadScenery(kit: RoadKit, options: { behind: number }): Ro
     z: number;
     scale: number;
   }
-  const placed: Record<CardMeta["atlas"], Placement[]> = { RK_Atlas_Built: [], RK_Atlas_Nature: [] };
+  const placed: Record<CardMeta["atlas"], Placement[]> = {
+    RK_Atlas_Built: [],
+    RK_Atlas_Nature: [],
+  };
 
   const recycle = (z0: number, offset: number, window: number) =>
     ((((z0 - offset) % window) + window) % window) - options.behind;
@@ -632,7 +703,10 @@ export function createRoadScenery(kit: RoadKit, options: { behind: number }): Ro
               slotScale.setScalar(id === "fuel_station" ? 1.55 : 1.25),
             );
             for (const mesh of type.meshes) {
-              mesh.setMatrixAt(type.count, matrix.multiplyMatrices(placement, mesh.userData.local as Matrix4));
+              mesh.setMatrixAt(
+                type.count,
+                matrix.multiplyMatrices(placement, mesh.userData.local as Matrix4),
+              );
             }
             type.count++;
           }
@@ -641,13 +715,14 @@ export function createRoadScenery(kit: RoadKit, options: { behind: number }): Ro
         place(id, spec.x, z, s0 + (s1 - s0) * hash(i + 17, spawn[i]!), visibility);
       });
       // Sparse traffic: oncoming vehicles pass quickly, same-direction ones hold station far ahead.
-        for (const v of TRAFFIC) {
+      for (const v of TRAFFIC) {
         if (journey > v.until || fadeWorld <= 0.001) continue;
         const z = recycle(v.z0, offset * v.drift, v.window);
         // Vehicles are cards: they dissolve before they come close enough to
         // show it (oncoming ones pass behind the median in the haze).
         const near = v.drift > 0 ? 160 : 90;
-        const fade = Math.min(1, Math.max(0, (z - near) / 60)) * Math.min(1, Math.max(0, (560 - z) / 120));
+        const fade =
+          Math.min(1, Math.max(0, (z - near) / 60)) * Math.min(1, Math.max(0, (560 - z) / 120));
         if (fade <= 0.01) continue;
         place(v.card, v.x, z, 1, fadeWorld * fade);
       }

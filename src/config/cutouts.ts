@@ -8,13 +8,15 @@
  * The side view is split into registered layers so the scroll can move them:
  * the tractor and the trailer (each without its wheels) and the wheels, each
  * placed in percentages of the whole truck's box. Images and positions come
- * from `pnpm assets:truck-cutouts` (scripts/render-truck-cutouts.mjs) —
- * re-render all layers together if the model changes, and copy the printed
- * placements here.
+ * from `pnpm assets:truck-cutouts` (scripts/render-truck-cutouts.mjs), which
+ * also writes the placements module read here (./cutouts-placements.ts) — the
+ * images and their registration always come from the same render.
  *
  * Replace with photographic cut-outs of the real truck, same views, when they
  * exist (manifest C-01 … C-04).
  */
+import { CUTOUT_PLACEMENTS } from "./cutouts-placements";
+
 const DIR = "/assets/images/content/cutouts";
 
 export interface CutoutBox {
@@ -30,68 +32,29 @@ export interface CutoutWheel extends CutoutBox {
   part: "tractor" | "trailer";
 }
 
+const { files, side, front34, top } = CUTOUT_PLACEMENTS;
+
 export const truckSide = {
   /** The whole truck with its wheels, one image (static uses, small sizes). */
-  src: `${DIR}/truck-side.webp`,
-  width: 3154,
-  height: 768,
+  src: `${DIR}/${files["truck-side.webp"]}`,
+  width: side.width,
+  height: side.height,
   alt: "Autoarticolato BSR, vista laterale: trattore bianco e semirimorchio telonato con il marchio BSR.",
-  tractor: { src: `${DIR}/truck-side-tractor.webp`, x: 65.694, y: 3.776, w: 34.306, h: 88.542 },
-  trailer: { src: `${DIR}/truck-side-trailer.webp`, x: 0, y: 0, w: 82.752, h: 97.005 },
-  wheels: [
-    {
-      src: `${DIR}/truck-wheel-front.webp`,
-      part: "tractor",
-      x: 87.484,
-      y: 72.991,
-      w: 6.658,
-      h: 27.344,
-    },
-    {
-      src: `${DIR}/truck-wheel-drive.webp`,
-      part: "tractor",
-      x: 66.771,
-      y: 73.409,
-      w: 6.531,
-      h: 26.823,
-    },
-    {
-      src: `${DIR}/truck-wheel-trailer.webp`,
-      part: "trailer",
-      x: 30.727,
-      y: 72.587,
-      w: 6.785,
-      h: 27.865,
-    },
-    {
-      src: `${DIR}/truck-wheel-trailer.webp`,
-      part: "trailer",
-      x: 22.765,
-      y: 72.587,
-      w: 6.785,
-      h: 27.865,
-    },
-    {
-      src: `${DIR}/truck-wheel-trailer.webp`,
-      part: "trailer",
-      x: 14.802,
-      y: 72.587,
-      w: 6.785,
-      h: 27.865,
-    },
-  ] as CutoutWheel[],
+  tractor: { src: `${DIR}/${files["truck-side-tractor.webp"]}`, ...side.tractor },
+  trailer: { src: `${DIR}/${files["truck-side-trailer.webp"]}`, ...side.trailer },
+  wheels: side.wheels.map((wheel) => ({ ...wheel, src: `${DIR}/${wheel.src}` })) as CutoutWheel[],
 } as const;
 
 export const truckFront34 = {
-  src: `${DIR}/truck-front34.webp`,
-  width: 1938,
-  height: 830,
+  src: `${DIR}/${files["truck-front34.webp"]}`,
+  width: front34.width,
+  height: front34.height,
   alt: "Autoarticolato BSR visto di tre quarti dal davanti, con il marchio BSR sul semirimorchio.",
 } as const;
 
 export const truckTop = {
-  src: `${DIR}/truck-top.webp`,
-  width: 1748,
-  height: 302,
+  src: `${DIR}/${files["truck-top.webp"]}`,
+  width: top.width,
+  height: top.height,
   alt: "",
 } as const;

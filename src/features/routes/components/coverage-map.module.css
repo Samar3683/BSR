@@ -1,0 +1,43 @@
+@media (prefers-reduced-motion: no-preference) {
+  :global([data-pinned]) .camera {
+    --u: calc(clamp(0, (var(--p, 1) - 0.2) / 0.72, 1) * 4);
+    --t1: clamp(0, (var(--u) - 0.7) / 0.6, 1);
+    --t2: clamp(0, (var(--u) - 1.7) / 0.6, 1);
+    --t3: clamp(0, (var(--u) - 2.7) / 0.6, 1);
+    --e1: calc(var(--t1) * var(--t1) * (3 - 2 * var(--t1)));
+    --e2: calc(var(--t2) * var(--t2) * (3 - 2 * var(--t2)));
+    --e3: calc(var(--t3) * var(--t3) * (3 - 2 * var(--t3)));
+    /* The base → the north → Italy → Europe (3.4 → 2.3 → 1.35 → 0.8). */
+    --map-scale: calc(3.4 - 1.1 * var(--e1) - 0.95 * var(--e2) - 0.55 * var(--e3));
+    scale: var(--map-scale);
+  }
+
+  /* Routes draw as the camera reaches their step (pathLength 1, dasharray 1). */
+  :global([data-pinned]) .draw1 {
+    stroke-dashoffset: calc(1 - var(--e1));
+  }
+  :global([data-pinned]) .draw2 {
+    stroke-dashoffset: calc(1 - var(--e2));
+  }
+  :global([data-pinned]) .draw3 {
+    stroke-dashoffset: calc(1 - var(--e3));
+  }
+
+  /* Ferries, cities and destinations appear whole (dashes are never drawn on). */
+  :global([data-pinned]) .show2 {
+    opacity: var(--e2);
+  }
+  :global([data-pinned]) .show3 {
+    opacity: var(--e3);
+  }
+
+  /* Partly compensated line weights: hairlines in the Europe view, not ropes on Carpi. */
+  :global([data-pinned]) .weight {
+    stroke-width: calc(var(--w) * (0.55 + 0.45 / var(--map-scale)));
+  }
+
+  /* Labels keep one on-screen size (≈ their size at the Italy step) at every zoom. */
+  :global([data-pinned]) .label {
+    font-size: calc(29.7px / var(--map-scale));
+  }
+}

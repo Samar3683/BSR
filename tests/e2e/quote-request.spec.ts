@@ -11,8 +11,9 @@ import { expect, type Page, test } from "@playwright/test";
 
 const whatsappText = async (page: Page) =>
   decodeURIComponent(
-    ((await page.getByRole("link", { name: /Scrivici su WhatsApp/ }).getAttribute("href")) ?? "")
-      .split("?text=")[1] ?? "",
+    (
+      (await page.getByRole("link", { name: /Scrivici su WhatsApp/ }).getAttribute("href")) ?? ""
+    ).split("?text=")[1] ?? "",
   );
 
 test("the hero quote CTA reaches the quote-request page (no 404)", async ({ page }) => {
@@ -21,12 +22,15 @@ test("the hero quote CTA reaches the quote-request page (no 404)", async ({ page
     if (response.status() >= 400) failures.push(`${response.status()} ${response.url()}`);
   });
   await page.goto("/");
+  // The headline block's action (the video's ending cue repeats it, hidden until then).
   await page
-    .locator("[data-hero]")
+    .locator("[data-hero-copy]")
     .getByRole("link", { name: /Richiedi un preventivo/ })
     .click();
   await page.waitForURL("**/preventivo");
-  await expect(page.getByRole("heading", { level: 1, name: "Richiedi un preventivo" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Richiedi un preventivo" }),
+  ).toBeVisible();
   expect(failures.filter((failure) => failure.includes("/preventivo"))).toEqual([]);
 });
 
@@ -37,7 +41,9 @@ test("composes the request and submits nothing", async ({ page }) => {
   const main = page.getByRole("main");
   await expect(main.locator('[data-composer="url"]')).toBeVisible();
   // No submission of any kind: no posting form, no submit button.
-  await expect(main.locator("form[method='post' i], button[type='submit'], input[type='submit']")).toHaveCount(0);
+  await expect(
+    main.locator("form[method='post' i], button[type='submit'], input[type='submit']"),
+  ).toHaveCount(0);
   await expect(main.getByText(/La richiesta non parte da questa pagina/)).toBeVisible();
 
   await main.getByLabel("Partenza").fill("Modena");
@@ -51,7 +57,10 @@ test("composes the request and submits nothing", async ({ page }) => {
     "href",
     /^mailto:Bsrtrasporti@gmail\.com\?subject=Richiesta%20di%20preventivo&body=/,
   );
-  await expect(main.getByRole("link", { name: /Chiama/ })).toHaveAttribute("href", "tel:+393279427723");
+  await expect(main.getByRole("link", { name: /Chiama/ })).toHaveAttribute(
+    "href",
+    "tel:+393279427723",
+  );
 
   // What was typed survives a reload.
   await expect(page).toHaveURL(/partenza=Modena&destinazione=Madrid&servizio=espresso/);

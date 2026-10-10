@@ -10,7 +10,8 @@ import { applyCameraPose, rigMatrix } from "./hero-three-math";
  * covers the headlights, the cab front or the wordmark. Focal points of the
  * (placeholder) rig are projected for every framing bucket:
  *   landscape layouts → text zone is the left 42% of the frame
- *   portrait (compact) → text zone is the bottom 45% of the frame
+ *   portrait (compact) → text zone is the bottom 67% of the frame (eyebrow, headline,
+ *   lead and both actions stack from about a third of the height down)
  */
 const FOCAL = {
   headlightLeft: [0.95, 0.95, 4.96],
@@ -79,7 +80,7 @@ describe("text safe zone (hero copy never covers the truck's focal points)", () 
           expect(y, `${name} y`).toBeGreaterThanOrEqual(0);
           expect(y, `${name} y`).toBeLessThanOrEqual(1);
           // …and outside the text zone.
-          if (portrait) expect(y, `${name} y`).toBeLessThanOrEqual(0.55);
+          if (portrait) expect(y, `${name} y`).toBeLessThanOrEqual(0.33);
           else expect(x, `${name} x`).toBeGreaterThanOrEqual(0.45);
         }
       });

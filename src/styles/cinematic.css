@@ -112,6 +112,11 @@
       opacity: 0;
       scale: 1.06;
     }
+    /* Captions never fade from or to invisible (text rule above): an inactive one is hidden
+       at once, while its picture still crossfades. */
+    &:where([data-pinned] *):not([data-state="active"]) figcaption {
+      visibility: hidden;
+    }
   }
 }
 

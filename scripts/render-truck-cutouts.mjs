@@ -14,13 +14,16 @@
  *   (one image per wheel type), all placed in percentages of the whole
  *   truck's box. Three-quarter front (perspective, contact shadow) and top
  *   view.
- * - Writes public/assets/images/content/cutouts/*.webp and prints the
- *   placements to copy into src/config/cutouts.ts.
+ * - Writes public/assets/images/content/cutouts/*.webp and the placements
+ *   module src/config/cutouts-placements.ts (read by src/config/cutouts.ts).
+ * - Materials get the hero's refinements (truck-materials.ts); the wheel layer
+ *   is lit along the view axis so its shading survives CSS rotation.
  *
  * Re-run whenever the truck models change; replace with photographic
  * cut-outs of the real truck when they exist (docs/cinematic-media-manifest.md).
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import http from "node:http";
 import { extname, join } from "node:path";
@@ -74,6 +77,20 @@ const root = new THREE.Group();
 root.add(tractor);
 tractor.getObjectByName("Hitch_FifthWheel").add(trailer);
 root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+// Same material separation as the hero (src/experiences/home/scenes/truck-materials.ts,
+// refineMaterial) — keep the two in step, so the film's truck is the opening's truck.
+const tuned = new Set();
+root.traverse((o) => {
+  if (!o.isMesh) return;
+  for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
+    if (tuned.has(m)) continue;
+    tuned.add(m);
+    if (m.name === "MAT_Metal_Steel") { m.roughness = 0.56; m.metalness = 0.75; m.color.setScalar(0.52); m.envMapIntensity = 0.8; }
+    if (m.name === "MAT_Curtain") { m.color.set("#e9e8e2"); m.normalScale.multiplyScalar(0.5); m.envMapIntensity = 0.8; }
+    if (m.name === "MAT_Plastic_Grille") { m.color.setScalar(0.035); m.roughness = 0.68; }
+    if (m.name === "MAT_Light_Tail" || m.name === "MAT_Light_Brake") m.emissive.setRGB(1, 0.015, 0.008);
+  }
+});
 scene.add(root);
 const spins = [];
 root.traverse((o) => { if (o.name.endsWith("_Spin")) spins.push(o); });
@@ -129,8 +146,14 @@ window.render = ({ w, h, view, pad = 0.015, shadow = true, layer = "all", keyDir
     cam.position.copy(c).addScaledVector(dir, box.getSize(new THREE.Vector3()).length() * 1.6);
     cam.lookAt(c);
   }
-  key.position.copy(c).add(new THREE.Vector3(...keyDir).multiplyScalar(20));
+  // Wheels are rotated by the page (wheel-spin), and their baked light turns with them: lit
+  // along the view axis with a quiet environment, a wheel's shading is rotationally even, so
+  // no highlight is seen to orbit the hub.
+  const wheelsOnly = layer === "wheels";
+  key.position.copy(c).add(wheelsOnly ? dir.clone().multiplyScalar(20) : new THREE.Vector3(...keyDir).multiplyScalar(20));
   key.target.position.copy(c);
+  key.castShadow = !wheelsOnly;
+  scene.environmentIntensity = wheelsOnly ? 0.35 : 0.75;
   renderer.render(scene, cam);
   // Copy to a 2D canvas to read the pixels and encode.
   const flat = document.createElement("canvas");
@@ -142,7 +165,11 @@ window.render = ({ w, h, view, pad = 0.015, shadow = true, layer = "all", keyDir
     const centre = b.getCenter(new THREE.Vector3());
     const p = centre.clone().project(cam);
     const top = centre.clone().add(new THREE.Vector3(0, b.getSize(new THREE.Vector3()).y / 2, 0)).project(cam);
-    return { name: s.name, x: ((p.x + 1) / 2) * w, y: ((1 - p.y) / 2) * h, r: Math.abs(((top.y - p.y) / 2) * h) };
+    // The spin axis (the node's origin) is what CSS rotates about: measure its offset from the
+    // bounds centre the crop is built on, so a drifting wheel is caught here, not on the page.
+    const axle = s.getWorldPosition(new THREE.Vector3()).project(cam);
+    const offsetPx = Math.hypot((axle.x - p.x) * w / 2, (axle.y - p.y) * h / 2);
+    return { name: s.name, x: ((axle.x + 1) / 2) * w, y: ((1 - axle.y) / 2) * h, r: Math.abs(((top.y - p.y) / 2) * h), offsetPx };
   });
   const cropWheel = (wheel) => {
     const r = Math.ceil(wheel.r) + 3;
@@ -187,8 +214,22 @@ const page = await browser.newPage();
 await page.goto(`http://localhost:${PORT}/`);
 await page.waitForFunction(() => window.ready, null, { timeout: 180_000 });
 
-const save = (name, dataUrl) =>
-  writeFileSync(join(OUT, name), Buffer.from(dataUrl.split(",")[1], "base64"));
+// Content-addressed names (`truck-side.<hash>.webp`): a re-render never reuses a URL, so no
+// browser, CDN or image-optimiser cache serves the previous truck. Older versions are removed.
+const files = {};
+const save = (name, dataUrl) => {
+  const bytes = Buffer.from(dataUrl.split(",")[1], "base64");
+  const stem = name.replace(/\.webp$/, "");
+  const named = `${stem}.${createHash("sha256").update(bytes).digest("hex").slice(0, 10)}.webp`;
+  mkdirSync(OUT, { recursive: true });
+  for (const old of readdirSync(OUT)) {
+    if ((old === name || (old.startsWith(`${stem}.`) && old.endsWith(".webp"))) && old !== named) {
+      rmSync(join(OUT, old));
+    }
+  }
+  writeFileSync(join(OUT, named), bytes);
+  files[name] = named;
+};
 mkdirSync(OUT, { recursive: true });
 
 // Side view, facing right (camera on the truck's right, -X), registered layers.
@@ -251,22 +292,31 @@ const top = await shot({
 });
 save("truck-top.webp", top.data);
 
+const placementsModule = {
+  files,
+  side: {
+    width: U.width,
+    height: U.height,
+    tractor: pct(tractor.bounds),
+    trailer: pct(trailer.bounds),
+    wheels: placements.map((wheel) => ({ ...wheel, src: files[wheel.src] })),
+  },
+  front34: { width: front.bounds.width, height: front.bounds.height },
+  top: { width: top.bounds.width, height: top.bounds.height },
+};
+const worst = Math.max(...wheels.wheels.map((wheel) => wheel.offsetPx));
 console.log(
-  JSON.stringify(
-    {
-      side: {
-        width: U.width,
-        height: U.height,
-        tractor: pct(tractor.bounds),
-        trailer: pct(trailer.bounds),
-        wheels: placements,
-      },
-      front34: { width: front.bounds.width, height: front.bounds.height },
-      top: { width: top.bounds.width, height: top.bounds.height },
-    },
-    null,
-    2,
-  ),
+  `wheel crops centred on their axles (largest bounds/axle offset ${worst.toFixed(2)} px)`,
 );
+// Written next to the config that reads it — never copied by hand (placement drift).
+// Skipped for CUTOUTS_OUT test renders, which must not change the published placements.
+if (!process.env.CUTOUTS_OUT) {
+  writeFileSync(
+    join(ROOT, "src/config/cutouts-placements.ts"),
+    `/** GENERATED by scripts/render-truck-cutouts.mjs (pnpm assets:truck-cutouts) — do not edit. */\n` +
+      `export const CUTOUT_PLACEMENTS = ${JSON.stringify(placementsModule, null, 2)} as const;\n`,
+  );
+}
+console.log(JSON.stringify(placementsModule, null, 2));
 await browser.close();
 server.close();

@@ -34,6 +34,8 @@ interface HeroRealtimeProps {
   onPhase?: (phase: HeroRealtimePhase) => void;
   onActive: () => void;
   onFailed: (reason: HeroRealtimeFailure) => void;
+  /** Past the wipe without the road world yet: the still ladder must cover the hero. */
+  onWaiting?: (waiting: boolean) => void;
 }
 
 /**
@@ -53,6 +55,7 @@ export default function HeroRealtime({
   onPhase,
   onActive,
   onFailed,
+  onWaiting,
 }: HeroRealtimeProps) {
   const profile = HERO_TIER_PROFILES[tier];
   const runtime = useMemo(
@@ -108,6 +111,7 @@ export default function HeroRealtime({
           onPhase={onPhase}
           onActive={onActive}
           onFailure={onFailed}
+          onWaiting={onWaiting}
         />
       </ExperienceCanvas>
     </ErrorBoundary>

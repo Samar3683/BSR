@@ -34,9 +34,13 @@ export const HERO_MARKS = {
   holdEnd: 0.42,
   /** The truck starts rolling; before this, dock distance D is always 0. */
   rollStart: 0.5,
-  /** Trailer-wipe window. */
-  wipeStart: 0.57,
-  wipeEnd: 0.63,
+  /**
+   * Trailer-wipe window: the camera holds against the curtain only briefly (3 % of the
+   * story). At 0.57–0.63 the covered frame lasted ~8 % with the approach, and read as a
+   * blank grey screen rather than a pass along the trailer.
+   */
+  wipeStart: 0.585,
+  wipeEnd: 0.615,
   /** Dock → road switch (forward) and road → dock switch (reverse). */
   wipeSwitchForward: 0.6,
   wipeSwitchBack: 0.595,

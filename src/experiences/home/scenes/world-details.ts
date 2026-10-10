@@ -86,7 +86,12 @@ export function createCladdingMaps(size = 512): { color: DataTexture; roughness:
   for (let row = 0; row < 6; row++) {
     const n = 1 + Math.floor(hash(row, 99) * 2);
     for (let k = 0; k < n; k++) {
-      drips.push({ px: hash(row, k) * 6, row, len: 0.25 + hash(row, k + 10) * 0.5, strength: 0.08 + hash(row, k + 20) * 0.1 });
+      drips.push({
+        px: hash(row, k) * 6,
+        row,
+        len: 0.25 + hash(row, k + 10) * 0.5,
+        strength: 0.08 + hash(row, k + 20) * 0.1,
+      });
     }
   }
   for (let y = 0; y < size; y++) {
@@ -112,17 +117,28 @@ export function createCladdingMaps(size = 512): { color: DataTexture; roughness:
         if (dx > 0.12) continue;
         const along = inPanel / d.len;
         if (along > 1) continue;
-        v *= 1 - d.strength * (1 - dx / 0.12) * (1 - along) * (0.6 + 0.4 * valueNoise(vx * 40, vy * 200, 64, 9));
+        v *=
+          1 -
+          d.strength *
+            (1 - dx / 0.12) *
+            (1 - along) *
+            (0.6 + 0.4 * valueNoise(vx * 40, vy * 200, 64, 9));
       }
       // Ground-level splash: only the lowest ~15% of the whole building (last panel row).
-      if (panel === 5) v *= 1 - 0.1 * Math.max(0, (inPanel - 0.5) / 0.5) * (0.7 + 0.3 * valueNoise(vx * 30, vy * 30, 64, 13));
+      if (panel === 5)
+        v *=
+          1 -
+          0.1 *
+            Math.max(0, (inPanel - 0.5) / 0.5) *
+            (0.7 + 0.3 * valueNoise(vx * 30, vy * 30, 64, 13));
       if (joint) v *= 0.5;
       const i = (y * size + x) * 4;
       color[i] = color[i + 1] = Math.min(255, Math.round(v * 210));
       color[i + 2] = Math.min(255, Math.round(v * 206));
       color[i + 3] = 255;
       const ribR = 0.5 + 0.5 * Math.cos(vx * 6 * 18 * Math.PI * 2);
-      const r = 0.55 + 0.14 * (ribR - 0.5) + 0.08 * (hash(panel, col * 3.1 + 7) - 0.5) + (joint ? 0.15 : 0);
+      const r =
+        0.55 + 0.14 * (ribR - 0.5) + 0.08 * (hash(panel, col * 3.1 + 7) - 0.5) + (joint ? 0.15 : 0);
       roughness[i] = roughness[i + 2] = 0;
       roughness[i + 1] = Math.round(Math.min(1, Math.max(0.25, r)) * 255);
       roughness[i + 3] = 255;
@@ -233,7 +249,9 @@ export function createAggregateDetail(size = 512): DataTexture {
       const u = x / size;
       const v = y / size;
       height[y * size + x] =
-        0.16 + 0.07 * valueNoise(u * 24, v * 24, 24, 91) + 0.04 * valueNoise(u * 96, v * 96, 96, 92);
+        0.16 +
+        0.07 * valueNoise(u * 24, v * 24, 24, 91) +
+        0.04 * valueNoise(u * 96, v * 96, 96, 92);
     }
   }
   let s = 0x9e3779b9;
@@ -251,7 +269,9 @@ export function createAggregateDetail(size = 512): DataTexture {
       for (let dx = -r; dx <= r; dx++) {
         const d = Math.hypot(dx, dy) / radius;
         if (d >= 1) continue;
-        const i = ((((Math.floor(cy) + dy) % size) + size) % size) * size + ((((Math.floor(cx) + dx) % size) + size) % size);
+        const i =
+          ((((Math.floor(cy) + dy) % size) + size) % size) * size +
+          ((((Math.floor(cx) + dx) % size) + size) % size);
         const dome = 0.22 + top * (1 - d * d) ** 0.55;
         if (dome > height[i]!) height[i] = dome;
       }
@@ -338,23 +358,36 @@ export function createGroundGlints(
   mesh.frustumCulled = false;
   mesh.renderOrder = 2;
   const tint = new Color();
-  sources.forEach((source, i) => {
-    mesh.setColorAt(i, tint.set(source.color).multiplyScalar(source.strength));
-  });
+  const base = sources.map((source) => new Color(source.color).multiplyScalar(source.strength));
+  sources.forEach((_, i) => mesh.setColorAt(i, base[i]!));
   const matrix = new Matrix4();
   const rotation = new Matrix4();
   mesh.onBeforeRender = (_renderer, _scene, camera) => {
     material.opacity = intensity();
     sources.forEach((source, i) => {
-      const angle = Math.atan2(camera.position.x - source.x, camera.position.z - source.z);
-      rotation.makeRotationY(angle);
+      const dx = camera.position.x - source.x;
+      const dz = camera.position.z - source.z;
+      const distance = Math.max(1, Math.hypot(dx, dz));
+      // A wet-ground streak is a grazing-angle effect: it fades as the view over the source
+      // steepens and never runs under the camera (a fixed-length card drew glowing columns
+      // up the bottom of the steep departure frames).
+      const elevation = Math.max(0, camera.position.y) / distance;
+      const t = Math.min(1, Math.max(0, (elevation - 0.06) / 0.24));
+      const grazing = 1 - t * t * (3 - 2 * t);
+      rotation.makeRotationY(Math.atan2(dx, dz));
       matrix
-        .makeScale(source.width, 1, source.length)
+        .makeScale(
+          source.width,
+          1,
+          Math.min(source.length, distance * 0.7) * (0.35 + 0.65 * grazing),
+        )
         .premultiply(rotation)
         .setPosition(source.x, 0.012, source.z);
       mesh.setMatrixAt(i, matrix);
+      mesh.setColorAt(i, tint.copy(base[i]!).multiplyScalar(grazing));
     });
     mesh.instanceMatrix.needsUpdate = true;
+    mesh.instanceColor!.needsUpdate = true;
   };
   return { mesh, material };
 }
@@ -391,7 +424,9 @@ export function createDistantLights(options: {
     const r = options.radius[0] + (options.radius[1] - options.radius[0]) * rand(i, 3);
     const h = options.height[0] + (options.height[1] - options.height[0]) * rand(i, 4) ** 3;
     positions.push(Math.sin(a) * r, h, Math.cos(a) * r);
-    c.copy(warm).lerp(white, rand(i, 5)).multiplyScalar(0.7 + 0.6 * rand(i, 6));
+    c.copy(warm)
+      .lerp(white, rand(i, 5))
+      .multiplyScalar(0.7 + 0.6 * rand(i, 6));
     colors.push(c.r, c.g, c.b);
   }
   const geometry = new BufferGeometry();

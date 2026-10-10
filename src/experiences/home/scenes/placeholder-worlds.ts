@@ -22,7 +22,6 @@ import {
   MeshStandardMaterial,
   PlaneGeometry,
   SpotLight,
-  type Texture,
   Vector3,
 } from "three";
 
@@ -99,7 +98,6 @@ const LIT_DOORS = [-8, -16] as const;
 const SLAB = 6;
 
 export function createDockWorld(
-  _interiorTexture: Texture | null = null,
   backdrop: DockBackdrop = { group: [], update: () => {} },
 ): DockWorld {
   const group = new Group();
@@ -209,7 +207,12 @@ export function createDockWorld(
     const lit = (LIT_DOORS as readonly number[]).includes(z);
     if (lit) {
       // The open bay: a real hall behind the opening (racking, loads, trusses, fixtures).
-      const interior = createBayInterior({ facadeX: FACADE_X, z, floorY: 1.2, seed: 5 + Math.abs(z) });
+      const interior = createBayInterior({
+        facadeX: FACADE_X,
+        z,
+        floorY: 1.2,
+        seed: 5 + Math.abs(z),
+      });
       const raisedDoor = new Mesh(new BoxGeometry(0.3, 0.5, 3.2), doorMaterial);
       raisedDoor.name = "Dock_Door_Raised";
       raisedDoor.position.set(FACADE_X + 0.1, 1.2 + 3.15, z);
@@ -288,7 +291,11 @@ export function createDockWorld(
   doors.push(hazardStripe);
 
   // Roof plant: turbine ventilators along the ridge (rooftop technical detail).
-  const ventMaterial = new MeshStandardMaterial({ color: "#7a7d7a", roughness: 0.4, metalness: 0.7 });
+  const ventMaterial = new MeshStandardMaterial({
+    color: "#7a7d7a",
+    roughness: 0.4,
+    metalness: 0.7,
+  });
   const roofVents: Mesh[] = [];
   for (let z = BUILDING_Z[0] + 6; z < BUILDING_Z[1] - 4; z += 11) {
     if (Math.abs(z - LIT_DOOR_Z) < 3) continue; // clear of the lit bay's canopy
@@ -437,7 +444,10 @@ export function createDockWorld(
 
   // Canopy strip along the loading doors with a pair of warm downlights per
   // door: the façade's rhythm of light (emissive only — no real-time lights).
-  const canopyStrip = new Mesh(new BoxGeometry(1.6, 0.28, BUILDING_Z[1] - BUILDING_Z[0] - 4), cladding);
+  const canopyStrip = new Mesh(
+    new BoxGeometry(1.6, 0.28, BUILDING_Z[1] - BUILDING_Z[0] - 4),
+    cladding,
+  );
   canopyStrip.name = "Dock_Canopy_Strip";
   canopyStrip.position.set(FACADE_X - 0.8, 5.35, (BUILDING_Z[0] + BUILDING_Z[1]) / 2);
   worldScaledUv(canopyStrip, 6);
@@ -558,7 +568,10 @@ export function createDockWorld(
   const drainMat = new MeshStandardMaterial({ color: "#1a1c1d", roughness: 0.6, metalness: 0.6 });
   const drains = new Group();
   drains.name = "Dock_Drains";
-  const trench = new Mesh(new BoxGeometry(0.32, 0.02, DRAINS.trench.z1 - DRAINS.trench.z0), drainMat);
+  const trench = new Mesh(
+    new BoxGeometry(0.32, 0.02, DRAINS.trench.z1 - DRAINS.trench.z0),
+    drainMat,
+  );
   trench.position.set(DRAINS.trench.x, 0.012, (DRAINS.trench.z0 + DRAINS.trench.z1) / 2);
   drains.add(trench);
   for (const [gx, gz] of DRAINS.grates) {
@@ -612,7 +625,12 @@ export function createDockWorld(
   // One lightweight realtime forklift, authored (not simulated): it carries a
   // wrapped pallet out to the threshold, pauses, then reverses back inside as
   // loading finishes and the truck becomes the hero (reference 02 → 03).
-  const { group: forklift, beaconMaterial: forkliftBeacon, wheels: forkWheels, rearSteer: forkSteer } = createForklift();
+  const {
+    group: forklift,
+    beaconMaterial: forkliftBeacon,
+    wheels: forkWheels,
+    rearSteer: forkSteer,
+  } = createForklift();
   group.add(blocking, ambient, dockLight, dockLight.target, forklift, ...backdrop.group);
   // Draw-call batching (same image): the blocking is static, so it merges per material;
   // the forklift's wheels roll and steer, so they are skinned to their own nodes. Materials
@@ -783,4 +801,3 @@ export function createRidge(radius: number, height: number, seed: number): Mesh 
   mesh.frustumCulled = false;
   return mesh;
 }
-

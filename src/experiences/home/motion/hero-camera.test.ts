@@ -10,6 +10,7 @@ import {
   shotParams,
   shotPose,
 } from "./hero-camera";
+import { YARD_BLOCK_DEPTH, YARD_BLOCKS } from "../scenes/dock-hardware";
 import { returnOcclusionProgress } from "./hero-story-control";
 
 describe("aspect buckets", () => {
@@ -99,5 +100,29 @@ describe("return path R(p; p_rev)", () => {
       return largest;
     };
     expect(largestStep(0.0005) / largestStep(0.001)).toBeLessThan(0.6);
+  });
+});
+
+describe("dock camera clearance", () => {
+  it("no opening / reveal camera stands in or next to a yard block, in any bucket", () => {
+    // The truck is parked at the origin from the opening through the reveal hold, so these
+    // truck-relative positions are world positions.
+    const last = SHOT_INDEX["rear-three-quarter"]!;
+    const margin = 2;
+    for (const bucket of ["ultrawide", "wide", "standard", "narrow", "portrait"] as const) {
+      for (let t = 0; t <= last; t += 0.05) {
+        const [x, , z] = shotPose(forwardShotParams(t, bucket)).position;
+        for (const block of YARD_BLOCKS) {
+          const inside =
+            Math.abs(x - block.x) < YARD_BLOCK_DEPTH / 2 + margin &&
+            z > block.z0 - margin &&
+            z < block.z1 + margin;
+          expect(
+            inside,
+            `${bucket} t=${t.toFixed(2)} camera (${x.toFixed(1)}, ${z.toFixed(1)})`,
+          ).toBe(false);
+        }
+      }
+    }
   });
 });

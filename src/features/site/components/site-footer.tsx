@@ -34,7 +34,10 @@ export function SiteFooter() {
             <p className="max-w-[30ch] ed-small text-text-secondary">{footer.tagline}</p>
           </div>
 
-          <div id={footer.contactId} className="col-span-4 flex flex-col gap-2 md:col-span-4 lg:col-span-4 lg:col-start-7">
+          <div
+            id={footer.contactId}
+            className="col-span-4 flex flex-col gap-2 md:col-span-4 lg:col-span-4 lg:col-start-7"
+          >
             <h2 className="ed-meta text-text-secondary">{footer.contactHeading}</h2>
             <address className="flex flex-col not-italic">
               <a href={contact.phoneHref} className={`${LINK} tabular-nums`}>
@@ -46,12 +49,16 @@ export function SiteFooter() {
                 {contact.email}
               </a>
               <a href={`mailto:${contact.pec}`} className={`${LINK} gap-2`}>
-                <span className="ed-meta text-text-secondary">{footer.labels.pec}</span> {contact.pec}
+                <span className="ed-meta text-text-secondary">{footer.labels.pec}</span>{" "}
+                {contact.pec}
               </a>
             </address>
           </div>
 
-          <nav aria-labelledby="footer-nav" className="col-span-4 flex flex-col gap-2 md:col-span-4 lg:col-span-5 lg:col-start-12">
+          <nav
+            aria-labelledby="footer-nav"
+            className="col-span-4 flex flex-col gap-2 md:col-span-4 lg:col-span-5 lg:col-start-12"
+          >
             <h2 id="footer-nav" className="ed-meta text-text-secondary">
               {footer.navHeading}
             </h2>
@@ -69,7 +76,25 @@ export function SiteFooter() {
 
         <p className="border-t border-hairline pt-5 ed-meta leading-relaxed text-text-secondary">
           © {year} {footer.legalName} · {address.street}, {address.postalCode} {address.locality} (
-          {address.province}) · {footer.vatLabel} {company.vatNumber} · {footer.reaLabel} {company.rea}
+          {address.province}) · {footer.vatLabel} {company.vatNumber} · {footer.reaLabel}{" "}
+          {company.rea}
+        </p>
+        <p className="ed-meta leading-relaxed text-text-secondary">
+          {footer.credits.lead}{" "}
+          {footer.credits.works.map((work, i) => (
+            <span key={work.href}>
+              {i > 0 && " e "}
+              <a href={work.href} className={LINK} rel="noopener noreferrer">
+                “{work.title}”
+              </a>{" "}
+              di {work.author}
+            </span>
+          ))}
+          , licenza{" "}
+          <a href={footer.credits.licence.href} className={LINK} rel="noopener noreferrer license">
+            {footer.credits.licence.label}
+          </a>
+          . {footer.credits.modified}
         </p>
       </div>
     </Surface>

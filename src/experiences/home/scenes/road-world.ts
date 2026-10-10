@@ -33,12 +33,7 @@ import { SCENE_COLORS } from "@/lib/three/brand-colors";
 
 import { createItalyStage } from "./italy-stage";
 import { createRidge } from "./placeholder-worlds";
-import {
-  chapterOf,
-  createHorizonPlates,
-  createRoadScenery,
-  type RoadKit,
-} from "./road-scenery";
+import { chapterOf, createHorizonPlates, createRoadScenery, type RoadKit } from "./road-scenery";
 import {
   createAggregateDetail,
   createAsphaltMaps,
@@ -266,9 +261,11 @@ function createGalvanizedTexture(w = 128, h = 32): DataTexture {
     for (let x = 0; x < w; x++) {
       const u = x / w;
       const v = y / h;
-      let k = 0.82 + 0.12 * valueNoise(u * 48, v * 12, 48, 40) + 0.05 * valueNoise(u * 8, v * 2, 8, 41);
+      let k =
+        0.82 + 0.12 * valueNoise(u * 48, v * 12, 48, 40) + 0.05 * valueNoise(u * 8, v * 2, 8, 41);
       if (u < 0.012) k *= 0.55; // splice overlap edge
-      const bolt = Math.hypot((u - 0.035) * 4, v - 0.5) < 0.05 || Math.hypot((u - 0.035) * 4, v - 0.25) < 0.05;
+      const bolt =
+        Math.hypot((u - 0.035) * 4, v - 0.5) < 0.05 || Math.hypot((u - 0.035) * 4, v - 0.25) < 0.05;
       if (bolt) k *= 0.6;
       k *= 0.85 + 0.15 * v; // road grime towards the bottom edge
       const i = (y * w + x) * 4;
@@ -326,7 +323,11 @@ function wBeamGeometry(facing: 1 | -1): BufferGeometry {
     shape.lineTo((d - t) * facing, y);
   }
   shape.closePath();
-  const geometry = new ExtrudeGeometry(shape, { depth: ROAD_LENGTH, bevelEnabled: false, steps: 1 });
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: ROAD_LENGTH,
+    bevelEnabled: false,
+    steps: 1,
+  });
   const position = geometry.attributes.position!;
   const uv = geometry.attributes.uv!;
   for (let i = 0; i < position.count; i++) {
@@ -344,8 +345,12 @@ function postGeometry(facing: 1 | -1): BufferGeometry {
   // pair on the block-out.
   const bolts: BufferGeometry[] = [];
   for (const y of [0.53, 0.68]) {
-    const head = new CylinderGeometry(0.022, 0.022, 0.014, 8).rotateZ(Math.PI / 2).translate(0.048 * facing, y, 0);
-    const washer = new CylinderGeometry(0.03, 0.03, 0.004, 10).rotateZ(Math.PI / 2).translate(0.041 * facing, y, 0);
+    const head = new CylinderGeometry(0.022, 0.022, 0.014, 8)
+      .rotateZ(Math.PI / 2)
+      .translate(0.048 * facing, y, 0);
+    const washer = new CylinderGeometry(0.03, 0.03, 0.004, 10)
+      .rotateZ(Math.PI / 2)
+      .translate(0.041 * facing, y, 0);
     bolts.push(head, washer);
   }
   const rust = new BoxGeometry(0.004, 0.12, 0.05).translate(0.042 * facing, 0.41, 0); // rain-wash stain under the post
@@ -412,7 +417,12 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
   fieldMap.repeat.set(2400 / FIELD_TILE, 2400 / FIELD_TILE);
   const fieldColor = new Color("#ffffff");
   // Seen at grazing angles by the low camera: environment reflection kept low.
-  const fields = new MeshStandardMaterial({ color: fieldColor, map: fieldMap, roughness: 1, envMapIntensity: 0.3 });
+  const fields = new MeshStandardMaterial({
+    color: fieldColor,
+    map: fieldMap,
+    roughness: 1,
+    envMapIntensity: 0.3,
+  });
   // Large enough that the high route camera never sees its edge.
   const groundPlane = new Mesh(reliefPlane(), fields);
   groundPlane.name = "Road_Fields";
@@ -447,11 +457,26 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
   // Reach: hedgerow / tree-belt geometry on the parcel edges (real height and long sun
   // shadows-by-shading, so the rising camera sees dimensional farmland, not a flat texture).
   const beltCount = 4200;
-  const belts = new InstancedMesh(
-    new IcosahedronGeometry(1, 1),
-    new MeshStandardMaterial({ color: "#ffffff", emissive: "#1c2712", emissiveIntensity: 0.85, roughness: 1, transparent: true }),
-    beltCount,
-  );
+  // Opaque, and grown out of the ground (uBeltGrow) as the aerial view takes over: faded by
+  // opacity they read as translucent ghost blobs over a see-through ground.
+  const beltGrow = { value: 0 };
+  const beltMaterial = new MeshStandardMaterial({
+    color: "#ffffff",
+    emissive: "#1c2712",
+    emissiveIntensity: 0.85,
+    roughness: 1,
+  });
+  beltMaterial.onBeforeCompile = (shader) => {
+    shader.uniforms.uBeltGrow = beltGrow;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nuniform float uBeltGrow;")
+      // The unit blob's base (local y = −1) stays on the ground; its crown rises.
+      .replace(
+        "#include <begin_vertex>",
+        "#include <begin_vertex>\ntransformed.y = (transformed.y + 1.0) * uBeltGrow - 1.0;",
+      );
+  };
+  const belts = new InstancedMesh(new IcosahedronGeometry(1, 1), beltMaterial, beltCount);
   belts.name = "Road_Tree_Belts";
   belts.frustumCulled = false;
   {
@@ -474,7 +499,11 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
         const x = along ? t : fixed + (h(t, 9) - 0.5) * 3;
         const z = along ? fixed + (h(t, 8) - 0.5) * 3 : t + 150;
         if (Math.abs(x) < 24) continue;
-        m.makeScale(along ? r * 1.9 : r, height * 0.55, along ? r : r * 1.9).setPosition(x, height * 0.4 + terrainHeight(x, z), z);
+        m.makeScale(along ? r * 1.9 : r, height * 0.55, along ? r : r * 1.9).setPosition(
+          x,
+          height * 0.4 + terrainHeight(x, z),
+          z,
+        );
         belts.setMatrixAt(n, m);
         belts.setColorAt(n, tint.setHSL(0.24 + 0.08 * h(n, 3), 0.5, 0.16 + 0.14 * h(n, 4)));
         n++;
@@ -488,8 +517,18 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
   // Long low-sun shadows: each belt segment throws a soft dark strip towards the camera
   // (−Z, the sun is ahead), stretched by its height; and localized morning mist banks in
   // the low ground between parcels (additive-free, alpha-blended noise cards near the ground).
-  const shadowMat = new MeshBasicMaterial({ color: "#0d1208", transparent: true, opacity: 0, depthWrite: false, fog: false });
-  const shadows = new InstancedMesh(new PlaneGeometry(1, 1).rotateX(-Math.PI / 2), shadowMat, beltCount);
+  const shadowMat = new MeshBasicMaterial({
+    color: "#0d1208",
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    fog: false,
+  });
+  const shadows = new InstancedMesh(
+    new PlaneGeometry(1, 1).rotateX(-Math.PI / 2),
+    shadowMat,
+    beltCount,
+  );
   shadows.name = "Road_Belt_Shadows";
   shadows.frustumCulled = false;
   shadows.renderOrder = 1;
@@ -503,7 +542,11 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
       belts.getMatrixAt(i, src);
       src.decompose(pos, q, sc);
       const len = sc.y * 9;
-      m.makeScale(sc.x * 1.1, 1, len).setPosition(pos.x, terrainHeight(pos.x, pos.z) + 0.08, pos.z - len * 0.45);
+      m.makeScale(sc.x * 1.1, 1, len).setPosition(
+        pos.x,
+        terrainHeight(pos.x, pos.z) + 0.08,
+        pos.z - len * 0.45,
+      );
       shadows.setMatrixAt(i, m);
     }
     shadows.count = belts.count;
@@ -511,7 +554,14 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
   }
   shadows.visible = false;
   const mistMap = createGlowTexture(64);
-  const mistMat = new MeshBasicMaterial({ map: mistMap, color: "#e8d8c0", transparent: true, opacity: 0, depthWrite: false, fog: false });
+  const mistMat = new MeshBasicMaterial({
+    map: mistMap,
+    color: "#e8d8c0",
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    fog: false,
+  });
   const mist = new InstancedMesh(new PlaneGeometry(1, 1).rotateX(-Math.PI / 2), mistMat, 90);
   mist.name = "Road_Morning_Mist";
   mist.frustumCulled = false;
@@ -530,7 +580,11 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
       const mz = (h(i, 5) - 0.3) * 1500;
       // Mist pools in depressions only: keep banks where the relief is low.
       const low = terrainHeight(mx, mz) < -1.4;
-      m.makeScale(low ? w : 0.001, 1, w * (0.55 + 0.35 * h(i, 2))).setPosition(mx, 0.6 + 1.2 * h(i, 4), mz);
+      m.makeScale(low ? w : 0.001, 1, w * (0.55 + 0.35 * h(i, 2))).setPosition(
+        mx,
+        0.6 + 1.2 * h(i, 4),
+        mz,
+      );
       mist.setMatrixAt(i, m);
     }
     mist.instanceMatrix.needsUpdate = true;
@@ -599,13 +653,21 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
   };
   withAggregateDetail(asphalt, aggregateUniforms);
   if (oppositeAsphalt !== asphalt) withAggregateDetail(oppositeAsphalt, aggregateUniforms);
-  const carriageway = flatAt(new Mesh(unitPlane, asphalt), (CARRIAGEWAY[0] + CARRIAGEWAY[1]) / 2, width);
+  const carriageway = flatAt(
+    new Mesh(unitPlane, asphalt),
+    (CARRIAGEWAY[0] + CARRIAGEWAY[1]) / 2,
+    width,
+  );
   carriageway.name = "Road_Surface";
   const opposite = flatAt(new Mesh(unitPlane, oppositeAsphalt), OPPOSITE_X + width / 2, width);
   opposite.name = "Road_Surface_Opposite";
 
   // Without a kit: simple markings (the kit bakes worn markings into the tile).
-  const markingMaterial = new MeshStandardMaterial({ color: "#dcdcd6", roughness: 0.5, transparent: true });
+  const markingMaterial = new MeshStandardMaterial({
+    color: "#dcdcd6",
+    roughness: 0.5,
+    transparent: true,
+  });
   const markings = new Group();
   const dashCount = Math.ceil(ROAD_LENGTH / DASH_SPACING);
   const dashes = new InstancedMesh(new BoxGeometry(0.15, 0.01, 4.5), markingMaterial, dashCount);
@@ -628,7 +690,11 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
     roughness: 0.42,
     transparent: true,
   });
-  const postMaterial = new MeshStandardMaterial({ color: "#8c9294", metalness: 0.6, roughness: 0.5 });
+  const postMaterial = new MeshStandardMaterial({
+    color: "#8c9294",
+    metalness: 0.6,
+    roughness: 0.5,
+  });
   // Right verge (traffic on +X) and the median (traffic on −X, i.e. our side).
   const rails = [
     { x: RIGHT_EDGE - 2.9, facing: 1 as const },
@@ -667,7 +733,12 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
     }
     return mergeGeometries(blades)!;
   })();
-  const tuftMaterial = new MeshStandardMaterial({ color: "#ffffff", roughness: 1, side: DoubleSide, transparent: true });
+  const tuftMaterial = new MeshStandardMaterial({
+    color: "#ffffff",
+    roughness: 1,
+    side: DoubleSide,
+    transparent: true,
+  });
   const tufts = [-1, 1].map(() => {
     const mesh = new InstancedMesh(tuftGeometry, tuftMaterial, tuftCount);
     mesh.name = "Road_Verge_Tufts";
@@ -675,12 +746,23 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
     for (let i = 0; i < tuftCount; i++) {
       const v = Math.sin(i * 12.9898) * 43758.5453;
       const f = v - Math.floor(v);
-      mesh.setColorAt(i, new Color().setHSL(0.11 + 0.06 * f, 0.35 + 0.2 * f, 0.36 + 0.14 * ((f * 7) % 1)));
+      mesh.setColorAt(
+        i,
+        new Color().setHSL(0.11 + 0.06 * f, 0.35 + 0.2 * f, 0.36 + 0.14 * ((f * 7) % 1)),
+      );
     }
     return mesh;
   });
   const dustStrips = rails.map(({ x, facing }) => {
-    const strip = new Mesh(new PlaneGeometry(0.55, ROAD_LENGTH), new MeshBasicMaterial({ color: "#1c1a15", transparent: true, opacity: 0.35, depthWrite: false }));
+    const strip = new Mesh(
+      new PlaneGeometry(0.55, ROAD_LENGTH),
+      new MeshBasicMaterial({
+        color: "#1c1a15",
+        transparent: true,
+        opacity: 0.35,
+        depthWrite: false,
+      }),
+    );
     strip.rotation.x = -Math.PI / 2;
     strip.position.set(x - 0.15 * facing, 0.02, (ROAD_AHEAD - ROAD_BEHIND) / 2);
     return strip;
@@ -691,7 +773,11 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
   lamps.castShadow = true;
 
   // Overpass (open road): realtime, it spans the road and casts its shadow across it.
-  const concrete = new MeshStandardMaterial({ color: "#ffffff", map: createConcreteTexture(), roughness: 0.9 });
+  const concrete = new MeshStandardMaterial({
+    color: "#ffffff",
+    map: createConcreteTexture(),
+    roughness: 0.9,
+  });
   concrete.map!.repeat.set(1 / 6, 1 / 3);
   const overpass = createOverpass(concrete);
   overpass.visible = false;
@@ -709,7 +795,14 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
   // starting ~420 m out under the sun and running back towards the camera
   // (a real specular streak's geometry); it fades as the route takes over.
   let sunGlintLevel = 1;
-  const sunSource: GlintSource = { x: 0, z: 0, length: 390, width: 8, color: "#ffc98a", strength: 0.4 };
+  const sunSource: GlintSource = {
+    x: 0,
+    z: 0,
+    length: 390,
+    width: 8,
+    color: "#ffc98a",
+    strength: 0.4,
+  };
   const sunGlint = createGroundGlints([sunSource], "Road_Sun_Glint", () => sunGlintLevel);
   const aimGlint = sunGlint.mesh.onBeforeRender;
   sunGlint.mesh.onBeforeRender = (renderer, scene, camera, geometry, material, grp) => {
@@ -780,7 +873,14 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
     sun.target,
   );
 
-  const placeRow = (mesh: InstancedMesh, count: number, spacing: number, offset: number, x: number, scaleY = 1) => {
+  const placeRow = (
+    mesh: InstancedMesh,
+    count: number,
+    spacing: number,
+    offset: number,
+    x: number,
+    scaleY = 1,
+  ) => {
     const phase = offset % spacing;
     for (let i = 0; i < count; i++) {
       matrix.makeScale(1, scaleY, 1).setPosition(x, 0, -ROAD_BEHIND + i * spacing - phase);
@@ -810,7 +910,10 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
       const { routeBlend, mapBlend, journey, active } = story;
       const settle = 1 - routeBlend;
       // The physical world dissolves into the information space as the camera rises.
-      const ground = 1 - smooth(0.15, 0.7, mapBlend);
+      // The physical ground is gone before Italy's shape is legible (italy-stage.ts): fading
+      // together, the leftover farmland showed through the sea and the neighbouring land as one
+      // brown mass around the Italian coast.
+      const ground = 1 - smooth(0.04, 0.38, mapBlend);
       const chapter = chapterOf(journey);
 
       // Everything on the ground flows at road speed.
@@ -843,11 +946,13 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
           const v = Math.sin(k * 78.233) * 43758.5453;
           const f = v - Math.floor(v);
           const sc = (0.5 + 0.7 * f) * settle * (f > 0.12 ? 1 : 0.001);
-          matrix.makeScale(sc, sc * (0.7 + f), sc).setPosition(
-            side.x - side.facing * (0.2 + 0.7 * ((f * 13) % 1)) + (f - 0.5) * 0.3,
-            terrainHeight(0, 0),
-            -ROAD_BEHIND + k * TUFT_SPACING - phase + f * 0.5,
-          );
+          matrix
+            .makeScale(sc, sc * (0.7 + f), sc)
+            .setPosition(
+              side.x - side.facing * (0.2 + 0.7 * ((f * 13) % 1)) + (f - 0.5) * 0.3,
+              terrainHeight(0, 0),
+              -ROAD_BEHIND + k * TUFT_SPACING - phase + f * 0.5,
+            );
           mesh.setMatrixAt(k, matrix);
         }
         mesh.instanceMatrix.needsUpdate = true;
@@ -870,7 +975,10 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
       }
       lastChapter = active ? chapter : null;
       const oz = recycle(620 + overpassPhase, offset, 900);
-      if ((active && !wasActive && chapter !== "C") || (!Number.isNaN(overpassLastZ) && oz > overpassLastZ + 450)) {
+      if (
+        (active && !wasActive && chapter !== "C") ||
+        (!Number.isNaN(overpassLastZ) && oz > overpassLastZ + 450)
+      ) {
         overpassChapter = chapter === "C";
       }
       overpassLastZ = oz;
@@ -897,23 +1005,26 @@ export function createRoadWorld(kit: RoadKit | null = null): RoadWorld {
         material.depthWrite = !material.transparent;
         material.opacity = ground;
       }
-      carriageway.visible = opposite.visible = groundPlane.visible = markings.visible = ground > 0.001;
+      carriageway.visible =
+        opposite.visible =
+        groundPlane.visible =
+        markings.visible =
+          ground > 0.001;
       if (aerialPlane && aerialMaterial) {
         // The real aerial tile takes over as the terrain tints towards graphite
         // (settle falling), then fades with the rest of the ground into Italy.
+        // The aerial tile lies over the field plane, which stays opaque until the whole ground
+        // dissolves: two half-transparent layers let ~25 % of the sunrise sky show through the
+        // ground mid-crossfade, which read as a flat orange plain.
         const aerialWeight = smooth(0.15, 0.75, routeBlend);
         aerialMaterial.opacity = aerialWeight * ground;
         aerialPlane.visible = aerialMaterial.opacity > 0.001;
-        const beltMaterial = belts.material as MeshStandardMaterial;
-        beltMaterial.opacity = aerialWeight * ground;
-        belts.visible = beltMaterial.opacity > 0.02;
-        shadowMat.opacity = 0.16 * beltMaterial.opacity;
+        beltGrow.value = aerialWeight * ground;
+        belts.visible = beltGrow.value > 0.02;
+        shadowMat.opacity = 0.16 * beltGrow.value;
         shadows.visible = belts.visible;
         mistMat.opacity = 0.16 * aerialWeight * ground;
         mist.visible = mistMat.opacity > 0.01;
-        fields.opacity = ground * (1 - aerialWeight);
-        fields.transparent = true;
-        fields.depthWrite = false;
       }
       // Relief sinks as soon as the camera starts to rise (seen from above it
       // would read as a ring around the world).

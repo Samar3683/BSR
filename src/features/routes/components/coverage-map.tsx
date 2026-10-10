@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { type CSSProperties, useId } from "react";
 
 import { MAPS } from "@/config/media-manifest";
 import { cx } from "@/lib/utils/cx";
@@ -14,6 +15,10 @@ import {
   NETWORK_VIEWBOX,
   ORIGIN,
 } from "../graphics/coverage-network";
+import styles from "./coverage-map.module.css";
+
+/** Line weight read by the zoom compensation (`.weight`); also the unpinned width. */
+const weight = (w: number) => ({ strokeWidth: w, style: { "--w": w } as CSSProperties });
 
 /** The last point of a corridor: where the route arrives. */
 function endOf(d: string): [number, number] {
@@ -21,31 +26,8 @@ function endOf(d: string): [number, number] {
   return match ? [Number(match[1]), Number(match[2])] : [0, 0];
 }
 
-/*
- * The camera over the map, per step of the act (styles: time-based, 1.6 s,
- * scaled around Carpi): the base → the north → Italy → Europe. Only while
- * the act is pinned; otherwise the whole map, every route drawn.
- */
-const CAMERA = [
-  "pinned:group-data-[step=0]/scene:scale-[3.4]",
-  "pinned:group-data-[step=1]/scene:scale-[2.3]",
-  "pinned:group-data-[step=2]/scene:scale-[1.35]",
-  "pinned:group-data-[step=3]/scene:scale-[0.8]",
-].join(" ");
-
-/** A route drawing once the camera reaches `from` (a step); drawn at rest. */
-const DRAW = "[stroke-dasharray:1] transition-[stroke-dashoffset] duration-[1400ms] ease-cinematic";
-const UNTIL: Record<1 | 2 | 3, string> = {
-  1: "pinned:group-data-[step=0]/scene:[stroke-dashoffset:1]",
-  2: "pinned:group-data-[step=0]/scene:[stroke-dashoffset:1] pinned:group-data-[step=1]/scene:[stroke-dashoffset:1]",
-  3: "pinned:group-data-[step=0]/scene:[stroke-dashoffset:1] pinned:group-data-[step=1]/scene:[stroke-dashoffset:1] pinned:group-data-[step=2]/scene:[stroke-dashoffset:1]",
-};
-const SHOW_FROM: Record<1 | 2 | 3, string> = {
-  1: "pinned:group-data-[step=0]/scene:opacity-0",
-  2: "pinned:group-data-[step=0]/scene:opacity-0 pinned:group-data-[step=1]/scene:opacity-0",
-  3: "pinned:group-data-[step=0]/scene:opacity-0 pinned:group-data-[step=1]/scene:opacity-0 pinned:group-data-[step=2]/scene:opacity-0",
-};
-const FADE = "transition-opacity duration-700 ease-enter";
+/** Route dash set-up for drawing (pathLength 1); the offset is scrubbed (coverage-map.module.css). */
+const DRAWABLE = "[stroke-dasharray:1]";
 
 /**
  * The supplied BSR coverage map (geography + the route network, one viewBox)
@@ -54,58 +36,77 @@ const FADE = "transition-opacity duration-700 ease-enter";
  * Italian network draws, then the island links, then the confirmed European
  * corridors, and the red destinations arrive. Verified geography only: every
  * line is the supplier's, sea links stay dashed. Decorative — the base, the
- * reach and the routes are real text beside it.
+ * reach and the routes are real text beside it. The camera and the reveals
+ * scrub with the act's progress (coverage-map.module.css): they follow the
+ * scroll exactly and stop when it stops.
  */
 export function CoverageMap({ className }: { className?: string }) {
+  // Unique per instance: two maps on one page must not share a clip path.
+  const clipId = `coverage-clip-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const destinations = EUROPE_CORRIDORS.map((route) => ({ id: route.id, at: endOf(route.d) }));
   const origin = { x: (ORIGIN.x / 1800) * 100, y: (ORIGIN.y / 1000) * 100 };
   return (
     <div aria-hidden="true" className={cx("overflow-clip", className ?? "relative")}>
       <div
         className={cx(
-          "absolute top-1/2 left-1/2 aspect-[1800/1000] w-[150%] -translate-x-1/2 -translate-y-1/2 transition-[scale] duration-[1600ms] ease-cinematic motion-reduce:transition-none",
-          CAMERA,
+          "absolute top-1/2 left-1/2 aspect-[1800/1000] w-[150%] -translate-x-1/2 -translate-y-1/2",
+          styles.camera,
         )}
         style={{ transformOrigin: `${origin.x}% ${origin.y}%` }}
       >
         <Image src={MAPS.geographyDark} alt="" fill unoptimized className="select-none" />
         <svg viewBox={NETWORK_VIEWBOX} className="absolute inset-0 h-full w-full" fill="none">
           <defs>
-            <clipPath id="coverage-network-clip">
+            <clipPath id={clipId}>
               <rect {...NETWORK_CLIP} />
             </clipPath>
           </defs>
-          <g clipPath="url(#coverage-network-clip)" strokeLinecap="round" strokeLinejoin="round">
-            <g className="stroke-success-graphic" strokeOpacity="0.75" strokeWidth="1.8">
+          <g clipPath={`url(#${clipId})`} strokeLinecap="round" strokeLinejoin="round">
+            <g
+              className={cx(styles.weight, "stroke-success-graphic")}
+              strokeOpacity="0.75"
+              {...weight(1.8)}
+            >
               {EUROPE_CORRIDORS.map((route) => (
-                <path key={route.id} d={route.d} pathLength={1} className={cx(DRAW, UNTIL[3])} />
+                <path
+                  key={route.id}
+                  d={route.d}
+                  pathLength={1}
+                  className={cx(DRAWABLE, styles.draw3)}
+                />
               ))}
             </g>
             <g
-              className={cx(FADE, SHOW_FROM[3], "stroke-success-graphic")}
+              className={cx(styles.show3, styles.weight, "stroke-success-graphic")}
               strokeOpacity="0.75"
-              strokeWidth="1.8"
+              {...weight(1.8)}
             >
               {EUROPE_FERRIES.map((route) => (
                 <path key={route.id} d={route.d} strokeDasharray="5 7" />
               ))}
             </g>
-            <g className="stroke-success-graphic" strokeWidth="3.3">
+            <g className={cx(styles.weight, "stroke-success-graphic")} {...weight(3.3)}>
               {ITALY_ROUTES.map((route) => (
                 <path
                   key={route.id}
                   d={route.d}
                   pathLength={1}
-                  className={cx(DRAW, route.id.startsWith("italy-north") ? UNTIL[1] : UNTIL[2])}
+                  className={cx(
+                    DRAWABLE,
+                    route.id.startsWith("italy-north") ? styles.draw1 : styles.draw2,
+                  )}
                 />
               ))}
             </g>
-            <g className={cx(FADE, SHOW_FROM[2], "stroke-success-graphic")} strokeWidth="2.4">
+            <g
+              className={cx(styles.show2, styles.weight, "stroke-success-graphic")}
+              {...weight(2.4)}
+            >
               {ITALY_FERRIES.map((route) => (
                 <path key={route.id} d={route.d} strokeDasharray="4 5" />
               ))}
             </g>
-            <g className={cx(FADE, SHOW_FROM[2])}>
+            <g className={styles.show2}>
               {CITIES.map((city) => (
                 <circle
                   key={city.id}
@@ -125,14 +126,17 @@ export function CoverageMap({ className }: { className?: string }) {
                   textAnchor={label.anchor}
                   paintOrder="stroke"
                   strokeWidth="5"
-                  className="fill-text-primary stroke-background-primary font-sans text-[22px] font-medium"
+                  className={cx(
+                    styles.label,
+                    "fill-text-primary stroke-background-primary font-sans text-[22px] font-medium",
+                  )}
                 >
                   {label.text}
                 </text>
               ))}
             </g>
             {destinations.map(({ id, at: [x, y] }) => (
-              <g key={id} className={cx(FADE, SHOW_FROM[3])}>
+              <g key={id} className={styles.show3}>
                 <circle cx={x} cy={y} r="16" className="fill-action-primary/25" />
                 <rect
                   x={x - 6}
@@ -163,7 +167,10 @@ export function CoverageMap({ className }: { className?: string }) {
                   textAnchor={label.anchor}
                   paintOrder="stroke"
                   strokeWidth="5"
-                  className="fill-text-primary stroke-background-primary font-sans text-[22px] font-semibold"
+                  className={cx(
+                    styles.label,
+                    "fill-text-primary stroke-background-primary font-sans text-[22px] font-semibold",
+                  )}
                 >
                   {label.text}
                 </text>

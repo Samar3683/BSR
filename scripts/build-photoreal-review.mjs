@@ -1,10 +1,4 @@
-/**
- * Builds the photoreal-reconstruction review set from raw checkpoint captures:
- *   node scripts/build-photoreal-review.mjs
- * For each scene: NN-name.png (beauty), NN-name-overlay.jpg (50/50 vs reference),
- * NN-name-luma.jpg (grayscale luminance, render | reference), NN-name-edges.jpg
- * (edge maps side by side) and two 512x512 anti-CG crops (road/ground + horizon).
- */
+
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";

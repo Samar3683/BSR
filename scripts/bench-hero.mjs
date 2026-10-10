@@ -1,21 +1,4 @@
-#!/usr/bin/env node
-/**
- * Hero real-time benchmark on the machine's real GPU (no software rasteriser).
- *
- * Holds the story at each cinematic checkpoint and lets the real frame driver
- * render continuously (composer, reflection throttle, shadows — the actual
- * pipeline), then reports per checkpoint: average/p90 frame time, fps, draw
- * calls per frame (all passes), geometries, textures, tier and DPR.
- *
- * Needs a production build with the test hooks, served on --url:
- *   BSR_DESIGN_PREVIEW=true NEXT_PUBLIC_BSR_HERO_TEST_HOOKS=true pnpm build && pnpm start
- *   node scripts/bench-hero.mjs --tier low
- *   node scripts/bench-hero.mjs --tier auto --attribute      (draw calls per object)
- *   node scripts/bench-hero.mjs --tier low --dpr 0.75           (force a render scale)
- *
- * `--tier auto` uses the page's own tier decision; a fixed tier holds the tier
- * for the whole run (the step-down monitor is relaxed so it cannot change).
- */
+
 import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";

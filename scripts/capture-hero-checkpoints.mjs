@@ -1,24 +1,4 @@
-/**
- * Captures the real-time hero at the four styleframe checkpoints and composes
- * each capture against its approved styleframe (hero Phase 2B overlay workflow).
- *
- *   node scripts/capture-hero-checkpoints.mjs [--url http://localhost:3100]
- *     [--tier high|medium|low] [--width 1600] [--height 900] [--out <dir>]
- *     [--only 01-opening,02-reveal]
- *
- * Needs a running test build (NEXT_PUBLIC_BSR_HERO_TEST_HOOKS=true), e.g. the
- * Playwright web server. For every checkpoint it navigates, snaps the story
- * deterministically, freezes the simulation (pointer input is not wired) at a
- * fixed tier and DPR 1, then writes:
- *
- *   <name>.png          clean plate (copy, scrim and header hidden)
- *   <name>-copy.png     with the HTML copy (safe-zone check)
- *   <name>-overlay.jpg  clean plate over the styleframe at 50 %
- *   <name>-side.jpg     styleframe | clean plate (composites are JPEG: review-size files)
- *
- * Captures from software WebGL are for composition review only — never for
- * visual or performance approval. Tools: Playwright and sharp (via Next.js).
- */
+
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";

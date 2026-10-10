@@ -130,7 +130,16 @@ One small store per concern. `performance-store` holds capability and tier. `exp
 holds canvas status and, later, scene state. Local UI state stays in components. Render loops read
 stores with `getState()` instead of subscribing every frame.
 
-## Home hero (Phase 1 foundation; Phase 2B visual production in progress)
+## Home hero — scroll-scrubbed video (October 2026)
+
+The hero is one video scrubbed by the scroll: see [hero-video.md](hero-video.md) (configuration,
+preparation command, scrubbing model, fallbacks, validation). It keeps the rules below that are
+not specific to WebGL: one hero ScrollTrigger, the GSAP ticker as the only clock, HTML copy that
+works without JavaScript, and nothing below the hero importing it. The real-time hero described
+in the rest of this section is no longer mounted; it stays in the repository until the video hero
+is approved.
+
+## Former real-time hero (not mounted)
 
 Status: the engineering foundation is complete. In Phase 2B, the dock camera, layout and light
 system are matched to Styleframes 01/02, and the production asset pipeline is in place. The truck,
@@ -245,22 +254,22 @@ video. Everything else is built so that swap touches one line.
   each other's sections (shared copy such as the navigation labels is imported from `config/`).
 - **Domain features.** Each chapter lives with its domain and keeps its copy in `config/`:
 
-  | Act — section (anchor)                 | Feature                                                              |
-  | -------------------------------------- | -------------------------------------------------------------------- |
-  | 01 Origine — who BSR is (`bsr`)        | `features/home` (`IdentitySection`: the dawn, the truck on the route) |
-  | 02 Il carico (`settori`)               | `features/sectors` (pinned: the cargo, the sectors in turn)          |
-  | 03 Il servizio (`servizi`)             | `features/services` (pinned from `lg`: the truck, the two modes)     |
-  | 04 Preparazione (`come-funziona`)      | `features/booking` (`RequestProcessSection`: the loading bay)       |
-  | 05 Sicurezza (`sicurezza`)             | `features/trust` (`ProtectionSection`: the green atmosphere)        |
-  | 06 Partenza (`flotta`)                 | `features/fleet` (pinned: the three types, then the departure)       |
-  | 07 La rete (`copertura`)               | `features/routes` (pinned: the aerial, the map's four positions)     |
-  | 08 Fiducia (`clienti`, `recensioni`)   | `features/trust`, `features/reviews` (consent-only proof)            |
-  | 09 Le persone (`chi-siamo`)            | `features/about`                                                     |
-  | 10 Richiesta (`richiesta`)             | `features/booking` (`BookingSection` → `BookingFlow`, the arrival)  |
-  | 11 Domande (`faq`)                     | `features/faq` (native `<details>` disclosures)                      |
-  | 12 Arrivo (`preventivo`)               | `features/contact` (`QuoteSection`: the last frame)                  |
-  | Header, menu, footer, quick actions    | `features/site`                                                      |
-  | The film's machinery                   | `features/story` (acts config, `SceneDirector`, `PinnedScene`, truck cut-outs, journey indicator, ink titles, road) |
+  | Act — section (anchor)               | Feature                                                                                                             |
+  | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+  | 01 Origine — who BSR is (`bsr`)      | `features/home` (`IdentitySection`: the dawn, the truck on the route)                                               |
+  | 02 Il carico (`settori`)             | `features/sectors` (pinned: the cargo, the sectors in turn)                                                         |
+  | 03 Il servizio (`servizi`)           | `features/services` (pinned from `lg`: the truck, the two modes)                                                    |
+  | 04 Preparazione (`come-funziona`)    | `features/booking` (`RequestProcessSection`: the loading bay)                                                       |
+  | 05 Sicurezza (`sicurezza`)           | `features/trust` (`ProtectionSection`: the green atmosphere)                                                        |
+  | 06 Partenza (`flotta`)               | `features/fleet` (pinned: the three types, then the departure)                                                      |
+  | 07 La rete (`copertura`)             | `features/routes` (pinned: the aerial, the map's four positions)                                                    |
+  | 08 Fiducia (`clienti`, `recensioni`) | `features/trust`, `features/reviews` (consent-only proof)                                                           |
+  | 09 Le persone (`chi-siamo`)          | `features/about`                                                                                                    |
+  | 10 Richiesta (`richiesta`)           | `features/booking` (`BookingSection` → `BookingFlow`, the arrival)                                                  |
+  | 11 Domande (`faq`)                   | `features/faq` (native `<details>` disclosures)                                                                     |
+  | 12 Arrivo (`preventivo`)             | `features/contact` (`QuoteSection`: the last frame)                                                                 |
+  | Header, menu, footer, quick actions  | `features/site`                                                                                                     |
+  | The film's machinery                 | `features/story` (acts config, `SceneDirector`, `PinnedScene`, truck cut-outs, journey indicator, ink titles, road) |
 
 - **The request flow (no backend).** The home page's form is a plain GET to `/preventivo`
   (`partenza`, `destinazione`, `servizio`, `settore`); services, sectors, vehicles and coverage

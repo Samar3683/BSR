@@ -262,8 +262,13 @@ function ringsToShapes(rings: readonly (readonly number[])[]): Shape[] {
   });
 }
 
-function landMesh(rings: readonly (readonly number[])[], material: MeshBasicMaterial | ShaderMaterial) {
-  const geometry = new ShapeGeometry(ringsToShapes(rings)).rotateX(-Math.PI / 2).translate(0, Y_LAND, 0);
+function landMesh(
+  rings: readonly (readonly number[])[],
+  material: MeshBasicMaterial | ShaderMaterial,
+) {
+  const geometry = new ShapeGeometry(ringsToShapes(rings))
+    .rotateX(-Math.PI / 2)
+    .translate(0, Y_LAND, 0);
   const mesh = new Mesh(geometry, material);
   mesh.frustumCulled = false;
   return mesh;
@@ -350,29 +355,10 @@ function createLabel(text: string, origin: boolean, anchor: Anchor): Label | nul
   const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d");
   if (!context) return null;
-  const fontPx = 44;
+  const fontPx = 48;
   const family = getComputedStyle(document.body).fontFamily || "sans-serif";
   const font = `${origin ? 600 : 500} ${fontPx}px ${family}`;
-  context.font = font;
-  const width = Math.ceil(context.measureText(text).width) + 8;
-  canvas.width = width;
-  canvas.height = Math.ceil(fontPx * 1.4);
-  const texture = new CanvasTexture(canvas);
-  texture.minFilter = LinearFilter;
-  texture.generateMipmaps = false;
-  const draw = () => {
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.font = font;
-    context.fillStyle = LABEL_TEXT;
-    context.textBaseline = "middle";
-    context.fillText(text, 4, canvas.height / 2);
-    texture.needsUpdate = true;
-  };
-  draw();
-  // Redraw once the web font is ready (first draw may use the fallback face).
-  void document.fonts?.ready.then(draw);
   const material = new SpriteMaterial({
-    map: texture,
     transparent: true,
     opacity: 0,
     depthTest: false,
@@ -382,12 +368,44 @@ function createLabel(text: string, origin: boolean, anchor: Anchor): Label | nul
   });
   const sprite = new Sprite(material);
   sprite.renderOrder = 10;
-  const aspect = canvas.width / canvas.height;
-  const gap = 0.55 / aspect; // ≈ half a text height between node and label
-  if (anchor === "right") sprite.center.set(-gap - 0.25 / aspect, 0.5);
-  else if (anchor === "left") sprite.center.set(1 + gap + 0.25 / aspect, 0.5);
-  else sprite.center.set(0.5, -0.45);
-  return { sprite, material, heightPx: origin ? 15 : 13, aspect };
+  // On screen: ≈ 15–17 CSS px type (the box is 1.4 × the font size).
+  const label: Label = { sprite, material, heightPx: origin ? 24 : 21, aspect: 1 };
+  /**
+   * Measures, sizes and draws the label. Runs again once the web font is ready: the first
+   * pass may measure the fallback face, and a redraw alone (as before) clipped the wider web
+   * font and kept a stale aspect and anchor offset.
+   */
+  const layout = () => {
+    context.font = font;
+    const width = Math.ceil(context.measureText(text).width) + 8;
+    const height = Math.ceil(fontPx * 1.4);
+    // A resized canvas needs a new texture (WebGL 2 storage is immutable).
+    if (width !== canvas.width || height !== canvas.height || !material.map) {
+      canvas.width = width;
+      canvas.height = height;
+      material.map?.dispose();
+      const texture = new CanvasTexture(canvas);
+      texture.minFilter = LinearFilter;
+      texture.generateMipmaps = false;
+      material.map = texture;
+      material.needsUpdate = true;
+    }
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.font = font; // resizing a canvas resets its state
+    context.fillStyle = LABEL_TEXT;
+    context.textBaseline = "middle";
+    context.fillText(text, 4, canvas.height / 2);
+    material.map!.needsUpdate = true;
+    const aspect = canvas.width / canvas.height;
+    label.aspect = aspect;
+    const gap = 0.55 / aspect; // ≈ half a text height between node and label
+    if (anchor === "right") sprite.center.set(-gap - 0.25 / aspect, 0.5);
+    else if (anchor === "left") sprite.center.set(1 + gap + 0.25 / aspect, 0.5);
+    else sprite.center.set(0.5, -0.45);
+  };
+  layout();
+  void document.fonts?.ready.then(layout);
+  return label;
 }
 
 export interface ItalyStage {
@@ -428,22 +446,41 @@ export function createItalyStage(): ItalyStage {
 
   // ---------------------------------------------------------------- network
   const green = SCENE_COLORS.green500;
+  // The first corridor (A22, Carpi → Verona) is the road the truck is on: it alone grows
+  // during the Reach, continuing the lane line. Every other corridor waits for the map —
+  // grown from Carpi at the same time, the A1 towards Milano cut sideways across the fields
+  // as a stray line while the camera was still low.
+  const lead = new Streams();
   const primary = new Streams();
   const secondary = new Streams();
   const sea = new Streams();
+  let corridorIndex = 0;
   const reached = layCorridors(CORRIDORS, new Map([["carpi", 0]]), (kind, points, along) => {
-    (kind === "primary" ? primary : kind === "sea" ? sea : secondary).ribbon(points, along, kind === "sea");
+    const streams =
+      corridorIndex++ === 0
+        ? lead
+        : kind === "primary"
+          ? primary
+          : kind === "sea"
+            ? sea
+            : secondary;
+    streams.ribbon(points, along, kind === "sea");
   });
   const networkKm = Math.max(...primary.along, ...secondary.along, ...sea.along);
   const firstLegKm = reached.get("verona")!;
 
   // Materials: a fine primary line with a soft glow, lighter secondaries, dashed ferries.
+  const leadLine = routeMaterial({ color: green, px: 2.6, mode: 0, min: 0.15 });
+  const leadGlow = routeMaterial({ color: green, px: 11, mode: 1, additive: true });
   const primaryLine = routeMaterial({ color: green, px: 2.6, mode: 0, min: 0.15 });
   const primaryGlow = routeMaterial({ color: green, px: 11, mode: 1, additive: true });
   const secondaryLine = routeMaterial({ color: green, px: 1.5, mode: 0, min: 0.1 });
   const seaLine = routeMaterial({ color: green, px: 1.5, mode: 0 });
+  const leadGeometry = lead.geometry();
   const primaryGeometry = primary.geometry();
   const network: Array<[BufferGeometry, ShaderMaterial, string]> = [
+    [leadGeometry, leadGlow, "Route_Lead_Glow"],
+    [leadGeometry, leadLine, "Route_Lead"],
     [primaryGeometry, primaryGlow, "Route_Primary_Glow"],
     [primaryGeometry, primaryLine, "Route_Primary"],
     [secondary.geometry(), secondaryLine, "Route_Secondary"],
@@ -474,7 +511,9 @@ export function createItalyStage(): ItalyStage {
   // Europe: faint continuations toward the confirmed corridors, fading out.
   const europe = new Streams();
   const gateways = new Map<PlaceId, number>(HUBS.map((hub) => [hub, 0]));
-  layCorridors(EUROPE_HINTS, gateways, (kind, points, along) => europe.ribbon(points, along, kind === "sea"));
+  layCorridors(EUROPE_HINTS, gateways, (kind, points, along) =>
+    europe.ribbon(points, along, kind === "sea"),
+  );
   const europeLine = routeMaterial({ color: green, px: 1.3, mode: 0, fade: [140, 520] });
   network.push([europe.geometry(), europeLine, "Route_Europe_Hint"]);
 
@@ -519,13 +558,15 @@ export function createItalyStage(): ItalyStage {
 
       // Reach: the lane line turns green and runs ahead to Verona; the map
       // then grows outward from Carpi across the whole country.
-      const grow = routeBlend * firstLegKm + smooth(0.02, 0.75, mapBlend) * (networkKm - firstLegKm + 20);
-      const route = smooth(0, 0.35, routeBlend);
+      const leadGrow = routeBlend * firstLegKm;
+      const grow = smooth(0.02, 0.75, mapBlend) * (networkKm + 20);
+      leadLine.uniforms.uGrow!.value = leadGlow.uniforms.uGrow!.value = leadGrow;
       for (const m of [primaryLine, primaryGlow, secondaryLine, seaLine, coreMaterial]) {
         m.uniforms.uGrow!.value = grow;
       }
-      primaryLine.uniforms.uOpacity!.value = route;
-      primaryGlow.uniforms.uOpacity!.value = route * 0.22;
+      const route = smooth(0, 0.35, routeBlend);
+      leadLine.uniforms.uOpacity!.value = primaryLine.uniforms.uOpacity!.value = route;
+      leadGlow.uniforms.uOpacity!.value = primaryGlow.uniforms.uOpacity!.value = route * 0.22;
       secondaryLine.uniforms.uOpacity!.value = route * 0.6;
       seaLine.uniforms.uOpacity!.value = route * 0.75;
       coreMaterial.uniforms.uOpacity!.value = smooth(0.2, 0.6, mapBlend) * 0.9;
@@ -534,9 +575,10 @@ export function createItalyStage(): ItalyStage {
       originHalo.uniforms.uOpacity!.value = smooth(0.2, 0.6, mapBlend) * 0.3;
       for (const m of [originCore, originRing, originHalo]) m.uniforms.uGrow!.value = 1e9;
 
-      italyMaterial.opacity = smooth(0.05, 0.55, mapBlend);
-      (coast.material as LineBasicMaterial).opacity = smooth(0.15, 0.6, mapBlend) * 0.55;
-      context.uniforms.uOpacity!.value = smooth(0.35, 0.9, mapBlend) * (0.55 + 0.45 * europeBlend);
+      // After the physical ground has dissolved (road-world.ts): land on the carbon sea.
+      italyMaterial.opacity = smooth(0.2, 0.6, mapBlend);
+      (coast.material as LineBasicMaterial).opacity = smooth(0.25, 0.65, mapBlend) * 0.55;
+      context.uniforms.uOpacity!.value = smooth(0.3, 0.85, mapBlend) * (0.55 + 0.45 * europeBlend);
 
       europeLine.uniforms.uGrow!.value = europeBlend * 620;
       europeLine.uniforms.uOpacity!.value = smooth(0, 0.6, europeBlend) * 0.5;

@@ -171,3 +171,20 @@ pnpm assets:capture-hero --only 01-opening,02-reveal
 It writes a clean plate, a copy-on frame, a 50 % overlay on the styleframe, and a side-by-side
 view to `docs/styleframes/hero/captures/`. Software-WebGL captures are for **composition review
 only**. Visual and performance approval needs real hardware.
+
+## 10. Production stills and phone clips
+
+The poster, the still ladder (S1–S4, wide and portrait) and the phone clips (A: S1 → S2, B: S2
+→ S4) are captured from the real-time scene, so every still matches the frame real-time takes
+over from. With a test build running on a machine with a real GPU:
+
+```bash
+node scripts/capture-hero-stills.mjs --url http://localhost:3100            # stills + clips
+node scripts/capture-hero-stills.mjs --url http://localhost:3100 --only stills
+```
+
+It writes content-hashed files (`hero-s1-opening-wide.<hash>.webp`,
+`hero-clip-a.av1.<hash>.mp4` …) and the manifest `src/experiences/home/config/hero-captures.ts`
+that `hero-assets.ts` reads — a re-capture never reuses a URL. Clips need `ffmpeg` with
+`libsvtav1` and `libx264`; budget ≤ 2 MB per clip. Re-capture after any change to the truck, the
+scene, the light or the cameras, and run `pnpm assets:truck-cutouts` for the film's cut-outs.

@@ -25,6 +25,10 @@ export interface GltfAssetLoader {
 
 export function createGltfLoader(renderer: WebGLRenderer): GltfAssetLoader {
   const ktx2 = new KTX2Loader().setTranscoderPath(BASIS_TRANSCODER_PATH).detectSupport(renderer);
+  // Fetch the transcoder alongside the models: left to the loader, it is only requested
+  // once a GLB has fully downloaded and its first KTX2 texture is parsed (≈ 0.6 s later
+  // on a fast 4G connection, all of it on the critical path).
+  void ktx2.init().catch(() => {});
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).setKTX2Loader(ktx2);
   return {
     load: (url) => loader.loadAsync(url),
