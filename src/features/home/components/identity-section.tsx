@@ -4,7 +4,7 @@ import { CountUp } from "@/components/data/count-up";
 import { ActionLink } from "@/components/editorial/action";
 import { siteConfig } from "@/config/site";
 import { siteNavigation as nav } from "@/features/site/config/site-navigation";
-import { ActLabel, seg } from "@/features/story/components/cine";
+import { seg } from "@/features/story/components/cine";
 import { TruckSide } from "@/features/story/components/truck";
 import { cx } from "@/lib/utils/cx";
 
@@ -49,13 +49,6 @@ export function IdentitySection() {
         {/* The light on the horizon. */}
         <div className="absolute inset-x-0 top-[40%] h-[50%] bg-[radial-gradient(ellipse_55%_45%_at_50%_60%,rgb(63_191_134/0.28),transparent_100%)]" />
         <div className="relative ed-frame flex h-full flex-col pt-[clamp(3rem,12svh,7rem)]">
-          <div className="flex items-center justify-between gap-6 ed-meta text-text-secondary">
-            <span className="flex items-center gap-3">
-              <span className="size-1.5 rounded-full bg-success-graphic" />
-              {prologue.origin}
-            </span>
-            <span className="hidden sm:block">{prologue.coordinates}</span>
-          </div>
 
           {/* The route out of Carpi, with the truck on it. */}
           <div className="relative mt-[clamp(4rem,14svh,9rem)]">
@@ -112,7 +105,6 @@ export function IdentitySection() {
       </div>
 
       <div className="relative ed-frame pb-[clamp(4rem,10svh,8rem)]">
-        <ActLabel act={identity.act.act} name={identity.act.name} meta={identity.act.meta} />
 
         <div className="mt-[clamp(2rem,5svh,4rem)] ed-grid gap-y-14">
           <h2 id={titleId} className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-16">

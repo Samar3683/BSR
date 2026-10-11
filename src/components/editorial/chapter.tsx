@@ -59,9 +59,6 @@ export function Chapter({
   id,
   tone,
   labelledBy,
-  index,
-  name,
-  context,
   className,
   frameClassName,
   conversion,
@@ -77,11 +74,6 @@ export function Chapter({
       data-scene="view"
       className={cx("relative overflow-x-clip ed-chapter", className)}
     >
-      {index && name && (
-        <div className="ed-frame mb-[clamp(1.5rem,1rem+1.6vw,2.75rem)]">
-          <ChapterMark index={index} name={name} context={context} />
-        </div>
-      )}
       <div className={cx("ed-frame", frameClassName)}>{children}</div>
     </Surface>
   );

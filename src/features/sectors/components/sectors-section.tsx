@@ -2,7 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { MediaSlot } from "@/components/media/media-slot";
-import { ActLabel, InkTitle, seg } from "@/features/story/components/cine";
+import { InkTitle, seg } from "@/features/story/components/cine";
 import { PinnedScene } from "@/features/story/components/scene";
 import { actOf } from "@/features/story/config/acts";
 import { cx } from "@/lib/utils/cx";
@@ -37,7 +37,6 @@ const CROPS = [
 export function SectorsSection() {
   const titleId = `${sectors.id}-title`;
   const act = actOf(sectors.id);
-  const count = String(sectors.items.length).padStart(2, "0");
   return (
     <PinnedScene
       id={sectors.id}
@@ -87,25 +86,10 @@ export function SectorsSection() {
           {/* Corner ticks and the caption: the picture as an instrument. */}
           <span className="absolute top-5 left-5 size-5 border-t border-l border-white/80" />
           <span className="absolute top-5 right-5 size-5 border-t border-r border-white/80" />
-          <div data-surface="white" className="absolute bottom-0 left-0 grid bg-background-primary">
-            {sectors.items.map((sector, i) => (
-              <p
-                key={sector.id}
-                data-step-item={i}
-                className="swap flex items-center gap-3 px-4 py-3 ed-meta text-text-secondary not-first:hidden pinned:not-first:flex"
-              >
-                <span className="text-success tabular-nums">
-                  {sectors.stageLabel} {sector.code} / {count}
-                </span>
-                <span>{sector.title}</span>
-              </p>
-            ))}
-          </div>
         </div>
 
         {/* The story: title, then the loads in turn. */}
         <div className="relative ed-frame flex flex-1 flex-col justify-center gap-[clamp(1.25rem,3svh,2.5rem)] py-10 lg:h-full lg:pr-[calc(47vw+var(--spacing-col-gap)*2)] pin:py-[clamp(1.5rem,4svh,3rem)] max-md:pin:justify-start max-md:pin:pb-24 lg:pin:pt-[calc(var(--header-height)+2rem)]">
-          <ActLabel act={act.act} name={sectors.act.name} meta={sectors.act.meta} />
           <InkTitle
             id={titleId}
             lines={sectors.title}

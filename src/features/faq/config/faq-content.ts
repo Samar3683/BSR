@@ -43,7 +43,7 @@ export const faqContent = {
     },
     {
       question: "Quanto tempo richiede la consegna?",
-      answer: `Per i trasporti espressi in Italia, indicativamente ${transit.italyExpress.replace(" h", " ore")} e, in molti casi, anche in giornata. Per le tratte europee in genere da 2 a 5 giorni, secondo la destinazione. I tempi ti vengono comunicati prima della conferma.`,
+      answer: `Per i trasporti espressi in Italia, entro ${transit.italyExpress.replace(" h", " ore")} e, in molti casi, anche in giornata. Per le tratte europee da 24 ore a 7 giorni, secondo la destinazione. I tempi ti vengono comunicati prima della conferma.`,
     },
     {
       question: "Quale mezzo è più adatto alla mia spedizione?",

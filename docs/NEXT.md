@@ -2,6 +2,16 @@
 
 Where the project stands and what comes next. Update this file at the end of every phase.
 
+## Admin panel and backend (11 October 2026)
+
+**Serverless backend + admin panel: done** — see [admin-backend.md](admin-backend.md). Supabase
+(Postgres with RLS, Auth, Storage, one Edge Function) and an isolated panel at `/admin`:
+dashboard, orders, dispatch (conflict-safe assignments), calendar, vehicles, drivers, customers,
+reports with CSV, immutable audit log, and a field builder that drives every form, list, filter
+and report. The public site and the hero are untouched (verified by hash). Open: create the
+production Supabase project, push the migrations, deploy `admin-users`, set the two public env
+vars, invite the first administrator (steps in admin-backend.md → Deployment).
+
 ## Where we are (10 October 2026, evening)
 
 **The hero is now a scroll-scrubbed video** (the generated 15 s footage) instead of the

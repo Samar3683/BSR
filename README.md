@@ -3,8 +3,10 @@
 Frontend for BSR, a freight transportation company operating in Italy: a cinematic, scroll-directed
 logistics experience built on a conventional, accessible, conversion-focused website.
 
-Frontend only — there is no backend yet. Feature boundaries are structured so booking, tracking or
-quoting services can be integrated later without a rewrite.
+The public site is frontend only. The operations panel at `/admin` (orders, dispatch, calendar,
+vehicles, drivers, customers, reports, audit log, configurable fields) runs on a serverless
+Supabase backend — see [docs/admin-backend.md](docs/admin-backend.md). The public site does not
+depend on it.
 
 ## Stack
 
@@ -18,6 +20,8 @@ quoting services can be integrated later without a rewrite.
 | Shared state    | Zustand                                                       |
 | Testing         | Vitest (units), Playwright + axe-core (browser, a11y)         |
 | Package manager | pnpm (Node ≥ 22)                                              |
+| Admin backend   | Supabase (Postgres + RLS, Auth, Storage, Edge Function)       |
+| Admin data      | @supabase/ssr + supabase-js, TanStack Query                   |
 
 Drei, React Hook Form, Zod and Radix are part of the planned stack. They get added when the first
 feature needs them.
@@ -40,13 +44,20 @@ pnpm assets:hero-placeholders  # regenerate the hero DEVELOPMENT placeholder sti
 pnpm assets:decoders           # sync the self-hosted KTX2 (Basis) transcoder from three
 pnpm assets:validate-model <file.glb> --role tractor|trailer|dock [--tier high|medium|low]
 pnpm assets:capture-hero       # checkpoint captures vs styleframes (needs a running test build)
+
+# Admin panel / backend (docs/admin-backend.md)
+pnpm supabase:local start      # local Supabase-compatible stack (no Docker), or `supabase start`
+pnpm test:db                   # database tests (RLS, triggers, dispatch, reports)
+pnpm test:e2e:admin            # admin end-to-end tests against the real local backend
+pnpm admin:create --email … --name … --password …   # first administrator (service role)
 ```
 
 ## Structure
 
 ```text
 src/
-  app/            Routes, layouts, metadata. Composition only.
+  app/            Routes, layouts, metadata. Composition only. app/admin = the panel's routes.
+  admin/          The admin panel (isolated: own UI kit, styles, services, field engine).
   features/       Business domains (booking, services, routes, contact).
   experiences/    Cinematic layer: scenes, scene motion, 3D. home/ + shared/.
   components/     Reusable primitives: ui, forms, layout, motion, feedback, accessibility.

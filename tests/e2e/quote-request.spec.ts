@@ -46,12 +46,16 @@ test("composes the request and submits nothing", async ({ page }) => {
   ).toHaveCount(0);
   await expect(main.getByText(/La richiesta non parte da questa pagina/)).toBeVisible();
 
-  await main.getByLabel("Partenza").fill("Modena");
-  await main.getByLabel("Destinazione").fill("Madrid");
-  await main.getByLabel("Servizio").selectOption("espresso");
-  await expect(page.getByTestId("quote-preview")).toContainText("Destinazione: Madrid");
+  // The form asks for the contacts and the two addresses only.
+  await expect(main.locator("input, select")).toHaveCount(12);
+  await main.locator('[name="nome"]').fill("Mario Rossi");
+  await main.locator('[name="telefono"]').fill("333 123 4567");
+  await main.locator('[name="ritiro_citta"]').fill("Modena");
+  await main.locator('[name="consegna_citta"]').fill("Madrid");
+  await main.locator('[name="consegna_provincia"]').fill("Madrid");
+  await expect(page.getByTestId("quote-preview")).toContainText("Consegna: Madrid (Madrid)");
   expect(await whatsappText(page)).toBe(
-    "Ciao, vorrei richiedere un preventivo per un trasporto.\n\nPartenza: Modena\nDestinazione: Madrid\nServizio: Trasporto espresso",
+    "Ciao, vorrei richiedere un preventivo per un trasporto.\n\nNome: Mario Rossi\nTelefono: +39 333 123 4567\nRitiro: Modena\nConsegna: Madrid (Madrid)",
   );
   await expect(main.getByRole("link", { name: /Scrivi un'email/ })).toHaveAttribute(
     "href",
@@ -63,22 +67,21 @@ test("composes the request and submits nothing", async ({ page }) => {
   );
 
   // What was typed survives a reload.
-  await expect(page).toHaveURL(/partenza=Modena&destinazione=Madrid&servizio=espresso/);
+  await expect(page).toHaveURL(/nome=Mario\+Rossi/);
   await page.reload();
   await expect(main.locator('[data-composer="url"]')).toBeVisible();
-  await expect(main.getByLabel("Destinazione")).toHaveValue("Madrid");
+  await expect(main.locator('[name="consegna_citta"]')).toHaveValue("Madrid");
 });
 
 test("drops invalid parameters and leaves missing ones empty", async ({ page }) => {
   await page.goto("/preventivo?servizio=volo&mezzo=__proto__&settore=&destinazione=Atene");
   const main = page.getByRole("main");
   await expect(main.locator('[data-composer="url"]')).toBeVisible();
-  await expect(main.getByLabel("Destinazione")).toHaveValue("Atene");
-  await expect(main.getByLabel("Servizio")).toHaveValue("");
-  await expect(main.getByLabel("Mezzo")).toHaveValue("");
-  await expect(main.getByLabel("Partenza")).toHaveValue("");
+  await expect(main.locator('[name="consegna_citta"]')).toHaveValue("Atene");
+  await expect(main.locator('[name="ritiro_citta"]')).toHaveValue("");
+  await expect(main.locator('[name="nome"]')).toHaveValue("");
   expect(await whatsappText(page)).toBe(
-    "Ciao, vorrei richiedere un preventivo per un trasporto.\n\nDestinazione: Atene",
+    "Ciao, vorrei richiedere un preventivo per un trasporto.\n\nConsegna: Atene",
   );
 });
 

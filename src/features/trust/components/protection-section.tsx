@@ -1,5 +1,5 @@
 import { MediaSlot } from "@/components/media/media-slot";
-import { ActLabel, InkTitle, seg } from "@/features/story/components/cine";
+import { InkTitle, seg } from "@/features/story/components/cine";
 
 import { protectionContent as protection } from "../config/protection-content";
 
@@ -17,7 +17,6 @@ import { protectionContent as protection } from "../config/protection-content";
  */
 export function ProtectionSection() {
   const titleId = `${protection.id}-title`;
-  const { act } = protection;
   return (
     <section
       id={protection.id}
@@ -33,7 +32,6 @@ export function ProtectionSection() {
       </div>
 
       <div className="relative ed-frame pt-[clamp(5rem,14svh,9rem)] pb-[clamp(4rem,10svh,7rem)]">
-        <ActLabel act={act.act} name={act.name} meta={act.meta} />
 
         <div className="mt-[clamp(2rem,5svh,3.5rem)] ed-grid gap-y-14">
           <div className="col-span-4 flex flex-col gap-8 md:col-span-8 lg:col-span-9">

@@ -1,6 +1,6 @@
 import { ActionLink } from "@/components/editorial/action";
 import { MediaSlot } from "@/components/media/media-slot";
-import { ActLabel, InkTitle, seg } from "@/features/story/components/cine";
+import { InkTitle, seg } from "@/features/story/components/cine";
 import { PinnedScene } from "@/features/story/components/scene";
 import { actOf } from "@/features/story/config/acts";
 
@@ -29,7 +29,6 @@ const STEP_RANGE = [0.3, 0.9] as const;
 export function RequestProcessSection() {
   const titleId = `${process.id}-title`;
   const act = actOf(process.id);
-  const total = String(process.steps.length).padStart(2, "0");
   return (
     <PinnedScene
       id={process.id}
@@ -68,7 +67,6 @@ export function RequestProcessSection() {
         className="relative ed-frame flex flex-col gap-6 py-12 seg pin:absolute pin:inset-x-0 pin:top-0 pin:h-full pin:justify-start pin:py-0 pin:pt-[calc(var(--header-height)+1.5rem)] lg:pin:justify-center lg:pin:pt-0 lg:pin:pr-[52%] pinned:[translate:0_calc(-70svh*var(--e))]"
         style={seg(0.16, 0.28)}
       >
-        <ActLabel act={act.act} name={process.act.name} meta={process.act.meta} />
         <InkTitle
           id={titleId}
           lines={process.titleLines}
@@ -88,20 +86,6 @@ export function RequestProcessSection() {
         style={seg(0.24, 0.34)}
       >
         <div className="ed-frame flex flex-col gap-10 py-12 pin:h-full pin:justify-end pin:gap-[clamp(1.5rem,5svh,3.5rem)] pin:pb-[clamp(6rem,12svh,7rem)] md:pin:pb-[clamp(5rem,9svh,6.5rem)]">
-          {/* Where we are: the step, as a readout (top right when pinned). */}
-          <p
-            aria-hidden="true"
-            className="hidden ed-meta text-text-primary pin:absolute pin:top-[calc(var(--header-height)+1.5rem)] pin:left-(--spacing-edge) pin:grid"
-          >
-            {process.steps.map((step, i) => (
-              <span key={step.title} data-step-item={i} className="swap">
-                <span className="text-success">
-                  {process.stageLabel} {String(i + 1).padStart(2, "0")} / {total}
-                </span>{" "}
-                · {step.title}
-              </span>
-            ))}
-          </p>
 
           <ol className="grid gap-10 pin:max-w-[min(46rem,60vw)]">
             {process.steps.map((step, i) => (

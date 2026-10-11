@@ -3,7 +3,7 @@ import { MessageCircle, Phone } from "lucide-react";
 import { ActionLink } from "@/components/editorial/action";
 import { MediaSlot } from "@/components/media/media-slot";
 import { siteConfig } from "@/config/site";
-import { ActLabel, InkTitle, seg } from "@/features/story/components/cine";
+import { InkTitle, seg } from "@/features/story/components/cine";
 import { PinnedScene } from "@/features/story/components/scene";
 import { actOf } from "@/features/story/config/acts";
 
@@ -41,7 +41,6 @@ export function QuoteSection() {
       </div>
 
       <div className="relative ed-frame flex min-h-[min(40rem,90svh)] flex-col justify-center gap-[clamp(1.5rem,4svh,2.75rem)] py-[clamp(5rem,12svh,8rem)] pin:h-full pin:min-h-0 pin:pt-(--header-height)">
-        <ActLabel act={act.act} name={quote.act.name} />
 
         {/* The whole film's route, arriving. */}
         <div aria-hidden="true" data-reveal="group" className="max-w-[56rem]">

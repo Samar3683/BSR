@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 /*
  * The site below the hero: page structure, the site header and mobile menu,
@@ -11,6 +11,25 @@ import { expect, type Page, test } from "@playwright/test";
  */
 
 test.use({ contextOptions: { reducedMotion: "reduce" } });
+
+/** Fills the quote form's fields (home page or quote page) by their parameter names. */
+async function fillForm(scope: Locator) {
+  const fields: Record<string, string> = {
+    nome: "Mario Rossi",
+    telefono: "333 123 4567",
+    ritiro_via: "Via Roma 10",
+    ritiro_cap: "41012",
+    ritiro_citta: "Carpi",
+    ritiro_provincia: "MO",
+    consegna_via: "5 Rue de la Gare",
+    consegna_cap: "69001",
+    consegna_citta: "Lione",
+    consegna_provincia: "Rhône",
+  };
+  for (const [name, value] of Object.entries(fields)) {
+    await scope.locator(`[name="${name}"]`).fill(value);
+  }
+}
 
 const SECTIONS = [
   "bsr",
@@ -180,35 +199,48 @@ test.describe("page structure", () => {
     await expect(actions).not.toHaveAttribute("data-visible");
   });
 
-  test("the request form carries the route into the quote page's channels", async ({ page }) => {
+  test("the request form carries the contacts and addresses into the quote page's channels", async ({
+    page,
+  }) => {
     await page.goto("/");
     const form = page.locator("#richiesta form");
-    const submit = form.getByRole("button", { name: "Richiedi un preventivo" });
-    // Nothing filled in: each missing field is named, focus goes to the first, the page stays.
+    const submit = form.getByRole("button", { name: "Invia la richiesta" });
+    // The form asks for these fields only: contacts, pick-up and delivery addresses.
+    await expect(form.locator("input, select, textarea")).toHaveCount(12);
+    // Nothing filled in: each missing required field is named (everything but the email),
+    // focus goes to the first, the page stays.
     await submit.click();
-    await expect(form.getByRole("alert")).toHaveCount(3);
-    await expect(form.getByLabel(/Partenza/)).toBeFocused();
-    await expect(form.getByLabel(/Partenza/)).toHaveAttribute("aria-invalid", "true");
+    await expect(form.getByRole("alert")).toHaveCount(10);
+    await expect(form.locator('[name="nome"]')).toBeFocused();
+    await expect(form.locator('[name="nome"]')).toHaveAttribute("aria-invalid", "true");
     expect(new URL(page.url()).pathname).toBe("/");
-    await form.getByLabel(/Partenza/).fill("Carpi");
-    await form.getByLabel(/Destinazione/).fill("Lione");
-    await form.getByLabel("Trasporto dedicato", { exact: false }).check({ force: true });
+    // A malformed email is named too; an empty one is fine.
+    await form.locator('[name="email"]').fill("mario");
+    await submit.click();
+    await expect(form.locator('[name="email"]')).toHaveAttribute("aria-invalid", "true");
+    await form.locator('[name="email"]').fill("mario@example.it");
+    await fillForm(form);
     await submit.click();
     await page.waitForURL((url) => {
       const q = url.searchParams;
       return (
         url.pathname === "/preventivo" &&
-        q.get("partenza") === "Carpi" &&
-        q.get("destinazione") === "Lione" &&
-        q.get("servizio") === "dedicato"
+        q.get("nome") === "Mario Rossi" &&
+        q.get("prefisso") === "+39" &&
+        q.get("ritiro_citta") === "Carpi" &&
+        q.get("consegna_citta") === "Lione"
       );
     });
     await expect(page.locator('[data-composer="url"]')).toBeVisible();
-    await expect(page.getByLabel("Partenza")).toHaveValue("Carpi");
-    await expect(page.getByLabel("Servizio")).toHaveValue("dedicato");
+    await expect(page.locator('[name="consegna_via"]')).toHaveValue("5 Rue de la Gare");
     const whatsapp = page.getByRole("link", { name: /Scrivici su WhatsApp/ });
     const href = decodeURIComponent((await whatsapp.getAttribute("href"))!);
-    expect(href).toContain("Partenza: Carpi\nDestinazione: Lione\nServizio: Trasporto dedicato");
+    expect(href).toContain(
+      "Nome: Mario Rossi\nTelefono: +39 333 123 4567\nEmail: mario@example.it",
+    );
+    expect(href).toContain(
+      "Ritiro: Via Roma 10, 41012 Carpi (MO)\nConsegna: 5 Rue de la Gare, 69001 Lione (Rhône)",
+    );
   });
 
   test("no photograph repeats below the hero", async ({ page }) => {
@@ -232,7 +264,7 @@ test.describe("page structure", () => {
       .click();
     await page.waitForURL(/\/preventivo\?settore=retail/);
     await expect(page.locator('[data-composer="url"]')).toBeVisible();
-    await expect(page.getByLabel("Settore")).toHaveValue("retail");
+    await expect(page.locator("p", { hasText: "Richiesta per" })).toContainText("Retail");
     const href = decodeURIComponent(
       (await page.getByRole("link", { name: /Scrivici su WhatsApp/ }).getAttribute("href"))!,
     );

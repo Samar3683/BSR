@@ -1,6 +1,6 @@
 import { ActionLink } from "@/components/editorial/action";
 import { MediaSlot } from "@/components/media/media-slot";
-import { ActLabel, GiantWord, InkTitle, seg } from "@/features/story/components/cine";
+import { GiantWord, InkTitle, seg } from "@/features/story/components/cine";
 import { RoadSkyline, RoadVerge } from "@/features/story/components/road";
 import { PinnedScene } from "@/features/story/components/scene";
 import { TruckSide } from "@/features/story/components/truck";
@@ -35,7 +35,6 @@ const PAN = seg(0.58, 0.68);
 export function VehiclesSection() {
   const titleId = `${vehicles.id}-title`;
   const act = actOf(vehicles.id);
-  const total = String(vehicles.categories.length).padStart(2, "0");
   const { departure } = vehicles;
 
   return (
@@ -56,7 +55,6 @@ export function VehiclesSection() {
         <div className="relative ed-frame flex flex-col gap-10 py-[clamp(4rem,10svh,7rem)] pin:h-full pin:justify-center pin:py-0 pin:pt-(--header-height) max-md:pin:justify-start max-md:pin:pt-[calc(var(--header-height)+1rem)] max-md:pin:pb-24">
           <div className="ed-grid gap-y-10">
             <div className="col-span-4 flex flex-col gap-[clamp(1rem,2.6svh,2rem)] md:col-span-8 lg:col-span-6">
-              <ActLabel act={act.act} name={vehicles.act.name} meta={vehicles.act.meta} />
               <InkTitle
                 id={titleId}
                 lines={vehicles.titleLines}
@@ -76,12 +74,6 @@ export function VehiclesSection() {
                     data-step-item={i}
                     className="swap flex flex-col gap-3 border-t border-hairline-strong pt-4"
                   >
-                    <p className="flex items-center gap-3 ed-label">
-                      <span className="text-success tabular-nums">
-                        {vehicle.code} / {total}
-                      </span>
-                      <span className="text-text-secondary">{vehicle.label}</span>
-                    </p>
                     <h3
                       id={`${vehicle.id}-title`}
                       className="cine-h3 text-[clamp(1.625rem,0.9rem+2vw,3rem)]"
@@ -155,9 +147,6 @@ export function VehiclesSection() {
                       sizes="(min-width: 64rem) 58vw, 100vw"
                       className="bg-surface-secondary pin:absolute pin:inset-0 pin:aspect-auto"
                     />
-                    <figcaption className="ed-meta text-text-secondary pin:absolute pin:bottom-0 pin:left-0 pin:bg-background-primary pin:px-4 pin:py-3">
-                      <span className="text-success">{vehicle.code}</span> · {vehicle.label}
-                    </figcaption>
                   </figure>
                 ))}
                 <span
@@ -243,10 +232,6 @@ export function VehiclesSection() {
               style={seg(0.66, 0.94)}
             />
             <span className="ed-label text-text-secondary">{departure.speedUnit}</span>
-          </p>
-          <p className="flex items-center gap-3 ed-meta text-text-secondary">
-            <span className="size-1.5 rounded-full bg-success-graphic" />
-            {departure.route}
           </p>
         </div>
 

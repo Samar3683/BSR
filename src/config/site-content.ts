@@ -56,8 +56,8 @@ export const contact = {
 
 /** Indicative transit times — never a guarantee (always shown as "indicativi"). */
 export const transit = {
-  italyExpress: "24–48 h",
-  europeTypical: "2–5 giorni",
+  italyExpress: "24 h",
+  europeTypical: "1–7 giorni",
 } as const;
 
 export const coverage = {

@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 /*
  * Content, conversion and SEO regressions (docs/content-audit.md): every
@@ -18,14 +18,37 @@ async function requestFrom(page: Page, href: string) {
   const main = page.getByRole("main");
   // The prerendered form is empty; wait for the one filled from the URL.
   await expect(main.locator('[data-composer="url"]')).toBeVisible();
-  const value = (label: string) => main.getByLabel(label, { exact: true }).inputValue();
+  const value = (name: string) => main.locator(`[name="${name}"]`).inputValue();
+  // A service, sector or vehicle chosen on the page rides along as context in the message.
+  const message = await page.getByTestId("quote-preview").innerText();
+  const context = (label: string) =>
+    message.match(new RegExp("^" + label + ": (.+)$", "m"))?.[1] ?? "";
   return {
-    origin: await value("Partenza"),
-    destination: await value("Destinazione"),
-    service: await value("Servizio"),
-    vehicle: await value("Mezzo"),
-    sector: await value("Settore"),
+    pickupCity: await value("ritiro_citta"),
+    deliveryCity: await value("consegna_citta"),
+    service: context("Servizio"),
+    vehicle: context("Mezzo"),
+    sector: context("Settore"),
   };
+}
+
+/** Fills the quote form's fields (home page or quote page) by their parameter names. */
+async function fillQuoteForm(scope: Locator) {
+  const fields: Record<string, string> = {
+    nome: "Mario Rossi",
+    telefono: "333 123 4567",
+    ritiro_via: "Via Roma 10",
+    ritiro_cap: "41012",
+    ritiro_citta: "Carpi",
+    ritiro_provincia: "MO",
+    consegna_via: "5 Rue de la Gare",
+    consegna_cap: "69001",
+    consegna_citta: "Lione",
+    consegna_provincia: "Rhône",
+  };
+  for (const [name, value] of Object.entries(fields)) {
+    await scope.locator(`[name="${name}"]`).fill(value);
+  }
 }
 
 test.describe("prefill: every action that passes data", () => {
@@ -35,12 +58,12 @@ test.describe("prefill: every action that passes data", () => {
     await page.goto("/");
     const hrefOf = (selector: string) => page.locator(selector).first().getAttribute("href");
     const cases: Array<[string, Partial<Awaited<ReturnType<typeof requestFrom>>>]> = [
-      [(await hrefOf("#espresso a[href*='servizio=']"))!, { service: "espresso" }],
-      [(await hrefOf("#dedicato a[href*='servizio=']"))!, { service: "dedicato" }],
-      [(await hrefOf("#flotta a[href*='mezzo=furgone']"))!, { vehicle: "furgone" }],
-      [(await hrefOf("#flotta a[href*='mezzo=da-valutare']"))!, { vehicle: "da-valutare" }],
-      [(await hrefOf("#settori a[href*='settore=industria']"))!, { sector: "industria" }],
-      [(await hrefOf("#copertura a[href*='destinazione=Turchia']"))!, { destination: "Turchia" }],
+      [(await hrefOf("#espresso a[href*='servizio=']"))!, { service: "Trasporto espresso" }],
+      [(await hrefOf("#dedicato a[href*='servizio=']"))!, { service: "Trasporto dedicato" }],
+      [(await hrefOf("#flotta a[href*='mezzo=furgone']"))!, { vehicle: "Furgone" }],
+      [(await hrefOf("#flotta a[href*='mezzo=da-valutare']"))!, { vehicle: "Da valutare insieme" }],
+      [(await hrefOf("#settori a[href*='settore=industria']"))!, { sector: "Industria" }],
+      [(await hrefOf("#copertura a[href*='destinazione=Turchia']"))!, { deliveryCity: "Turchia" }],
     ];
     for (const [href, expected] of cases) {
       expect(href).toMatch(/^\/preventivo\?/);
@@ -48,22 +71,33 @@ test.describe("prefill: every action that passes data", () => {
     }
   });
 
-  test("the starter form carries route, service and sector", async ({ page }) => {
+  test("the quote form carries contacts and both addresses", async ({ page }) => {
     await page.goto("/");
     const form = page.locator("#richiesta form");
-    await form.getByLabel(/Trasporto dedicato/).check({ force: true });
-    await form.getByLabel(/Partenza/).fill("Carpi (MO)");
-    await form.getByLabel(/Destinazione/).fill("Lione, Francia");
-    await form.getByLabel(/Settore/).selectOption("e-commerce");
-    await form.getByRole("button", { name: "Richiedi un preventivo" }).click();
+    await fillQuoteForm(form);
+    await form.locator('[name="email"]').fill("mario@example.it");
+    await form.locator('[name="prefisso"]').selectOption("+33");
+    await form.getByRole("button", { name: "Invia la richiesta" }).click();
     await page.waitForURL("**/preventivo?**");
-    expect(await requestFrom(page, page.url())).toEqual({
-      origin: "Carpi (MO)",
-      destination: "Lione, Francia",
-      service: "dedicato",
-      vehicle: "",
-      sector: "e-commerce",
-    });
+    const main = page.getByRole("main");
+    await expect(main.locator('[data-composer="url"]')).toBeVisible();
+    for (const [name, value] of Object.entries({
+      nome: "Mario Rossi",
+      email: "mario@example.it",
+      prefisso: "+33",
+      telefono: "333 123 4567",
+      ritiro_via: "Via Roma 10",
+      ritiro_cap: "41012",
+      ritiro_citta: "Carpi",
+      ritiro_provincia: "MO",
+      consegna_via: "5 Rue de la Gare",
+      consegna_cap: "69001",
+      consegna_citta: "Lione",
+      consegna_provincia: "Rhône",
+    })) {
+      await expect(main.locator(`[name="${name}"]`)).toHaveValue(value);
+    }
+    await expect(page.getByTestId("quote-preview")).toContainText("Telefono: +33 333 123 4567");
   });
 });
 
@@ -114,7 +148,9 @@ test.describe("no placeholders, no dead links, no invented proof", () => {
     test(`clean copy and working links on ${path}`, async ({ page }) => {
       await page.goto(path);
       const text = await page.locator("body").innerText();
-      expect(text).not.toMatch(/\b(TODO|TBD|PLACEHOLDER|Lorem|INSERT|ADD CLIENT)\b|undefined|\bnull\b/i);
+      expect(text).not.toMatch(
+        /\b(TODO|TBD|PLACEHOLDER|Lorem|INSERT|ADD CLIENT)\b|undefined|\bnull\b/i,
+      );
       // Claims removed by the content audit.
       expect(text).not.toMatch(/30 minuti|garantit|in tempo reale|leader|Türkiye/i);
 
@@ -174,7 +210,9 @@ test.describe("SEO", () => {
     );
     expect(await meta('meta[property="og:title"]')).toMatch(/^BSR Trasporti/);
     expect(await meta('meta[property="og:description"]')).toBeTruthy();
-    expect(await meta('meta[property="og:image"]')).toMatch(/^https:\/\/bsrtrasporti\.com\/opengraph-image/);
+    expect(await meta('meta[property="og:image"]')).toMatch(
+      /^https:\/\/bsrtrasporti\.com\/opengraph-image/,
+    );
     expect(await meta('meta[property="og:locale"]')).toBe("it_IT");
     expect(await meta('meta[name="twitter:card"]')).toBe("summary_large_image");
 

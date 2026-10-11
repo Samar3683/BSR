@@ -1,6 +1,6 @@
 import { ActionLink } from "@/components/editorial/action";
 import { MediaSlot } from "@/components/media/media-slot";
-import { ActLabel, InkTitle, seg } from "@/features/story/components/cine";
+import { InkTitle, seg } from "@/features/story/components/cine";
 import { PinnedScene } from "@/features/story/components/scene";
 import { actOf } from "@/features/story/config/acts";
 
@@ -13,7 +13,6 @@ const STEPS = [0.2, 0.92] as const;
 export function CoverageSection() {
   const titleId = `${coverage.id}-title`;
   const act = actOf(coverage.id);
-  const total = String(coverage.stages.length).padStart(2, "0");
   const [italy, europe, countries] = coverage.facts;
 
   return (
@@ -29,7 +28,6 @@ export function CoverageSection() {
       {/* The words: title, then what each camera position shows. */}
       <div className="relative z-10 ed-frame flex flex-col gap-[clamp(1.25rem,3svh,2.25rem)] py-12 pin:h-full pin:justify-center pin:py-0 pin:pt-(--header-height) max-lg:pin:justify-end max-lg:pin:pb-24">
         <div className="flex max-w-[34rem] flex-col gap-[clamp(1.25rem,3svh,2.25rem)]">
-          <ActLabel act={act.act} name={coverage.act.name} meta={coverage.act.meta} />
           <InkTitle
             id={titleId}
             lines={coverage.titleLines}
@@ -45,12 +43,6 @@ export function CoverageSection() {
                 data-step-item={i}
                 className="swap flex flex-col gap-3 border-t border-hairline-strong pt-4"
               >
-                <p className="flex items-center gap-3 ed-label">
-                  <span className="text-success tabular-nums">
-                    {String(i + 1).padStart(2, "0")} / {total}
-                  </span>
-                  <span className="text-text-secondary">{stage.label}</span>
-                </p>
                 <h3 className="cine-h3 text-[clamp(1.625rem,1rem+1.8vw,2.75rem)]">
                   {stage.headline}
                 </h3>

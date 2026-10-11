@@ -58,7 +58,7 @@ export const servicesContent = {
       label: "Espresso",
       title: services.espresso,
       message: "Quando il carico deve partire subito.",
-      body: `Per le spedizioni urgenti in tutta Italia: ritiro anche in giornata, quando tratta e disponibilità lo consentono, e consegna indicativamente in ${transit.italyExpress.replace(" h", " ore")}.`,
+      body: `Per le spedizioni urgenti in tutta Italia: ritiro anche in giornata, quando tratta e disponibilità lo consentono, e consegna entro ${transit.italyExpress.replace(" h", " ore")}.`,
       facts: [
         { label: "Tempi indicativi", value: transit.italyExpress },
         { label: "Ritiro", value: "Anche in giornata" },

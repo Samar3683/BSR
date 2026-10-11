@@ -1,6 +1,6 @@
 import { ActionLink } from "@/components/editorial/action";
 import { MediaSlot } from "@/components/media/media-slot";
-import { ActLabel, GiantWord, InkTitle, seg } from "@/features/story/components/cine";
+import { GiantWord, InkTitle, seg } from "@/features/story/components/cine";
 import { PinnedScene } from "@/features/story/components/scene";
 import { TruckFront34 } from "@/features/story/components/truck";
 import { actOf } from "@/features/story/config/acts";
@@ -56,7 +56,6 @@ function ServiceRoute({ route }: { route: ServiceItem["route"] }) {
 export function ServicesSection() {
   const titleId = `${services.id}-title`;
   const act = actOf(services.id);
-  const total = String(services.items.length).padStart(2, "0");
   return (
     <PinnedScene
       id={services.id}
@@ -91,7 +90,6 @@ export function ServicesSection() {
         <div className="ed-grid gap-y-10 lg:gap-y-[clamp(1.5rem,3.5svh,2.5rem)]">
           {/* The story (left). */}
           <div className="order-1 col-span-4 flex flex-col gap-[clamp(1.5rem,3.5svh,2.5rem)] md:col-span-8 lg:col-span-7 lg:row-start-1">
-            <ActLabel act={act.act} name={services.act.name} meta={services.act.meta} />
             <InkTitle
               id={titleId}
               lines={services.title}
@@ -116,12 +114,6 @@ export function ServicesSection() {
                   data-step-item={i}
                   className="swap flex flex-col gap-3 border-t border-hairline-strong pt-5"
                 >
-                  <p className="flex items-center gap-3 ed-label">
-                    <span className="text-success tabular-nums">
-                      {item.code} / {total}
-                    </span>
-                    <span className="text-text-secondary">{item.label}</span>
-                  </p>
                   <h3
                     id={`${item.id}-title`}
                     className="cine-h3 text-[clamp(1.75rem,0.9rem+1.9vw,2.875rem)]"
@@ -172,9 +164,6 @@ export function ServicesSection() {
                     sizes="(min-width: 64rem) 22vw, 50vw"
                     className="bg-surface-secondary lg:pin:absolute lg:pin:inset-0 lg:pin:aspect-auto"
                   />
-                  <figcaption className="ed-meta text-text-secondary lg:pin:hidden">
-                    {item.code} · {item.label}
-                  </figcaption>
                 </figure>
               ))}
             </div>

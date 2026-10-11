@@ -8,23 +8,13 @@
 export const quoteRequestContent = {
   title: "Richiedi un preventivo",
   description:
-    "Indica partenza, destinazione e servizio: il messaggio si apre già compilato su WhatsApp o per email. BSR ti ricontatta per confermare mezzo, tempi e prezzo.",
+    "Indica i tuoi contatti e gli indirizzi di ritiro e di consegna: il messaggio si apre già compilato su WhatsApp o per email. BSR ti ricontatta per confermare mezzo, tempi e prezzo.",
   eyebrow: "Preventivo",
   headline: "Richiedi un preventivo",
   intro:
-    "Compila i campi che conosci: il messaggio si prepara da solo. Lo apri su WhatsApp o per email, lo controlli e ce lo invii.",
+    "Compila i campi: il messaggio si prepara da solo. Lo apri su WhatsApp o per email, lo controlli e ce lo invii.",
   composer: {
-    notSpecified: "Non indicato",
     previewLabel: "Il tuo messaggio",
-    fields: {
-      origin: { label: "Partenza", placeholder: "Es. Carpi (MO) o CAP 41012" },
-      destination: { label: "Destinazione", placeholder: "Es. Milano, o Lione (Francia)" },
-      service: { label: "Servizio" },
-      vehicle: { label: "Mezzo" },
-      sector: { label: "Settore" },
-      when: { label: "Quando", placeholder: "Es. ritiro entro venerdì" },
-      goods: { label: "Merce", placeholder: "Es. 2 bancali, circa 800 kg" },
-    },
   },
   send: {
     whatsapp: "Scrivici su WhatsApp",

@@ -13,7 +13,6 @@ import { CoverageSection } from "@/features/routes/components/coverage-section";
 import { SectorsSection } from "@/features/sectors/components/sectors-section";
 import { ServicesSection } from "@/features/services/components/services-section";
 import { QuickActions } from "@/features/site/components/quick-actions";
-import { JourneyIndicator } from "@/features/story/components/journey-indicator";
 import { SceneDirector } from "@/features/story/components/scene-director";
 import { NetworkSection } from "@/features/trust/components/network-section";
 import { ProtectionSection } from "@/features/trust/components/protection-section";
@@ -53,7 +52,6 @@ export default function HomePage() {
         <QuoteSection />
       </main>
       <QuickActions />
-      <JourneyIndicator />
       <HeroInView />
       <SceneDirector />
       {/* The organisation as structured data (verified facts only). */}
