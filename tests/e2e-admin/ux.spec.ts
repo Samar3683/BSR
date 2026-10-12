@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { fillDateTime, login, romeDate, uid } from "./support";
+import { fillDateTime, login, openAccountMenu, romeDate, uid } from "./support";
 import { USERS } from "./users";
 
 /** Workflow improvements: search, quick create, timeline, week grid, rules, language. */
@@ -73,10 +73,64 @@ test("dispatch timeline, calendar hours and dispatch rules render real data", as
 
 test("the interface can be switched to Italian and back", async ({ page }) => {
   await login(page, USERS.admin, "/admin/orders");
-  await page.getByRole("group", { name: "Language" }).getByRole("button", { name: "IT" }).click();
+  await openAccountMenu(page);
+  await page
+    .getByRole("group", { name: "Language" })
+    .getByRole("button", { name: "Italiano" })
+    .click();
   await expect(page.getByRole("link", { name: "Ordini" }).first()).toBeVisible();
   await page.reload();
   await expect(page.getByRole("link", { name: "Ordini" }).first()).toBeVisible();
-  await page.getByRole("group", { name: "Lingua" }).getByRole("button", { name: "EN" }).click();
+  await openAccountMenu(page);
+  await page
+    .getByRole("group", { name: "Lingua" })
+    .getByRole("button", { name: "English" })
+    .click();
   await expect(page.getByRole("link", { name: "Orders" }).first()).toBeVisible();
+});
+
+test("an administrator manages their own profile: name and password", async ({ page }) => {
+  const user = USERS.second;
+  const temporary = "Temporary-pass-2026";
+  await login(page, user, "/admin");
+  await openAccountMenu(page);
+  await page.getByRole("link", { name: "Profile and security" }).click();
+  await expect(page).toHaveURL(/\/admin\/profile$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Profile and security" })).toBeVisible();
+  await expect(page.getByLabel("Email")).toHaveValue(user.email);
+
+  // Name: shown in the header after saving, restored afterwards.
+  const name = page.getByLabel("Name", { exact: false }).first();
+  await name.fill(`${user.name} Jr`);
+  await page.getByRole("button", { name: "Save name" }).click();
+  await expect(page.getByText("Name updated.")).toBeVisible();
+  await expect(page.locator(".a-account-name")).toHaveText(`${user.name} Jr`);
+  await name.fill(user.name);
+  await page.getByRole("button", { name: "Save name" }).click();
+  await expect(page.locator(".a-account-name")).toHaveText(user.name);
+
+  // Password: the current one is verified, weak ones are refused.
+  await page.getByLabel("Current password").fill("wrong-password");
+  await page.getByLabel("New password", { exact: true }).fill(temporary);
+  await page.getByLabel("Repeat the new password").fill(temporary);
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("The current password is not correct")).toBeVisible();
+
+  await page.getByLabel("Current password").fill(user.password);
+  await page.getByLabel("New password", { exact: true }).fill("short");
+  await page.getByLabel("Repeat the new password").fill("short");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText(/Use at least 10 characters/)).toBeVisible();
+
+  await page.getByLabel("New password", { exact: true }).fill(temporary);
+  await page.getByLabel("Repeat the new password").fill(temporary);
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("Password changed.")).toBeVisible();
+
+  // And back, so the shared test account keeps working.
+  await page.getByLabel("Current password").fill(temporary);
+  await page.getByLabel("New password", { exact: true }).fill(user.password);
+  await page.getByLabel("Repeat the new password").fill(user.password);
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("Password changed.").first()).toBeVisible();
 });

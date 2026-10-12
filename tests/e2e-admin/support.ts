@@ -44,6 +44,13 @@ export async function login(page: Page, user: TestUser, path = "/admin") {
   await expect(page.locator(".a-topbar")).toBeVisible();
 }
 
+/** Opens the account menu in the header (profile, appearance, language, sign out). */
+export async function openAccountMenu(page: Page) {
+  const trigger = page.locator(".a-account-trigger");
+  if ((await trigger.getAttribute("aria-expanded")) !== "true") await trigger.click();
+  await expect(page.locator(".a-account-panel")).toBeVisible();
+}
+
 /** A short unique suffix so reruns without a reset do not collide. */
 export function uid(): string {
   return Date.now().toString(36).slice(-5).toUpperCase();

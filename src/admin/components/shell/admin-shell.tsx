@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -13,10 +13,8 @@ import { useAdminConfig } from "../../hooks/use-admin-config";
 import { useI18n } from "../../i18n/provider";
 import { fetchNavCounts } from "../../services/records";
 import { Button } from "../ui/button";
-import { Segmented } from "../ui/form";
+import { AccountMenu } from "./account-menu";
 import { CommandPalette } from "./command-palette";
-import { ThemeSelector } from "./theme-selector";
-import { useSession } from "./session";
 
 const COLLAPSE_KEY = "bsr-admin:sidebar";
 
@@ -30,23 +28,12 @@ function readCollapsed(): boolean {
   return window.matchMedia("(max-width: 1024px)").matches;
 }
 
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const { admin, signOut } = useSession();
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const { data: config } = useAdminConfig();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
   const counts = useQuery({
     queryKey: ["nav-counts"],
     queryFn: fetchNavCounts,
@@ -197,43 +184,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </Button>
           <CommandPalette />
           <span className="a-topbar-spacer" />
-          <div className="a-user">
-            <span className="a-avatar" aria-hidden="true">
-              {initials(admin.display_name)}
-            </span>
-            <span className="a-user-meta">
-              <span className="a-user-name" title={admin.email ?? undefined}>
-                {admin.display_name}
-              </span>
-              <span className="a-user-role">
-                {admin.role === "admin" ? t("Administrator") : admin.role}
-              </span>
-            </span>
-            <ThemeSelector />
-            <Segmented
-              label="Language"
-              value={lang}
-              onChange={setLang}
-              options={[
-                { value: "it", label: "IT" },
-                { value: "en", label: "EN" },
-              ]}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="a-signout"
-              loading={signingOut}
-              aria-label={t("Sign out")}
-              onClick={async () => {
-                setSigningOut(true);
-                await signOut();
-              }}
-            >
-              <LogOut aria-hidden="true" />
-              <span className="a-signout-label">{t("Sign out")}</span>
-            </Button>
-          </div>
+          <AccountMenu />
         </header>
         <main id={MAIN_CONTENT_ID} className="a-main" tabIndex={-1}>
           {children}

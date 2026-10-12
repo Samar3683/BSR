@@ -4564,3 +4564,238 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---- Header: search on the left, account on the right */
+
+.adm .a-topbar {
+  gap: 16px;
+  padding: 0 24px 0 16px;
+  box-shadow: 0 1px 0 var(--a-border);
+}
+
+.adm .a-account {
+  position: relative;
+  flex: none;
+}
+
+.adm .a-account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 4px 10px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--a-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.adm .a-account-trigger:hover,
+.adm .a-account-trigger[aria-expanded="true"] {
+  background: var(--a-soft);
+  border-color: var(--a-border);
+}
+
+.adm .a-account-trigger .a-avatar {
+  width: 38px;
+  height: 38px;
+  background: var(--a-fill);
+  color: #ffffff;
+  font-size: 13px;
+}
+
+.adm .a-account-meta {
+  display: grid;
+  text-align: left;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.adm .a-account-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--a-text);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adm .a-account-role {
+  font-size: 12.5px;
+  color: var(--a-text-2);
+}
+
+.adm .a-account-caret {
+  width: 16px;
+  height: 16px;
+  color: var(--a-text-2);
+}
+
+.adm .a-account-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 40;
+  width: 300px;
+  padding: 8px;
+  border: 1px solid var(--a-border);
+  border-radius: 10px;
+  background: var(--a-surface);
+  color: var(--a-text);
+  box-shadow: var(--a-shadow-overlay);
+}
+
+.adm .a-account-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px 14px;
+  border-bottom: 1px solid var(--a-border);
+  margin-bottom: 6px;
+}
+
+.adm .a-account-card strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.adm .a-account-card .a-small {
+  overflow-wrap: anywhere;
+}
+
+.adm .a-avatar--lg {
+  width: 44px;
+  height: 44px;
+  background: var(--a-fill);
+  color: #ffffff;
+  font-size: 15px;
+}
+
+.adm .a-account-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--a-text);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.adm .a-account-item:hover {
+  background: var(--a-soft);
+}
+
+.adm .a-account-item svg {
+  width: 18px;
+  height: 18px;
+  color: var(--a-text-2);
+}
+
+.adm .a-account-item[aria-pressed="true"] {
+  font-weight: 600;
+}
+
+.adm .a-account-check {
+  margin-left: auto;
+  color: var(--a-green) !important;
+}
+
+.adm .a-account-group {
+  padding: 10px 0 4px;
+  border-top: 1px solid var(--a-border);
+  margin-top: 6px;
+}
+
+.adm .a-account-label {
+  padding: 0 10px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--a-text-2);
+}
+
+.adm .a-account-choices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 0 4px;
+}
+
+.adm .a-account-choices button {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-height: 56px;
+  padding: 8px 4px;
+  border: 1px solid var(--a-border);
+  border-radius: 6px;
+  background: var(--a-surface);
+  color: var(--a-text-2);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.adm .a-account-choices button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.adm .a-account-choices button[aria-pressed="true"] {
+  border-color: var(--a-green);
+  background: var(--a-green-tint);
+  color: var(--a-green);
+  font-weight: 600;
+}
+
+.adm .a-account-signout {
+  margin-top: 6px;
+  border-top: 1px solid var(--a-border);
+  border-radius: 0 0 6px 6px;
+  padding-top: 12px;
+  color: var(--a-red);
+}
+
+.adm .a-account-signout svg {
+  color: var(--a-red);
+}
+
+@media (max-width: 820px) {
+  .adm .a-account-meta,
+  .adm .a-account-caret {
+    display: none;
+  }
+
+  .adm .a-account-trigger {
+    padding: 4px;
+  }
+
+  .adm .a-account-panel {
+    width: min(300px, calc(100vw - 24px));
+  }
+}
+
+/* ---- Profile page */
+
+.adm .a-profile {
+  display: grid;
+  gap: 24px;
+  max-width: 760px;
+}
+
+.adm .a-input[readonly] {
+  background: var(--a-soft);
+  color: var(--a-text-2);
+  cursor: default;
+}

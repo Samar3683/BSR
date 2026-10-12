@@ -110,6 +110,13 @@ export function CommandPalette() {
         .join(" · "),
       href: `${ENTITY_PATHS[hit.entity]}/${hit.id}`,
     }));
+    const profile: Result = {
+      id: "page:/admin/profile",
+      group: t("Pages"),
+      title: t("Profile and security"),
+      href: "/admin/profile",
+    };
+    if (!q || profile.title.toLowerCase().includes(q)) pages.push(profile);
     return [...records, ...(q ? pages : pages.slice(0, 6))];
   }, [term, debounced, hits.data, config, t]);
 

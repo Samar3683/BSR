@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { anonClient, login, panelLink, stack, waitForMail } from "./support";
+import { anonClient, login, openAccountMenu, panelLink, stack, waitForMail } from "./support";
 import { USERS } from "./users";
 
 test.describe("admin authentication", () => {
@@ -61,6 +61,7 @@ test.describe("admin authentication", () => {
     const auth = cookies.filter((c) => c.name.startsWith("bsr-admin-auth"));
     expect(auth.length).toBeGreaterThan(0);
     for (const cookie of auth) expect(cookie.path).toBe("/admin");
+    await openAccountMenu(page);
     await page.getByRole("button", { name: "Sign out" }).click();
     await expect(page).toHaveURL(/\/admin\/login/);
     await page.goto("/admin/orders");
@@ -84,9 +85,11 @@ test.describe("admin authentication", () => {
     await page.getByLabel("Repeat the password").fill(password);
     await page.getByRole("button", { name: "Save password" }).click();
     await expect(page).toHaveURL(/\/admin$/);
+    await openAccountMenu(page);
     await page.getByRole("button", { name: "Sign out" }).click();
     await login(page, { ...USERS.recovery, password });
     // A used link cannot be replayed.
+    await openAccountMenu(page);
     await page.getByRole("button", { name: "Sign out" }).click();
     await page.goto(panelLink(mail, baseURL!));
     await expect(page).toHaveURL(/\/admin\/login\?error=link/);

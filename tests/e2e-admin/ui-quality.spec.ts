@@ -3,7 +3,14 @@ import { mkdirSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-import { expectNoHorizontalOverflow, login, stack, uid, userClient } from "./support";
+import {
+  expectNoHorizontalOverflow,
+  login,
+  openAccountMenu,
+  stack,
+  uid,
+  userClient,
+} from "./support";
 import { USERS } from "./users";
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -76,7 +83,11 @@ test.describe("admin UI quality", () => {
   test("dark theme persists across navigation and has no WCAG violations", async ({ page }) => {
     test.setTimeout(240_000);
     await login(page, USERS.admin);
-    await page.getByLabel("Color theme").selectOption("dark");
+    await openAccountMenu(page);
+    await page
+      .getByRole("group", { name: "Color theme" })
+      .getByRole("button", { name: "Dark" })
+      .click();
     await expect(page.locator(".adm")).toHaveAttribute("data-theme", "dark");
     for (const path of PAGES) {
       await page.goto(path);
@@ -86,7 +97,11 @@ test.describe("admin UI quality", () => {
       expect(results.violations, path).toEqual([]);
     }
     // Back to the default so the other tests see the light theme.
-    await page.getByLabel("Color theme").selectOption("light");
+    await openAccountMenu(page);
+    await page
+      .getByRole("group", { name: "Color theme" })
+      .getByRole("button", { name: "Light" })
+      .click();
     await expect(page.locator(".adm")).toHaveAttribute("data-theme", "light");
   });
 
