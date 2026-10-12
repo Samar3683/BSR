@@ -81,6 +81,15 @@ export async function migrate({ url, appRole = "bsr_app", log = console.log }) {
       await client.query(
         `grant select, insert, update, delete on auth.users, auth.sessions, auth.one_time_tokens to "${appRole}"`,
       );
+      // Password-reset requests are only sent to people with an active administrator profile.
+      await client.query(
+        `grant execute on function auth.active_admin_user_id(text) to "${appRole}"`,
+      );
+      // Public-site intake: the only way the web server writes visitor submissions.
+      await client.query(`grant usage on schema intake to "${appRole}"`);
+      await client.query(
+        `grant execute on function intake.submit_quote_request(jsonb), intake.record_contact_event(text, text) to "${appRole}"`,
+      );
     } else {
       log(`note: role ${appRole} does not exist yet; create it and run this again to grant access`);
     }

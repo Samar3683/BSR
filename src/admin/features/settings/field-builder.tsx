@@ -427,7 +427,6 @@ function FieldList({ entity, config }: { entity: EntityKey; config: AdminConfig 
   );
 }
 
-
 /** The create form as people will see it (inputs are inert). */
 function FormPreview({ entity, config }: { entity: EntityKey; config: AdminConfig }) {
   const fields = formFields(config, entity, "create");

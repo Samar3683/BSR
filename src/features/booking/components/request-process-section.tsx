@@ -86,7 +86,6 @@ export function RequestProcessSection() {
         style={seg(0.24, 0.34)}
       >
         <div className="ed-frame flex flex-col gap-10 py-12 pin:h-full pin:justify-end pin:gap-[clamp(1.5rem,5svh,3.5rem)] pin:pb-[clamp(6rem,12svh,7rem)] md:pin:pb-[clamp(5rem,9svh,6.5rem)]">
-
           <ol className="grid gap-10 pin:max-w-[min(46rem,60vw)]">
             {process.steps.map((step, i) => (
               <li

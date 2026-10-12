@@ -36,14 +36,22 @@ export async function uploadFieldFile(def: FieldDefinition, file: File): Promise
   form.set("file", file, file.name);
   let response: Response;
   try {
-    response = await fetch("/admin/api/files", { method: "POST", body: form, credentials: "same-origin" });
+    response = await fetch("/admin/api/files", {
+      method: "POST",
+      body: form,
+      credentials: "same-origin",
+    });
   } catch {
-    throw new AdminError("network", "The server could not be reached. Check the connection and try again.");
+    throw new AdminError(
+      "network",
+      "The server could not be reached. Check the connection and try again.",
+    );
   }
   if (!response.ok) {
     let message = "The file could not be uploaded.";
     try {
-      message = ((await response.json()) as { error?: { message?: string } }).error?.message ?? message;
+      message =
+        ((await response.json()) as { error?: { message?: string } }).error?.message ?? message;
     } catch {
       // keep the generic message
     }

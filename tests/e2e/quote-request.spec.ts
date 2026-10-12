@@ -2,11 +2,13 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
 /*
- * /preventivo — the request, composed on the page. It must stay an honest
- * destination: nothing is submitted by the site (no form posting anywhere,
- * no submit button, no "sent" state); the fields arrive filled from the home
- * page, stay editable, and every edit rewrites the message, the WhatsApp and
- * email links and the URL (so a reload keeps what was typed).
+ * /preventivo — the request, composed on the page. The fields arrive filled
+ * from the home page, stay editable, and every edit rewrites the message, the
+ * WhatsApp and email links and the URL (so a reload keeps what was typed). The
+ * request can be sent to BSR from here: it is checked first, posted to the
+ * site's own endpoint (mocked in this suite, which runs without a database),
+ * and only then does the page say it was received. No form posts anywhere and
+ * nothing is sent until the visitor presses the button.
  */
 
 const whatsappText = async (page: Page) =>
@@ -34,17 +36,18 @@ test("the hero quote CTA reaches the quote-request page (no 404)", async ({ page
   expect(failures.filter((failure) => failure.includes("/preventivo"))).toEqual([]);
 });
 
-test("composes the request and submits nothing", async ({ page }) => {
+test("composes the request and sends nothing until asked", async ({ page }) => {
   const response = await page.goto("/preventivo");
   expect(response?.status()).toBe(200);
   await expect(page).toHaveTitle(/Richiedi un preventivo/);
   const main = page.getByRole("main");
   await expect(main.locator('[data-composer="url"]')).toBeVisible();
-  // No submission of any kind: no posting form, no submit button.
+  // No form posts and no implicit submit: the visitor sends the request on purpose.
   await expect(
     main.locator("form[method='post' i], button[type='submit'], input[type='submit']"),
   ).toHaveCount(0);
-  await expect(main.getByText(/La richiesta non parte da questa pagina/)).toBeVisible();
+  await expect(main.getByRole("button", { name: "Invia la richiesta a BSR" })).toBeVisible();
+  await expect(main.getByText(/Preferisci un altro canale/)).toBeVisible();
 
   // The form asks for the contacts and the two addresses only.
   await expect(main.locator("input, select")).toHaveCount(12);
@@ -91,4 +94,84 @@ test("has no automatically detectable WCAG 2.2 A/AA violations", async ({ page }
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
   expect(results.violations).toEqual([]);
+});
+
+const fillRequest = async (page: Page) => {
+  const main = page.getByRole("main");
+  // Typing before hydration would be overwritten: wait for the composer to be live.
+  await expect(main.locator('[data-composer="url"]')).toBeVisible();
+  await main.locator('[name="nome"]').fill("Mario Rossi");
+  await main.locator('[name="telefono"]').fill("333 123 4567");
+  await main.locator('[name="ritiro_via"]').fill("Via Roma 10");
+  await main.locator('[name="ritiro_cap"]').fill("41012");
+  await main.locator('[name="ritiro_citta"]').fill("Carpi");
+  await main.locator('[name="ritiro_provincia"]').fill("MO");
+  await main.locator('[name="consegna_via"]').fill("5 Rue de la Gare");
+  await main.locator('[name="consegna_cap"]').fill("69001");
+  await main.locator('[name="consegna_citta"]').fill("Lione");
+  await main.locator('[name="consegna_provincia"]').fill("Rhône");
+};
+
+test("names the missing fields and sends nothing", async ({ page }) => {
+  let posted = 0;
+  await page.route("**/api/quote-requests", (route) => {
+    posted += 1;
+    return route.fulfill({ status: 201, json: { reference: "RQ-2026-00001" } });
+  });
+  await page.goto("/preventivo");
+  const main = page.getByRole("main");
+  await main.getByRole("button", { name: "Invia la richiesta a BSR" }).click();
+  await expect(main.getByRole("alert").first()).toBeVisible();
+  await expect(main.locator('[name="nome"]')).toBeFocused();
+  expect(posted).toBe(0);
+});
+
+test("sends the request to BSR and confirms it with a reference", async ({ page }) => {
+  const bodies: unknown[] = [];
+  await page.route("**/api/quote-requests", (route) => {
+    bodies.push(route.request().postDataJSON());
+    return route.fulfill({ status: 201, json: { reference: "RQ-2026-00042" } });
+  });
+  await page.goto("/preventivo?servizio=dedicato");
+  await fillRequest(page);
+  const main = page.getByRole("main");
+  await main.getByRole("button", { name: "Invia la richiesta a BSR" }).click();
+  await expect(page.getByTestId("quote-sent")).toContainText("RQ-2026-00042");
+  await expect(page.getByTestId("quote-sent")).toContainText(/Ti ricontattiamo/);
+  expect(bodies).toHaveLength(1);
+  expect(bodies[0]).toMatchObject({
+    name: "Mario Rossi",
+    phone: "+39 333 123 4567",
+    pickup: { city: "Carpi", province: "MO" },
+    delivery: { city: "Lione", province: "Rhône" },
+  });
+  // WhatsApp and email stay available as direct channels.
+  await expect(main.getByRole("link", { name: /Scrivici su WhatsApp/ })).toBeVisible();
+});
+
+test("shows the server's message and lets the visitor retry", async ({ page }) => {
+  await page.route("**/api/quote-requests", (route) =>
+    route.fulfill({ status: 503, json: { error: { message: "Il servizio non è disponibile." } } }),
+  );
+  await page.goto("/preventivo");
+  await fillRequest(page);
+  const main = page.getByRole("main");
+  await main.getByRole("button", { name: "Invia la richiesta a BSR" }).click();
+  await expect(main.getByRole("alert")).toContainText("Il servizio non è disponibile.");
+  await expect(main.getByRole("button", { name: "Invia la richiesta a BSR" })).toBeEnabled();
+});
+
+test("counts clicks on contact links without delaying them", async ({ page }) => {
+  const events: unknown[] = [];
+  await page.route("**/api/contact-events", (route) => {
+    events.push(route.request().postData());
+    return route.fulfill({ status: 204 });
+  });
+  await page.goto("/preventivo");
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: /Chiama/ })
+    .click({ noWaitAfter: true });
+  await expect.poll(() => events.length).toBeGreaterThan(0);
+  expect(JSON.parse(events[0] as string)).toEqual({ channel: "phone", page: "/preventivo" });
 });

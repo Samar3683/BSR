@@ -18,7 +18,7 @@ import { QuoteComposerFromUrl } from "./quote-composer-from-url";
  * section title style, a flat white panel). Left: the composer, filled with
  * whatever the home page passed (QuoteComposerFromUrl; the empty composer is
  * the prerendered fallback, same layout). Right: what happens next, where BSR
- * operates, the direct contacts. It sends nothing: see quote-composer.tsx.
+ * operates, the direct contacts. The request is sent from the composer: see quote-composer.tsx.
  */
 export function QuoteRequestPage() {
   const { contact } = siteConfig;

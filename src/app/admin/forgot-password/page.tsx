@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { NotConfigured } from "@/admin/features/auth/access-states";
 import { AuthCard } from "@/admin/features/auth/auth-card";
 import { ForgotPasswordForm } from "@/admin/features/auth/password-forms";
-import { isBackendConfigured } from "@/admin/server/config";
+import { isBackendConfigured } from "@/server/config";
 
 export const metadata: Metadata = { title: "Reset password" };
 

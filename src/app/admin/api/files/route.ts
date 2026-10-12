@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 
-import { withIdentity } from "@/admin/server/db";
+import { withIdentity } from "@/server/db";
 import { currentSession, isSameSite, json, unauthorized } from "@/admin/server/http";
 
 const BUCKET = "entity-files";

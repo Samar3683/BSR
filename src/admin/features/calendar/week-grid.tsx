@@ -223,7 +223,9 @@ export function WeekGrid({
               const dayStart = businessToInstant(day).getTime();
               const dayEnd = businessToInstant(addDays(day, 1)).getTime();
               const nowTop =
-                now >= dayStart && now < dayEnd ? ((now - dayStart) / (dayEnd - dayStart)) * 24 * HOUR_PX : null;
+                now >= dayStart && now < dayEnd
+                  ? ((now - dayStart) / (dayEnd - dayStart)) * 24 * HOUR_PX
+                  : null;
               return (
                 <div
                   key={day}
@@ -320,7 +322,8 @@ export function WeekGrid({
                 <>
                   <dt>Crew</dt>
                   <dd>
-                    {move.event.driver_name ?? "No driver"} · {move.event.vehicle_name ?? "No vehicle"}{" "}
+                    {move.event.driver_name ?? "No driver"} ·{" "}
+                    {move.event.vehicle_name ?? "No vehicle"}{" "}
                     <span className="a-help">(kept; refused if they are busy then)</span>
                   </dd>
                 </>

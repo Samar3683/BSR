@@ -6,27 +6,11 @@ import { ActionButton } from "@/components/editorial/action";
 
 import { quoteFormContent as content } from "../config/quote-form-content";
 import { bookingContent as booking } from "../config/booking-content";
-import { FORM_KEYS, type FormKey, email, phone } from "../lib/quote-draft";
+import { type FormKey } from "../lib/quote-draft";
+import { firstError, validateQuote } from "../lib/quote-validate";
 import { type FormErrors, type FormValues, QuoteFields, StepLegend } from "./quote-fields";
 
 const subscribeNever = () => () => {};
-
-/** What each field needs to pass, and the message when it does not. */
-function validate(values: FormValues): FormErrors {
-  const e = content.errors;
-  const filled = (key: FormKey) => Boolean(values[key]?.trim());
-  const errors: FormErrors = {};
-  if (!filled("name")) errors.name = e.name;
-  if (values.email?.trim() && !email(values.email)) errors.email = e.email;
-  if (!phone(values.phone ?? null)) errors.phone = e.phone;
-  for (const kind of ["pickup", "delivery"] as const) {
-    if (!filled(`${kind}Street`)) errors[`${kind}Street`] = e.street;
-    if (!filled(`${kind}Zip`)) errors[`${kind}Zip`] = e.zip;
-    if (!filled(`${kind}City`)) errors[`${kind}City`] = e.city;
-    if (!filled(`${kind}Province`)) errors[`${kind}Province`] = e.province;
-  }
-  return errors;
-}
 
 /**
  * The quote form: three steps — your contacts, the cargo's path (pick-up and
@@ -51,9 +35,9 @@ export function BookingFlow() {
   };
 
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    const next = validate(values);
+    const next = validateQuote(values);
     setErrors(next);
-    const first = FORM_KEYS.find((key) => next[key]);
+    const first = firstError(next);
     if (first) {
       event.preventDefault();
       document.getElementById(`booking-${first}`)?.focus();

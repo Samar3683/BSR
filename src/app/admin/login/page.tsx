@@ -5,7 +5,7 @@ import { AuthCard } from "@/admin/features/auth/auth-card";
 import { NotConfigured } from "@/admin/features/auth/access-states";
 import { LoginForm } from "@/admin/features/auth/login-form";
 import { safeAdminNext } from "@/admin/lib/paths";
-import { isBackendConfigured } from "@/admin/server/config";
+import { isBackendConfigured } from "@/server/config";
 import { resolveAdminGate } from "@/admin/server/gate";
 
 export const metadata: Metadata = { title: "Sign in" };

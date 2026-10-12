@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
 
 import { passwordProblem } from "../lib/password-policy";
-import { withApp, withIdentity } from "./db";
-import { inviteMail, recoveryMail, sendMail } from "./mail";
+import { withApp, withIdentity } from "@/server/db";
+import { inviteMail, recoveryMail, sendMail } from "@/server/mail";
 import { hashPassword, verifyPassword } from "./passwords";
 import {
   createSession,
@@ -110,11 +110,8 @@ export async function requestPasswordReset(emailInput: unknown, origin: string):
   const email = normalizeEmail(emailInput);
   if (!EMAIL.test(email)) return;
   const userId = await withApp(async (client) => {
-    const { rows } = await client.query<{ id: string }>(
-      `select u.id
-         from auth.users u
-         join public.admin_profiles p on p.user_id = u.id and p.active
-        where lower(u.email) = $1`,
+    const { rows } = await client.query<{ id: string | null }>(
+      "select auth.active_admin_user_id($1) as id",
       [email],
     );
     return rows[0]?.id ?? null;

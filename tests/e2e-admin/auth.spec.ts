@@ -58,7 +58,7 @@ test.describe("admin authentication", () => {
     await expect(page).toHaveURL(/\/admin$/);
     // The session cookie is scoped to /admin.
     const cookies = await page.context().cookies();
-    const auth = cookies.filter((c) => c.name.startsWith("bsr-admin-auth"));
+    const auth = cookies.filter((c) => c.name === "bsr-admin-session");
     expect(auth.length).toBeGreaterThan(0);
     for (const cookie of auth) expect(cookie.path).toBe("/admin");
     await openAccountMenu(page);

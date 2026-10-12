@@ -79,15 +79,19 @@ function useHiddenColumns(entity: EntityKey) {
     // Per-viewer preference that only exists in the browser: read after hydration.
     try {
       const stored = JSON.parse(window.localStorage.getItem(key) ?? "[]") as unknown;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client-only read
-      if (Array.isArray(stored)) setHidden(stored.filter((v): v is string => typeof v === "string"));
+      if (Array.isArray(stored)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client-only read
+        setHidden(stored.filter((v): v is string => typeof v === "string"));
+      }
     } catch {
       // storage unavailable or corrupt: show every column
     }
   }, [key]);
   const toggle = (column: string) =>
     setHidden((current) => {
-      const next = current.includes(column) ? current.filter((c) => c !== column) : [...current, column];
+      const next = current.includes(column)
+        ? current.filter((c) => c !== column)
+        : [...current, column];
       try {
         window.localStorage.setItem(key, JSON.stringify(next));
       } catch {
@@ -130,7 +134,9 @@ export function RecordListView({ entity }: { entity: EntityKey }) {
   const dispatch = get("dispatch");
   const availability = get("avail");
   const whenParam = get("when");
-  const when = (["today", "tomorrow", "week", "next7"].includes(whenParam ?? "") ? whenParam : null) as When | null;
+  const when = (
+    ["today", "tomorrow", "week", "next7"].includes(whenParam ?? "") ? whenParam : null
+  ) as When | null;
   const filterParam = get("f");
   const uiFilters = useMemo(() => parseJsonParam<UiFilter[]>(filterParam, []), [filterParam]);
   const urlSearch = get("q") ?? "";
@@ -176,7 +182,10 @@ export function RecordListView({ entity }: { entity: EntityKey }) {
   const queryKey = JSON.stringify(query);
 
   // Selection belongs to the visible page: a new query starts with none.
-  const [selection, setSelection] = useState<{ key: string; ids: string[] }>({ key: queryKey, ids: [] });
+  const [selection, setSelection] = useState<{ key: string; ids: string[] }>({
+    key: queryKey,
+    ids: [],
+  });
   const selected = selection.key === queryKey ? selection.ids : [];
   const setSelected = (ids: string[]) => setSelection({ key: queryKey, ids });
 
@@ -399,7 +408,9 @@ export function RecordListView({ entity }: { entity: EntityKey }) {
             <Segmented
               label="Pickup day"
               value={when ?? "any"}
-              onChange={(value) => update({ when: value === "any" ? null : value }, { resetPage: true })}
+              onChange={(value) =>
+                update({ when: value === "any" ? null : value }, { resetPage: true })
+              }
               options={(["any", "today", "tomorrow", "week", "next7"] as const).map((value) => ({
                 value,
                 label: WHEN_LABELS[value],
@@ -562,7 +573,9 @@ function ColumnChooser({
     <Popover
       title="Visible columns"
       icon={<Columns3 aria-hidden="true" />}
-      label={hiddenCount ? `Columns (${optional.length - hiddenCount}/${optional.length})` : "Columns"}
+      label={
+        hiddenCount ? `Columns (${optional.length - hiddenCount}/${optional.length})` : "Columns"
+      }
     >
       <div className="a-stack" style={{ gap: 4, padding: 6 }}>
         <span className="a-help">Shown in this browser only.</span>
@@ -770,14 +783,23 @@ function BulkBar({
           </Select>
         </Field>
         <Field label="Note" help="Recorded in each order's status history.">
-          <Textarea rows={2} maxLength={500} value={note} onChange={(e) => setNote(e.target.value)} />
+          <Textarea
+            rows={2}
+            maxLength={500}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
         </Field>
       </Dialog>
 
       <ConfirmDialog
         open={archiveOpen !== null}
         tone={archiveOpen === "restore" ? "primary" : "danger"}
-        title={archiveOpen === "restore" ? `Restore ${selected.length} ${plural}?` : `Archive ${selected.length} ${plural}?`}
+        title={
+          archiveOpen === "restore"
+            ? `Restore ${selected.length} ${plural}?`
+            : `Archive ${selected.length} ${plural}?`
+        }
         message={
           archiveOpen === "restore"
             ? "They return to working lists and pickers."

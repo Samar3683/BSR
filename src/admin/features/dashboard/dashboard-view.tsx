@@ -1,16 +1,18 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, CircleAlert, Plus } from "lucide-react";
+import { ArrowUpRight, CircleAlert, Inbox, Plus } from "lucide-react";
 import Link from "next/link";
 
 import { ButtonLink } from "../../components/ui/button";
 import { ErrorState, LoadingState } from "../../components/ui/feedback";
 import { PageHeader, StatusBadge } from "../../components/ui/layout";
 import { useSession } from "../../components/shell/session";
+import { useLiveStatus } from "../../hooks/use-realtime";
 import { useT } from "../../i18n/provider";
 import { formatDateTime, formatRelative } from "../../lib/datetime";
 import { fetchDashboard, ORDER_STATUSES, STATUS_LABELS } from "../../services/operations";
+import { fetchRequests } from "../../services/requests";
 
 const REASONS = {
   overdue: { label: "Overdue", tone: "a-badge--red" },
@@ -72,9 +74,15 @@ function greeting(): string {
 export function DashboardView() {
   const { admin } = useSession();
   const t = useT();
+  const live = useLiveStatus();
   const query = useQuery({
     queryKey: ["dashboard"],
     queryFn: fetchDashboard,
+    refetchInterval: 60_000,
+  });
+  const requests = useQuery({
+    queryKey: ["requests", "dashboard"],
+    queryFn: () => fetchRequests("new", 5),
     refetchInterval: 60_000,
   });
 
@@ -100,7 +108,17 @@ export function DashboardView() {
         title={`${t(greeting())}, ${admin.display_name.split(" ")[0]}`}
         meta={
           <span>
-            {t("Data updated")} {formatRelative(d.generated_at)} · Europe/Rome
+            {live ? (
+              <span className="a-live" title={t("Updates arrive as they happen")}>
+                <span className="a-live-dot" aria-hidden="true" />
+                {t("Live")}
+              </span>
+            ) : (
+              <>
+                {t("Data updated")} {formatRelative(d.generated_at)}
+              </>
+            )}{" "}
+            · Europe/Rome
           </span>
         }
         actions={
@@ -166,6 +184,68 @@ export function DashboardView() {
                 </span>
               </div>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section aria-labelledby="requests-title" className="a-open-section">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <h2 id="requests-title" style={{ paddingTop: 0 }}>
+            <Inbox
+              aria-hidden="true"
+              size={18}
+              style={{ display: "inline", verticalAlign: "-3px", marginRight: 8 }}
+            />
+            {t("New quote requests")}
+            {requests.data?.total ? ` (${requests.data.total})` : ""}
+          </h2>
+          <Link className="a-link" href="/admin/requests">
+            {t("Open requests")}
+          </Link>
+        </div>
+        {!requests.data?.rows.length ? (
+          <p className="a-muted">{t("No new requests. Requests from the website appear here.")}</p>
+        ) : (
+          <div className="a-table-wrap">
+            <table className="a-table a-table-stack">
+              <thead>
+                <tr>
+                  <th scope="col">{t("Received")}</th>
+                  <th scope="col">{t("Contact")}</th>
+                  <th scope="col">{t("Route")}</th>
+                  <th scope="col">{t("Request")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {requests.data.rows.map((row) => (
+                  <tr key={row.id}>
+                    <td className="a-nowrap" data-label={t("Received")}>
+                      {formatRelative(row.created_at)}
+                    </td>
+                    <td data-label={t("Contact")}>
+                      <strong style={{ fontWeight: 600 }}>{row.name}</strong>
+                      <div className="a-small a-muted">{row.phone}</div>
+                    </td>
+                    <td data-label={t("Route")}>
+                      {row.pickup.city ?? "—"} → {row.delivery.city ?? "—"}
+                    </td>
+                    <td data-label={t("Request")}>
+                      <Link className="a-row-link a-mono" href={`/admin/requests/${row.id}`}>
+                        {row.reference}
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>

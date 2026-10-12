@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
-import { isBackendConfigured } from "./config";
-import { withIdentity } from "./db";
+import { isBackendConfigured } from "@/server/config";
+import { withIdentity } from "@/server/db";
 import { readSession, SESSION_COOKIE, type SessionUser } from "./session";
 
 export interface CurrentAdmin {

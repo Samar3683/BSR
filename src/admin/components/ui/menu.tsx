@@ -43,14 +43,18 @@ export function MenuButton({
   const visible = items.filter(Boolean);
 
   const focusItem = (index: number) => {
-    const nodes = rootRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])');
+    const nodes = rootRef.current?.querySelectorAll<HTMLElement>(
+      '[role="menuitem"]:not([aria-disabled="true"])',
+    );
     if (!nodes?.length) return;
     nodes[(index + nodes.length) % nodes.length]?.focus();
   };
 
   useEffect(() => {
     if (!open) return;
-    rootRef.current?.querySelector<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])')?.focus();
+    rootRef.current
+      ?.querySelector<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])')
+      ?.focus();
     const onDown = (event: MouseEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
     };
@@ -70,7 +74,9 @@ export function MenuButton({
       onKeyDown={(event) => {
         if (!open) return;
         const nodes = Array.from(
-          rootRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])') ?? [],
+          rootRef.current?.querySelectorAll<HTMLElement>(
+            '[role="menuitem"]:not([aria-disabled="true"])',
+          ) ?? [],
         );
         const index = nodes.indexOf(document.activeElement as HTMLElement);
         if (event.key === "ArrowDown") {

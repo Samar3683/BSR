@@ -1,6 +1,5 @@
 import { contact, europeList, transit } from "@/config/site-content";
 
-
 export interface FaqItem {
   question: string;
   answer: string;
@@ -52,7 +51,7 @@ export const faqContent = {
     },
     {
       question: "Come posso richiedere un preventivo?",
-      answer: `Indica partenza, destinazione e servizio nel modulo di questa pagina: il messaggio si apre già compilato su WhatsApp o per email, e lo invii tu. Oppure chiamaci al ${contact.phoneDisplay} o scrivici a ${contact.email}. Il prezzo dipende da distanza, tipo di mezzo e urgenza.`,
+      answer: `Indica contatti e indirizzi di ritiro e di consegna nel modulo di questa pagina e invia la richiesta a BSR; in alternativa il messaggio si apre già compilato su WhatsApp o per email. Oppure chiamaci al ${contact.phoneDisplay} o scrivici a ${contact.email}. Il prezzo dipende da distanza, tipo di mezzo e urgenza.`,
     },
     {
       question: "Offrite un servizio di trasporto dedicato?",

@@ -138,3 +138,33 @@ describe("mutations", () => {
     expect(() => buildStatement({ table: "customers", action: "delete" })).toThrow(RestError);
   });
 });
+
+describe("embedded relations", () => {
+  const relations = {
+    drivers: { column: "driver_id", references: "id" },
+    vehicles: { column: "vehicle_id", references: "id" },
+  };
+
+  it("embeds related rows as json objects through the foreign key", () => {
+    const built = buildStatement(
+      select({
+        table: "driver_vehicle_assignments",
+        columns: "*, driver:drivers(display_name), vehicle:vehicles(display_name)",
+        order: [{ column: "starts_at", ascending: false }],
+      }),
+      {},
+      relations,
+    );
+    expect(built.text).toContain(
+      'select t.*, (select to_jsonb(e) from (select "display_name" from public."drivers" r where r."id" = t."driver_id") e) as "driver"',
+    );
+    expect(built.text).toContain('from public."driver_vehicle_assignments" t');
+    expect(built.params).toEqual([]);
+  });
+
+  it("refuses an embed without a known relationship", () => {
+    expect(() => buildStatement(select({ columns: "*, x:secrets(a)" }), {}, relations)).toThrow(
+      RestError,
+    );
+  });
+});

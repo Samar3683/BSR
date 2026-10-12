@@ -32,8 +32,18 @@ import {
 } from "../../lib/fields/values";
 import { formFields, type AdminConfig } from "../../services/config";
 import { createRecord, ENTITY_PATHS, getRecord, updateRecord } from "../../services/records";
+import { getRequest, linkRequestOrder, type QuoteRequest } from "../../services/requests";
 
-export function RecordFormView({ entity, id }: { entity: EntityKey; id?: string }) {
+export function RecordFormView({
+  entity,
+  id,
+  fromRequest,
+}: {
+  entity: EntityKey;
+  id?: string;
+  /** A quote request this new order is created from (prefills the form). */
+  fromRequest?: string;
+}) {
   const mode: FormMode = id ? "edit" : "create";
   const configQuery = useAdminConfig();
   const recordQuery = useQuery({
@@ -42,8 +52,24 @@ export function RecordFormView({ entity, id }: { entity: EntityKey; id?: string 
     enabled: Boolean(id),
   });
 
+  const requestQuery = useQuery({
+    queryKey: ["request", fromRequest],
+    queryFn: () => getRequest(fromRequest!),
+    enabled: Boolean(fromRequest) && !id,
+  });
+
   if (configQuery.isError)
     return <ErrorState error={configQuery.error} onRetry={() => configQuery.refetch()} />;
+  if (requestQuery.isError)
+    return (
+      <div className="a-page">
+        <ErrorState
+          error={requestQuery.error}
+          onRetry={() => requestQuery.refetch()}
+          back={{ href: "/admin/requests", label: "Back to requests" }}
+        />
+      </div>
+    );
   if (recordQuery.isError)
     return (
       <div className="a-page">
@@ -55,7 +81,8 @@ export function RecordFormView({ entity, id }: { entity: EntityKey; id?: string 
       </div>
     );
   const config = configQuery.data;
-  if (!config || (id && !recordQuery.data)) return <LoadingState />;
+  if (!config || (id && !recordQuery.data) || (fromRequest && !id && !requestQuery.data))
+    return <LoadingState />;
 
   return (
     <RecordForm
@@ -66,6 +93,7 @@ export function RecordFormView({ entity, id }: { entity: EntityKey; id?: string 
       config={config}
       fields={formFields(config, entity, mode)}
       record={recordQuery.data ?? null}
+      request={requestQuery.data ?? null}
     />
   );
 }
@@ -76,12 +104,14 @@ function RecordForm({
   config,
   fields,
   record,
+  request,
 }: {
   entity: EntityKey;
   mode: FormMode;
   config: AdminConfig;
   fields: FieldDefinition[];
   record: EntityRecord | null;
+  request: QuoteRequest | null;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -102,6 +132,7 @@ function RecordForm({
           base[def.field_key] = { country: DEFAULT_COUNTRY };
       }
     }
+    if (mode === "create" && request) Object.assign(base, requestPrefill(fields, request));
     return base;
   };
   const [values, setValues] = useState<Record<string, FormValue>>(freshValues);
@@ -132,6 +163,16 @@ function RecordForm({
         window.scrollTo({ top: 0 });
         document.querySelector<HTMLElement>(".adm form input:not([disabled])")?.focus();
         return;
+      }
+      if (request && mode === "create") {
+        try {
+          await linkRequestOrder(request.id, (saved as EntityRecord).id);
+          await invalidate();
+        } catch (error) {
+          toast.error(
+            `The order was created, but the request was not linked: ${toAdminError(error).message}`,
+          );
+        }
       }
       leaving.current = true;
       router.push(`${basePath}/${(saved as EntityRecord).id}`);
@@ -287,6 +328,12 @@ function RecordForm({
             : { href: `${basePath}/${record!.id}`, label: record!.display_name }
         }
       />
+      {request ? (
+        <Alert>
+          Prefilled from request <strong>{request.reference}</strong> ({request.name}). Enter the
+          pickup and delivery times, then create the order.
+        </Alert>
+      ) : null}
       {mode === "create" && !entityConfig?.active ? (
         <Alert tone="error">
           New {entityConfig?.plural_display_name.toLowerCase()} cannot be created while the entity
@@ -395,4 +442,36 @@ function focusFirstError() {
     const target = document.querySelector<HTMLElement>('.adm [aria-invalid="true"]');
     target?.focus();
   });
+}
+
+/** Values of the order form taken from a quote request: customer, both addresses, a note on the cargo. */
+function requestPrefill(
+  fields: readonly FieldDefinition[],
+  request: QuoteRequest,
+): Record<string, FormValue> {
+  const out: Record<string, FormValue> = {};
+  const address = (a: QuoteRequest["pickup"]): AddressValue => ({
+    line1: a.street ?? "",
+    postal_code: a.zip ?? "",
+    city: a.city ?? "",
+    province: a.province ?? "",
+    country: DEFAULT_COUNTRY,
+  });
+  const context = [
+    `Richiesta web ${request.reference}`,
+    request.context.service && `servizio: ${request.context.service}`,
+    request.context.sector && `settore: ${request.context.sector}`,
+    request.context.vehicle && `mezzo: ${request.context.vehicle}`,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  for (const field of fields) {
+    if (field.binding_key === "customer_id" && request.customer_id)
+      out[field.field_key] = request.customer_id;
+    else if (field.field_key === "pickup_address") out[field.field_key] = address(request.pickup);
+    else if (field.field_key === "delivery_address")
+      out[field.field_key] = address(request.delivery);
+    else if (field.field_key === "cargo") out[field.field_key] = context;
+  }
+  return out;
 }

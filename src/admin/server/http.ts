@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { readConfig } from "./config";
-import { toErrorBody } from "./db";
+import { readConfig } from "@/server/config";
+import { toErrorBody } from "@/server/db";
+export { clearLimit, clientKey, isBlocked, rateLimited } from "@/server/limits";
 import { RestError } from "./rest";
 import {
   cookieOptions,
@@ -85,31 +86,4 @@ export function clearSessionCookie(response: NextResponse, request: NextRequest)
     ...cookieOptions(new Date(0), request.nextUrl.protocol === "https:"),
     maxAge: 0,
   });
-}
-
-// ------------------------------------------------------------------ rate limits
-
-const buckets = new Map<string, { count: number; resetAt: number }>();
-
-/** Best-effort, per-process limiter for sign-in and reset requests. */
-export function rateLimited(key: string, max: number, windowMs: number): boolean {
-  const now = Date.now();
-  const bucket = buckets.get(key);
-  if (!bucket || bucket.resetAt <= now) {
-    buckets.set(key, { count: 1, resetAt: now + windowMs });
-    if (buckets.size > 5000) {
-      for (const [k, v] of buckets) if (v.resetAt <= now) buckets.delete(k);
-    }
-    return false;
-  }
-  bucket.count += 1;
-  return bucket.count > max;
-}
-
-export function clientKey(request: NextRequest): string {
-  return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "local"
-  );
 }

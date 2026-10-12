@@ -93,13 +93,23 @@ export function DispatchTimeline() {
       <section className="a-panel" aria-label="Dispatch timeline">
         <div className="a-toolbar" style={{ justifyContent: "space-between" }}>
           <div className="a-row">
-            <Button size="sm" icon aria-label="Previous day" onClick={() => update({ day: addDays(day, -1) })}>
+            <Button
+              size="sm"
+              icon
+              aria-label="Previous day"
+              onClick={() => update({ day: addDays(day, -1) })}
+            >
               <ChevronLeft aria-hidden="true" />
             </Button>
             <Button size="sm" onClick={() => update({ day: null })}>
               Today
             </Button>
-            <Button size="sm" icon aria-label="Next day" onClick={() => update({ day: addDays(day, 1) })}>
+            <Button
+              size="sm"
+              icon
+              aria-label="Next day"
+              onClick={() => update({ day: addDays(day, 1) })}
+            >
               <ChevronRight aria-hidden="true" />
             </Button>
             <Input
@@ -146,7 +156,11 @@ export function DispatchTimeline() {
                 <strong className="a-mono">{e.order_number}</strong> {formatTime(e.starts_at)}–
                 {formatTime(e.ends_at)} · {e.customer_name}
               </span>
-              <Button size="sm" variant="ghost" onClick={() => setTarget({ event: e, resourceId: null })}>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setTarget({ event: e, resourceId: null })}
+              >
                 <Link2 aria-hidden="true" />
                 Assign
               </Button>
@@ -161,10 +175,7 @@ export function DispatchTimeline() {
         ) : events.isLoading || resources.isLoading ? (
           <LoadingState />
         ) : !resources.data?.rows.length ? (
-          <EmptyState
-            title={`No ${lanes}s yet`}
-            message={`Add ${lanes}s to plan the day.`}
-          />
+          <EmptyState title={`No ${lanes}s yet`} message={`Add ${lanes}s to plan the day.`} />
         ) : (
           <div className="a-table-wrap">
             <div className="a-tl" role="table" aria-label={`${formatLongDate(day)} by ${lanes}`}>
@@ -205,13 +216,19 @@ export function DispatchTimeline() {
                         <span className="a-help">Unavailable</span>
                       ) : resource.pairing ? (
                         <span className="a-help">
-                          {lanes === "driver" ? resource.pairing.vehicle_name : resource.pairing.driver_name}
+                          {lanes === "driver"
+                            ? resource.pairing.vehicle_name
+                            : resource.pairing.driver_name}
                         </span>
                       ) : null}
                     </div>
                     <div role="cell" className="a-tl-track">
                       {nowOffset !== null && nowOffset >= 0 && nowOffset <= 100 ? (
-                        <span className="a-tl-now" style={{ left: `${nowOffset}%` }} aria-hidden="true" />
+                        <span
+                          className="a-tl-now"
+                          style={{ left: `${nowOffset}%` }}
+                          aria-hidden="true"
+                        />
                       ) : null}
                       {rowEvents.map((e) => (
                         <Link
@@ -223,7 +240,8 @@ export function DispatchTimeline() {
                           title={`${e.order_number} · ${e.customer_name}\n${formatTime(e.starts_at)}–${formatTime(e.ends_at)} · ${STATUS_LABELS[e.status]}`}
                           aria-label={`${e.order_number}, ${formatTime(e.starts_at)} to ${formatTime(e.ends_at)}, ${e.customer_name}, ${STATUS_LABELS[e.status]}`}
                         >
-                          <span className="a-mono">{e.order_number.slice(-5)}</span> {e.customer_name}
+                          <span className="a-mono">{e.order_number.slice(-5)}</span>{" "}
+                          {e.customer_name}
                         </Link>
                       ))}
                     </div>
@@ -250,8 +268,16 @@ export function DispatchTimeline() {
             <AssignmentEditor
               orderId={target.event.id}
               status={target.event.status}
-              initialDriverId={lanes === "driver" ? (target.resourceId ?? target.event.driver_id) : target.event.driver_id}
-              initialVehicleId={lanes === "vehicle" ? (target.resourceId ?? target.event.vehicle_id) : target.event.vehicle_id}
+              initialDriverId={
+                lanes === "driver"
+                  ? (target.resourceId ?? target.event.driver_id)
+                  : target.event.driver_id
+              }
+              initialVehicleId={
+                lanes === "vehicle"
+                  ? (target.resourceId ?? target.event.vehicle_id)
+                  : target.event.vehicle_id
+              }
               onDone={() => setTarget(null)}
             />
           </div>

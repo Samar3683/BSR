@@ -2,6 +2,7 @@ import {
   CalendarDays,
   ChartColumn,
   IdCard,
+  Inbox,
   LayoutDashboard,
   Package,
   Route,
@@ -29,6 +30,7 @@ export const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Operations",
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/admin/requests", label: "Requests", icon: Inbox },
       { href: "/admin/orders", label: "Orders", icon: Package, entity: "order" },
       { href: "/admin/dispatch", label: "Dispatch", icon: Route },
       { href: "/admin/calendar", label: "Calendar", icon: CalendarDays },

@@ -14,7 +14,8 @@ import type { FieldDefinition } from "../../lib/fields/types";
 import { addRequirement, fetchRequirements, removeRequirement } from "../../services/operations";
 
 const isSelect = (field: FieldDefinition) =>
-  !field.archived_at && (field.field_type === "single_select" || field.field_type === "multi_select");
+  !field.archived_at &&
+  (field.field_type === "single_select" || field.field_type === "multi_select");
 
 /**
  * Which driver qualifications each kind of vehicle needs, e.g. vehicle type
@@ -25,7 +26,10 @@ export function DispatchRules() {
   const { data: config, isLoading, error, refetch } = useAdminConfig();
   const client = useQueryClient();
   const toast = useToast();
-  const requirements = useQuery({ queryKey: ["dispatch-requirements"], queryFn: fetchRequirements });
+  const requirements = useQuery({
+    queryKey: ["dispatch-requirements"],
+    queryFn: fetchRequirements,
+  });
 
   const vehicleFields = config?.fields.vehicle.filter(isSelect) ?? [];
   const driverFields = config?.fields.driver.filter(isSelect) ?? [];
@@ -77,7 +81,8 @@ export function DispatchRules() {
     if (!first) return null;
     for (const field of config.fields.driver) {
       if (field.id === driverField.id) continue;
-      if ((config.options[field.id] ?? []).some((o) => o.id === first.driver_option_id)) return field;
+      if ((config.options[field.id] ?? []).some((o) => o.id === first.driver_option_id))
+        return field;
     }
     return null;
   };
@@ -158,7 +163,11 @@ export function DispatchRules() {
                               disabled={Boolean(other) || toggle.isPending}
                               aria-label={`${vehicle.label} accepts ${driver.label}`}
                               onChange={() =>
-                                toggle.mutate({ vehicle: vehicle.id, driver: driver.id, on: !checked })
+                                toggle.mutate({
+                                  vehicle: vehicle.id,
+                                  driver: driver.id,
+                                  on: !checked,
+                                })
                               }
                             />
                           </td>

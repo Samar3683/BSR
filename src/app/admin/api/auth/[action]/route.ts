@@ -1,11 +1,13 @@
 import type { NextRequest } from "next/server";
 
 import { AuthFailure, changePassword, login, requestPasswordReset } from "@/admin/server/auth";
-import { isBackendConfigured } from "@/admin/server/config";
+import { isBackendConfigured } from "@/server/config";
 import {
   clearSessionCookie,
   clientKey,
   currentSession,
+  clearLimit,
+  isBlocked,
   isSameSite,
   json,
   rateLimited,
@@ -56,16 +58,24 @@ export async function POST(request: NextRequest, context: Context) {
       case "login": {
         const data = await body(request);
         const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
-        if (
-          rateLimited(`login:ip:${clientKey(request)}`, 40, 10 * 60_000) ||
-          rateLimited(`login:email:${email}`, 10, 10 * 60_000)
-        ) {
+        // Only failed attempts count: brute force is limited, normal use is not.
+        const ipKey = `login:ip:${clientKey(request)}`;
+        const emailKey = `login:email:${email}`;
+        if (isBlocked(ipKey, 40) || isBlocked(emailKey, 10)) {
           return json(
             { error: { message: "Too many attempts. Wait a few minutes and try again." } },
             429,
           );
         }
-        const session = await login(data.email, data.password, userAgent);
+        let session;
+        try {
+          session = await login(data.email, data.password, userAgent);
+        } catch (error) {
+          rateLimited(ipKey, 40, 10 * 60_000);
+          rateLimited(emailKey, 10, 10 * 60_000);
+          throw error;
+        }
+        clearLimit(emailKey);
         const response = json({ ok: true });
         setSessionCookie(response, session, request);
         return response;
@@ -83,8 +93,9 @@ export async function POST(request: NextRequest, context: Context) {
         }
         try {
           await requestPasswordReset(data.email, siteOrigin(request));
-        } catch {
-          // Do not reveal whether the address exists or whether mail is configured.
+        } catch (error) {
+          // Not shown to the visitor (it would reveal which addresses exist), but logged.
+          console.error("password reset email failed:", (error as Error).message);
         }
         return json({ ok: true });
       }

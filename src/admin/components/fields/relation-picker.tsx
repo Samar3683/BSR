@@ -165,7 +165,7 @@ export function RelationPicker({
               }}
             >
               <Plus size={14} aria-hidden="true" />
-              <span>{term.trim() ? `Create “${term.trim()}”…` : "Create new…"}</span>
+              <span>Create new…</span>
             </li>
           ) : null}
         </ul>

@@ -17,6 +17,8 @@ const TABLES = [
   "order_assignments",
   "audit_logs",
   "admin_profiles",
+  "quote_requests",
+  "contact_events",
 ];
 
 const PNG = Buffer.from(
@@ -92,8 +94,8 @@ test.describe("security", () => {
     for (const file of files) {
       const content = readFileSync(file, "utf8");
       expect(content.includes(stack.sessionSecret), file).toBe(false);
-      expect(content.includes("DATABASE_URL"), file).toBe(false);
-      expect(content.includes("postgresql://"), file).toBe(false);
+      expect(content.includes(stack.databaseUrl), file).toBe(false);
+      expect(/postgres(ql)?:\/\/[^\s"']*@/.test(content), file).toBe(false);
     }
   });
 

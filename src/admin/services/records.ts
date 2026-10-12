@@ -117,9 +117,7 @@ export async function listAllRecords<T = EntityRecord>(
 }
 
 export async function getRecord<T = EntityRecord>(entity: EntityKey, id: string): Promise<T> {
-  return unwrap(
-    await getDb().from(ENTITY_TABLES[entity]).select("*").eq("id", id).single(),
-  ) as T;
+  return unwrap(await getDb().from(ENTITY_TABLES[entity]).select("*").eq("id", id).single()) as T;
 }
 
 export interface RecordWrite {
@@ -282,13 +280,16 @@ export interface SearchHit {
 
 /** A few matches per entity, using each entity's searchable fields. */
 export async function globalSearch(query: string, limit = 5): Promise<SearchHit[]> {
-  return unwrap(await getDb().rpc("global_search", { p_query: query, p_limit: limit })) as SearchHit[];
+  return unwrap(
+    await getDb().rpc("global_search", { p_query: query, p_limit: limit }),
+  ) as SearchHit[];
 }
 
 export interface NavCounts {
   awaiting_dispatch: number;
   overdue: number;
   in_transit: number;
+  new_requests: number;
 }
 
 export async function fetchNavCounts(): Promise<NavCounts> {

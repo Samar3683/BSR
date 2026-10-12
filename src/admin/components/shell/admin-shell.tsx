@@ -10,6 +10,7 @@ import { MAIN_CONTENT_ID } from "@/constants/landmarks";
 
 import { isNavActive, NAV_SECTIONS, type NavItem } from "../../config/navigation";
 import { useAdminConfig } from "../../hooks/use-admin-config";
+import { useRealtime } from "../../hooks/use-realtime";
 import { useI18n } from "../../i18n/provider";
 import { fetchNavCounts } from "../../services/records";
 import { Button } from "../ui/button";
@@ -31,6 +32,7 @@ function readCollapsed(): boolean {
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { t } = useI18n();
+  useRealtime();
   const { data: config } = useAdminConfig();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -43,6 +45,13 @@ export function AdminShell({ children }: { children: ReactNode }) {
     string,
     { value: number; tone: "red" | "green"; label: string } | undefined
   > = {
+    "/admin/requests": counts.data?.new_requests
+      ? {
+          value: counts.data.new_requests,
+          tone: "green",
+          label: `${counts.data.new_requests} new requests`,
+        }
+      : undefined,
     "/admin/orders": counts.data?.overdue
       ? { value: counts.data.overdue, tone: "red", label: `${counts.data.overdue} overdue` }
       : undefined,

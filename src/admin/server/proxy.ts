@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { readConfig } from "./config";
+import { readConfig } from "@/server/config";
 import { decodeCookie, SESSION_COOKIE } from "./session";
 
 /** Admin pages reachable without a session. */

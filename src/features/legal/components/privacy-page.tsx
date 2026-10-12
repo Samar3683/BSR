@@ -45,7 +45,10 @@ export function PrivacyPage() {
         </header>
 
         {content.sections.map((section) => (
-          <section key={section.heading} className="flex flex-col gap-3 border-t border-border-default pt-6">
+          <section
+            key={section.heading}
+            className="flex flex-col gap-3 border-t border-border-default pt-6"
+          >
             <h2 className="type-heading-md">{section.heading}</h2>
             {section.controller && controller}
             {section.body?.map((paragraph) => (

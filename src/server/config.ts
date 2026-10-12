@@ -12,6 +12,8 @@ export interface ServerConfig {
   /** SMTP connection, e.g. smtp://user:pass@host:587 (smtps:// for TLS). */
   smtpUrl: string | null;
   mailFrom: string;
+  /** Who is told about new quote requests (comma-separated addresses); optional. */
+  notifyEmail: string[];
 }
 
 export function readConfig(): ServerConfig | null {
@@ -24,6 +26,10 @@ export function readConfig(): ServerConfig | null {
     appUrl: process.env.APP_URL?.trim().replace(/\/+$/, "") || null,
     smtpUrl: process.env.SMTP_URL?.trim() || null,
     mailFrom: process.env.MAIL_FROM?.trim() || "BSR Trasporti <no-reply@localhost>",
+    notifyEmail: (process.env.NOTIFY_EMAIL ?? "")
+      .split(",")
+      .map((a) => a.trim())
+      .filter(Boolean),
   };
 }
 

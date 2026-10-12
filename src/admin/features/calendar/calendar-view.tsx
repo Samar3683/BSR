@@ -322,9 +322,7 @@ function WeekLanes({
     <div className="a-table-wrap">
       <div className="a-lanes" role="table" aria-label="Week by resource">
         <div className="a-lane-row a-lane-row--head" role="row">
-          <div role="columnheader">
-            {group === "driver" ? "Driver" : "Vehicle"}
-          </div>
+          <div role="columnheader">{group === "driver" ? "Driver" : "Vehicle"}</div>
           {days.map((day) => (
             <div
               key={day}

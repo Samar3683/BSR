@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { NotConfigured } from "@/admin/features/auth/access-states";
 import { AuthCard } from "@/admin/features/auth/auth-card";
 import { ResetPasswordForm } from "@/admin/features/auth/password-forms";
-import { isBackendConfigured } from "@/admin/server/config";
+import { isBackendConfigured } from "@/server/config";
 import { getSessionUser } from "@/admin/server/gate";
 
 export const metadata: Metadata = { title: "Choose a password" };

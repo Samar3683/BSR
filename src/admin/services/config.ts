@@ -219,9 +219,7 @@ export async function deleteOption(id: string): Promise<void> {
 }
 
 export async function reorderOptions(fieldId: string, ids: string[]): Promise<void> {
-  unwrap(
-    await getDb().rpc("reorder_field_options", { p_field_id: fieldId, p_option_ids: ids }),
-  );
+  unwrap(await getDb().rpc("reorder_field_options", { p_field_id: fieldId, p_option_ids: ids }));
 }
 
 export async function fetchOptionUsage(fieldId: string): Promise<Record<string, number>> {
@@ -239,11 +237,6 @@ export async function updateEntityConfig(
   >,
 ): Promise<EntityConfig> {
   return unwrap(
-    await getDb()
-      .from("entity_configs")
-      .update(patch)
-      .eq("entity_key", entity)
-      .select()
-      .single(),
+    await getDb().from("entity_configs").update(patch).eq("entity_key", entity).select().single(),
   ) as EntityConfig;
 }

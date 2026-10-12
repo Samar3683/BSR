@@ -4,7 +4,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
 
-import { announceSignOut, onSignOutElsewhere, signOut as signOutRequest } from "../../lib/auth-client";
+import {
+  announceSignOut,
+  onSignOutElsewhere,
+  signOut as signOutRequest,
+} from "../../lib/auth-client";
 import { UNAUTHORIZED_EVENT } from "../../lib/db/client";
 
 export interface SessionAdmin {

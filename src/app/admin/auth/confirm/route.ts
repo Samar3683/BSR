@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { safeAdminNext } from "@/admin/lib/paths";
 import { consumeToken } from "@/admin/server/auth";
-import { isBackendConfigured } from "@/admin/server/config";
+import { isBackendConfigured } from "@/server/config";
 import { setSessionCookie } from "@/admin/server/http";
 
 const KINDS = ["recovery", "invite"] as const;

@@ -49,7 +49,10 @@ export function AssignmentEditor({
     queryKey: ["dispatch-candidates", orderId],
     queryFn: () => fetchDispatchCandidates(orderId),
   });
-  const requirements = useQuery({ queryKey: ["dispatch-requirements"], queryFn: fetchRequirements });
+  const requirements = useQuery({
+    queryKey: ["dispatch-requirements"],
+    queryFn: fetchRequirements,
+  });
   const { data: config } = useAdminConfig();
   if (query.isError) return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   if (!query.data || !config) return <LoadingState label="Checking availability…" />;
@@ -95,14 +98,21 @@ function EditorBody({
   const [vehicleId, setVehicleId] = useState<string | null>(
     initialVehicleId ??
       data.current?.vehicle_id ??
-      (pairedForFirst && data.vehicles.some((v) => v.id === pairedForFirst) ? pairedForFirst : null),
+      (pairedForFirst && data.vehicles.some((v) => v.id === pairedForFirst)
+        ? pairedForFirst
+        : null),
   );
   const [note, setNote] = useState("");
   const [confirmUnassign, setConfirmUnassign] = useState(false);
 
   const assign = useMutation({
     mutationFn: (pair?: { driverId: string; vehicleId: string }) =>
-      assignOrder(orderId, pair?.driverId ?? driverId, pair?.vehicleId ?? vehicleId, note.trim() || undefined),
+      assignOrder(
+        orderId,
+        pair?.driverId ?? driverId,
+        pair?.vehicleId ?? vehicleId,
+        note.trim() || undefined,
+      ),
     onSuccess: async (_, pair) => {
       await invalidate();
       const both = pair || (driverId && vehicleId);
@@ -211,7 +221,9 @@ function EditorBody({
           selected={driverId}
           onSelect={pickDriver}
           onClear={status === "in_transit" ? undefined : () => setDriverId(null)}
-          pairedLabel={(c) => (c.paired_vehicle_name ? `Paired with ${c.paired_vehicle_name}` : null)}
+          pairedLabel={(c) =>
+            c.paired_vehicle_name ? `Paired with ${c.paired_vehicle_name}` : null
+          }
           warning={(c) =>
             vehicleId && issuesFor(c, vehicleById.get(vehicleId)).length
               ? "Does not meet the selected vehicle's requirements"
@@ -225,7 +237,9 @@ function EditorBody({
           selected={vehicleId}
           onSelect={pickVehicle}
           onClear={status === "in_transit" ? undefined : () => setVehicleId(null)}
-          pairedLabel={(c) => (c.paired_driver_name ? `Usually driven by ${c.paired_driver_name}` : null)}
+          pairedLabel={(c) =>
+            c.paired_driver_name ? `Usually driven by ${c.paired_driver_name}` : null
+          }
           warning={(c) =>
             driverId && issuesFor(driverById.get(driverId), c).length
               ? "The selected driver does not meet its requirements"
@@ -313,7 +327,10 @@ function CandidateList({
           <p className="a-muted a-small">
             No available {title.toLowerCase()}s. Add one or mark one available.
           </p>
-          <ButtonLink size="sm" href={title === "Driver" ? "/admin/drivers/new" : "/admin/vehicles/new"}>
+          <ButtonLink
+            size="sm"
+            href={title === "Driver" ? "/admin/drivers/new" : "/admin/vehicles/new"}
+          >
             New {title.toLowerCase()}
           </ButtonLink>
         </div>

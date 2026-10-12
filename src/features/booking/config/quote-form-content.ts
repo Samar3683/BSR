@@ -2,9 +2,9 @@
  * The quote form's fields and copy — one definition for the home page's form
  * and the quote-request page's composer. The customer quotes with these
  * fields only: contacts, the pick-up address, the delivery address. Nothing is
- * sent from the site (no backend): the request is prepared as a message for
- * BSR's real channels, WhatsApp or email, and the visitor sends it. No
- * response-time promise (docs/content-audit.md).
+ * kept apart from the channels: the request is sent to BSR from the quote-request
+ * page, or prepared as a message for WhatsApp or email. No response-time promise
+ * (docs/content-audit.md).
  */
 
 /** The phone prefixes offered (the customer's own number), Italy first. */
@@ -62,7 +62,7 @@ export const quoteFormContent = {
     province: "Indica la provincia.",
   },
   submit: "Invia la richiesta",
-  note: "Nella pagina successiva il messaggio è già scritto: lo invii tu, su WhatsApp o per email. Poi ti ricontattiamo per confermare mezzo, tempi e prezzo.",
+  note: "Nella pagina successiva controlli la richiesta e la invii a BSR (oppure la apri su WhatsApp o per email). Poi ti ricontattiamo per confermare mezzo, tempi e prezzo.",
   /** Over the request the visitor arrived with (a service, a sector or a vehicle chosen on the page). */
   context: "Richiesta per",
 } as const;

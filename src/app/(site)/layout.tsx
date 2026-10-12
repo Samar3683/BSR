@@ -1,4 +1,5 @@
 import { RevealController } from "@/components/motion/reveal-controller";
+import { ContactTracker } from "@/features/site/components/contact-tracker";
 import { SiteFooter } from "@/features/site/components/site-footer";
 import { SiteHeader } from "@/features/site/components/site-header";
 
@@ -10,6 +11,7 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
       {children}
       <SiteFooter />
       <RevealController />
+      <ContactTracker />
     </>
   );
 }

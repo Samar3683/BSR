@@ -53,7 +53,10 @@ export async function inviteAdmin(email: string, displayName: string): Promise<v
       credentials: "same-origin",
     });
   } catch {
-    throw new AdminError("network", "The server could not be reached. Check the connection and try again.");
+    throw new AdminError(
+      "network",
+      "The server could not be reached. Check the connection and try again.",
+    );
   }
   if (response.ok) return;
   let payload: { error?: string; field_errors?: Record<string, string> } = {};
@@ -62,7 +65,8 @@ export async function inviteAdmin(email: string, displayName: string): Promise<v
   } catch {
     // keep the generic message
   }
-  if (response.status === 401) throw new AdminError("auth", "Your session has expired. Sign in again.");
+  if (response.status === 401)
+    throw new AdminError("auth", "Your session has expired. Sign in again.");
   throw new AdminError(
     payload.field_errors ? "validation" : "rule",
     payload.error ?? "The invitation could not be sent",

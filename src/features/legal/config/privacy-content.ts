@@ -31,7 +31,7 @@ export const privacyContent = {
     {
       heading: "Quali dati trattiamo",
       body: [
-        "Il modulo di richiesta preventivo non invia la richiesta: prepara soltanto un messaggio, che sei tu a inviarci su WhatsApp o via email. I dati che inserisci compaiono nell'indirizzo della pagina e, come ogni visita a un sito, possono essere registrati nei log tecnici del servizio che ospita il sito.",
+        "Se invii la richiesta di preventivo dal modulo, registriamo i dati che inserisci: nome, telefono, email (facoltativa), indirizzo di ritiro e di consegna e, se li hai scelti, servizio, settore o mezzo. Mentre compili il modulo, i dati compaiono anche nell'indirizzo della pagina e, come ogni visita a un sito, possono essere registrati nei log tecnici del servizio che ospita il sito.",
         "Trattiamo i dati che ci comunichi quando ci contatti — per telefono, WhatsApp, email o PEC — ad esempio nome, recapiti, indirizzi di ritiro e di consegna e i dettagli della spedizione.",
       ],
     },
@@ -50,13 +50,13 @@ export const privacyContent = {
     {
       heading: "Conservazione",
       body: [
-        "I dati sono conservati per il tempo necessario a gestire la richiesta e, in caso di conclusione del contratto di trasporto, per gli obblighi di legge in materia fiscale e contrattuale.",
+        "I dati sono conservati per il tempo necessario a gestire la richiesta e, in caso di conclusione del contratto di trasporto, per gli obblighi di legge in materia fiscale e contrattuale. Le richieste di preventivo che non danno seguito a un servizio possono essere cancellate in qualsiasi momento su tua richiesta.",
       ],
     },
     {
       heading: "Cookie e strumenti di tracciamento",
       body: [
-        "Questo sito non utilizza cookie, né tecnici né di profilazione, e non salva dati nel tuo browser. Non usa strumenti di statistica o di tracciamento; i caratteri tipografici sono serviti dal sito stesso, senza richieste a terze parti.",
+        "Questo sito non utilizza cookie, né tecnici né di profilazione, e non salva dati nel tuo browser. Non usa strumenti di tracciamento: conta soltanto, in forma anonima e aggregata, quante volte vengono premuti i pulsanti di contatto (WhatsApp, telefono, email) e in quale pagina, senza cookie né identificativi, quindi senza possibilità di risalire a te. I caratteri tipografici sono serviti dal sito stesso, senza richieste a terze parti.",
       ],
     },
     {

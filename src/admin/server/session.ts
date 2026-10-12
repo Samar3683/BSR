@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
-import { requireConfig } from "./config";
-import { withApp } from "./db";
+import { requireConfig } from "@/server/config";
+import { withApp } from "@/server/db";
 
 /**
  * Login sessions.

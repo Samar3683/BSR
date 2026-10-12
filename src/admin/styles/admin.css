@@ -2999,11 +2999,7 @@
 }
 
 .adm .a-tl-row[data-unavailable] .a-tl-track {
-  background: repeating-linear-gradient(
-    135deg,
-    transparent 0 8px,
-    var(--a-soft) 8px 16px
-  );
+  background: repeating-linear-gradient(135deg, transparent 0 8px, var(--a-soft) 8px 16px);
 }
 
 .adm .a-tl-row--head {
@@ -4798,4 +4794,37 @@
   background: var(--a-soft);
   color: var(--a-text-2);
   cursor: default;
+}
+
+/* Live connection indicator */
+.adm .a-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--a-green);
+  font-weight: 500;
+}
+
+.adm .a-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--a-fill);
+  box-shadow: 0 0 0 0 rgb(11 110 69 / 0.5);
+  animation: a-live-pulse 2s ease-out infinite;
+}
+
+@keyframes a-live-pulse {
+  70% {
+    box-shadow: 0 0 0 6px rgb(11 110 69 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgb(11 110 69 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adm .a-live-dot {
+    animation: none;
+  }
 }

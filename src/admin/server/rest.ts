@@ -141,13 +141,64 @@ export function buildWhere(filters: RestFilter[] | undefined, params: Params): s
   return ` where ${conditions.join(" and ")}`;
 }
 
-function selectList(columns: string | undefined): string {
+/** How a table points at another one (a single-column foreign key). */
+export interface Relations {
+  [targetTable: string]: { column: string; references: string };
+}
+
+/** `alias:table(col, col)` items of a select list: related rows embedded as objects. */
+const EMBED = /^(?:([A-Za-z_][A-Za-z0-9_]*):)?([A-Za-z_][A-Za-z0-9_]*)\(([^()]*)\)$/;
+
+/** Splits a select list on top-level commas. */
+function splitSelect(columns: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const char of columns) {
+    if (char === "(") depth++;
+    if (char === ")") depth--;
+    if (char === "," && depth === 0) {
+      parts.push(current.trim());
+      current = "";
+    } else current += char;
+  }
+  if (current.trim()) parts.push(current.trim());
+  return parts;
+}
+
+/** Tables embedded by a select list (their relations must be looked up first). */
+export function embeddedTables(columns: string | undefined): string[] {
+  if (!columns) return [];
+  return splitSelect(columns)
+    .map((item) => EMBED.exec(item)?.[2])
+    .filter((t): t is string => Boolean(t));
+}
+
+function selectList(columns: string | undefined, relations: Relations = {}): string {
   if (!columns || columns.trim() === "*") return "*";
-  return columns
-    .split(",")
-    .map((c) => c.trim())
-    .filter(Boolean)
-    .map((c) => (c === "*" ? "*" : quoteIdent(c)))
+  const items = splitSelect(columns);
+  const hasEmbed = items.some((item) => EMBED.test(item));
+  return items
+    .map((item) => {
+      const embed = EMBED.exec(item);
+      if (embed) {
+        const [, alias, target, inner] = embed as unknown as [
+          string,
+          string | undefined,
+          string,
+          string,
+        ];
+        const relation = relations[target];
+        if (!relation) throw new RestError(`No relationship to "${target}"`, "PGRST200");
+        const cols = selectList(inner, {});
+        return (
+          `(select to_jsonb(e) from (select ${cols} from public.${quoteIdent(target)} r ` +
+          `where r.${quoteIdent(relation.references)} = t.${quoteIdent(relation.column)}) e) as ${quoteIdent(alias ?? target)}`
+        );
+      }
+      if (item === "*") return hasEmbed ? "t.*" : "*";
+      return quoteIdent(item);
+    })
     .join(", ");
 }
 
@@ -167,10 +218,15 @@ export interface BuiltStatement {
   countParams?: Params;
 }
 
-export function buildStatement(op: RestOp, types: ColumnTypes = {}): BuiltStatement {
+export function buildStatement(
+  op: RestOp,
+  types: ColumnTypes = {},
+  relations: Relations = {},
+): BuiltStatement {
   const table = `public.${quoteIdent(op.table)}`;
   const params: Params = [];
   const returning = op.returning ? ` returning ${selectList(op.columns)}` : "";
+  const from = embeddedTables(op.columns).length ? `${"public"}.${quoteIdent(op.table)} t` : table;
 
   if (op.action === "select") {
     const where = buildWhere(op.filters, params);
@@ -190,7 +246,7 @@ export function buildStatement(op: RestOp, types: ColumnTypes = {}): BuiltStatem
       limit = ` limit ${MAX_ROWS}`;
     }
     const built: BuiltStatement = {
-      text: `select ${selectList(op.columns)} from ${table}${where}${order}${limit}`,
+      text: `select ${selectList(op.columns, relations)} from ${from}${where}${order}${limit}`,
       params,
     };
     if (op.count === "exact") {
@@ -265,6 +321,38 @@ async function columnTypes(client: pg.PoolClient, table: string): Promise<Column
   return types;
 }
 
+const relationCache = new Map<string, { at: number; relations: Relations }>();
+
+/** Foreign keys from op.table to the tables a select list embeds. */
+async function relationsFor(client: pg.PoolClient, op: RestOp): Promise<Relations> {
+  const targets = op.action === "select" ? embeddedTables(op.columns) : [];
+  if (!targets.length) return {};
+  const key = `${op.table}>${targets.join(",")}`;
+  const cached = relationCache.get(key);
+  if (cached && Date.now() - cached.at < 60_000) return cached.relations;
+  const relations: Relations = {};
+  for (const target of targets) {
+    const { rows } = await client.query<{ child: string; parent: string }>(
+      `select ca.attname as child, pa.attname as parent
+         from pg_constraint c
+         join pg_attribute ca on ca.attrelid = c.conrelid and ca.attnum = c.conkey[1]
+         join pg_attribute pa on pa.attrelid = c.confrelid and pa.attnum = c.confkey[1]
+        where c.contype = 'f' and array_length(c.conkey, 1) = 1
+          and c.conrelid = to_regclass($1) and c.confrelid = to_regclass($2)`,
+      [`public.${quoteIdent(op.table)}`, `public.${quoteIdent(target)}`],
+    );
+    if (rows.length !== 1) {
+      throw new RestError(
+        rows.length ? `Ambiguous relationship to "${target}"` : `No relationship to "${target}"`,
+        "PGRST200",
+      );
+    }
+    relations[target] = { column: rows[0]!.child, references: rows[0]!.parent };
+  }
+  relationCache.set(key, { at: Date.now(), relations });
+  return relations;
+}
+
 export interface RestResult {
   data: unknown;
   count?: number;
@@ -273,7 +361,8 @@ export interface RestResult {
 export async function executeRest(client: pg.PoolClient, op: RestOp): Promise<RestResult> {
   const types =
     op.action === "insert" || op.action === "update" ? await columnTypes(client, op.table) : {};
-  const built = buildStatement(op, types);
+  const relations = await relationsFor(client, op);
+  const built = buildStatement(op, types, relations);
   const result = await client.query(built.text, built.params);
 
   let count: number | undefined;
