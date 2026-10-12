@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { anonClient, login, openAccountMenu, panelLink, stack, waitForMail } from "./support";
+import { adminQuery, api, login, openAccountMenu, panelLink, waitForMail } from "./support";
 import { USERS } from "./users";
 
 test.describe("admin authentication", () => {
@@ -87,10 +87,13 @@ test.describe("admin authentication", () => {
     await expect(page).toHaveURL(/\/admin$/);
     await openAccountMenu(page);
     await page.getByRole("button", { name: "Sign out" }).click();
+    await expect(page).toHaveURL(/\/admin\/login/);
     await login(page, { ...USERS.recovery, password });
     // A used link cannot be replayed.
     await openAccountMenu(page);
     await page.getByRole("button", { name: "Sign out" }).click();
+    // Let the sign-out finish its redirect before replaying the link.
+    await expect(page).toHaveURL(/\/admin\/login/);
     await page.goto(panelLink(mail, baseURL!));
     await expect(page).toHaveURL(/\/admin\/login\?error=link/);
     await expect(page.locator(".a-auth-card").getByRole("alert")).toHaveText(
@@ -99,11 +102,18 @@ test.describe("admin authentication", () => {
   });
 
   test("does not allow public sign-up", async () => {
-    const { error } = await anonClient().auth.signUp({
-      email: "intruder@bsr.test",
-      password: "Intruder-2026-x",
+    // There is no registration endpoint, and a login for an unknown address fails the same way.
+    const signup = await api("/admin/api/auth/signup", undefined, {
+      method: "POST",
+      body: JSON.stringify({ email: "intruder@bsr.test", password: "Intruder-2026-x" }),
     });
-    expect(error).not.toBeNull();
-    expect(stack.url).toBeTruthy();
+    expect(signup.status).toBe(404);
+    const attempt = await api("/admin/api/auth/login", undefined, {
+      method: "POST",
+      body: JSON.stringify({ email: "intruder@bsr.test", password: "Intruder-2026-x" }),
+    });
+    expect(attempt.status).toBe(401);
+    const rows = await adminQuery("select 1 from auth.users where email = 'intruder@bsr.test'");
+    expect(rows).toEqual([]);
   });
 });

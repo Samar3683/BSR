@@ -7,7 +7,7 @@ import type {
   FormMode,
 } from "../lib/fields/types";
 import { ENTITY_KEYS } from "../lib/fields/types";
-import { getSupabase } from "../lib/supabase/client";
+import { getDb } from "../lib/db/client";
 
 /** Everything the panel needs to render entities dynamically. */
 export interface AdminConfig {
@@ -25,11 +25,11 @@ const bySortOrder = (
 ) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at);
 
 export async function fetchAdminConfig(): Promise<AdminConfig> {
-  const supabase = getSupabase();
+  const db = getDb();
   const [entities, fields, options] = await Promise.all([
-    supabase.from("entity_configs").select("*"),
-    supabase.from("field_definitions").select("*"),
-    supabase.from("field_options").select("*"),
+    db.from("entity_configs").select("*"),
+    db.from("field_definitions").select("*"),
+    db.from("field_options").select("*"),
   ]);
   const entityRows = unwrap(entities) as EntityConfig[];
   const fieldRows = (unwrap(fields) as FieldDefinition[]).map((f) => ({
@@ -137,9 +137,9 @@ export type FieldInput = Partial<
 >;
 
 export async function createField(entity: EntityKey, input: FieldInput): Promise<FieldDefinition> {
-  const supabase = getSupabase();
+  const db = getDb();
   return unwrap(
-    await supabase
+    await db
       .from("field_definitions")
       .insert({ ...input, entity_type: entity })
       .select()
@@ -152,13 +152,13 @@ export async function updateField(id: string, input: FieldInput): Promise<FieldD
   const { field_key: _key, ...patch } = input;
   void _key;
   return unwrap(
-    await getSupabase().from("field_definitions").update(patch).eq("id", id).select().single(),
+    await getDb().from("field_definitions").update(patch).eq("id", id).select().single(),
   ) as FieldDefinition;
 }
 
 export async function setFieldArchived(id: string, archived: boolean): Promise<FieldDefinition> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("field_definitions")
       .update({ archived_at: archived ? new Date().toISOString() : null })
       .eq("id", id)
@@ -168,15 +168,15 @@ export async function setFieldArchived(id: string, archived: boolean): Promise<F
 }
 
 export async function deleteField(id: string): Promise<void> {
-  unwrap(await getSupabase().from("field_definitions").delete().eq("id", id));
+  unwrap(await getDb().from("field_definitions").delete().eq("id", id));
 }
 
 export async function reorderFields(entity: EntityKey, ids: string[]): Promise<void> {
-  unwrap(await getSupabase().rpc("reorder_fields", { p_entity: entity, p_field_ids: ids }));
+  unwrap(await getDb().rpc("reorder_fields", { p_entity: entity, p_field_ids: ids }));
 }
 
 export async function fetchFieldUsage(entity: EntityKey): Promise<Record<string, number>> {
-  const rows = unwrap(await getSupabase().rpc("field_usage", { p_entity: entity })) as {
+  const rows = unwrap(await getDb().rpc("field_usage", { p_entity: entity })) as {
     field_id: string;
     record_count: number;
   }[];
@@ -189,7 +189,7 @@ export async function createOption(
   sortOrder: number,
 ): Promise<FieldOption> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("field_options")
       .insert({ field_id: fieldId, label, sort_order: sortOrder })
       .select()
@@ -199,13 +199,13 @@ export async function createOption(
 
 export async function updateOption(id: string, label: string): Promise<FieldOption> {
   return unwrap(
-    await getSupabase().from("field_options").update({ label }).eq("id", id).select().single(),
+    await getDb().from("field_options").update({ label }).eq("id", id).select().single(),
   ) as FieldOption;
 }
 
 export async function setOptionArchived(id: string, archived: boolean): Promise<FieldOption> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("field_options")
       .update({ archived_at: archived ? new Date().toISOString() : null })
       .eq("id", id)
@@ -215,17 +215,17 @@ export async function setOptionArchived(id: string, archived: boolean): Promise<
 }
 
 export async function deleteOption(id: string): Promise<void> {
-  unwrap(await getSupabase().from("field_options").delete().eq("id", id));
+  unwrap(await getDb().from("field_options").delete().eq("id", id));
 }
 
 export async function reorderOptions(fieldId: string, ids: string[]): Promise<void> {
   unwrap(
-    await getSupabase().rpc("reorder_field_options", { p_field_id: fieldId, p_option_ids: ids }),
+    await getDb().rpc("reorder_field_options", { p_field_id: fieldId, p_option_ids: ids }),
   );
 }
 
 export async function fetchOptionUsage(fieldId: string): Promise<Record<string, number>> {
-  const rows = unwrap(await getSupabase().rpc("option_usage", { p_field_id: fieldId })) as {
+  const rows = unwrap(await getDb().rpc("option_usage", { p_field_id: fieldId })) as {
     option_id: string;
     record_count: number;
   }[];
@@ -239,7 +239,7 @@ export async function updateEntityConfig(
   >,
 ): Promise<EntityConfig> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("entity_configs")
       .update(patch)
       .eq("entity_key", entity)

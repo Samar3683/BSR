@@ -14,11 +14,11 @@ import { useToast } from "../../components/ui/toast";
 import { useI18n } from "../../i18n/provider";
 import { formatDateTime } from "../../lib/datetime";
 import { toAdminError } from "../../lib/errors";
-import { getSupabase } from "../../lib/supabase/client";
+import { changePassword } from "../../lib/auth-client";
 import { fetchAdmins, renameAdmin } from "../../services/admins";
 import type { ThemePreference } from "../../theme/constants";
 import { useTheme } from "../../theme/theme-provider";
-import { MIN_PASSWORD_LENGTH } from "../auth/password-forms";
+import { MIN_PASSWORD_LENGTH, passwordProblem } from "../../lib/password-policy";
 
 /** The signed-in administrator's own profile: name, password, appearance, language. */
 export function ProfileView() {
@@ -146,17 +146,9 @@ function PasswordPanel({ email }: { email: string | null }) {
   }>({});
 
   const change = useMutation({
-    mutationFn: async () => {
-      const supabase = getSupabase();
-      // Re-authenticate so a stolen, unlocked session cannot change the password.
-      const check = await supabase.auth.signInWithPassword({
-        email: email ?? "",
-        password: current,
-      });
-      if (check.error) throw new Error("current");
-      const result = await supabase.auth.updateUser({ password: next });
-      if (result.error) throw new Error(result.error.message || "update");
-    },
+    // The server re-checks the current password, so a stolen, unlocked session
+    // cannot change it, and signs every other session out.
+    mutationFn: () => changePassword(next, current),
     onSuccess: () => {
       setCurrent("");
       setNext("");
@@ -164,12 +156,10 @@ function PasswordPanel({ email }: { email: string | null }) {
       toast.success("Password changed.");
     },
     onError: (e) => {
-      const message = e instanceof Error ? e.message : "";
-      if (message === "current") setErrors({ current: "The current password is not correct" });
-      else
-        setErrors({
-          form: message && message !== "update" ? message : "The password could not be changed.",
-        });
+      const mapped = toAdminError(e);
+      if (mapped.fieldErrors.current) setErrors({ current: mapped.fieldErrors.current });
+      else if (mapped.fieldErrors.password) setErrors({ next: mapped.fieldErrors.password });
+      else setErrors({ form: mapped.message || "The password could not be changed." });
     },
   });
 
@@ -177,13 +167,9 @@ function PasswordPanel({ email }: { email: string | null }) {
     event.preventDefault();
     const found: typeof errors = {};
     if (!current) found.current = "Enter your current password";
-    if (next.length < MIN_PASSWORD_LENGTH) {
-      found.next = `Use at least ${MIN_PASSWORD_LENGTH} characters`;
-    } else if (!/[a-z]/.test(next) || !/[A-Z]/.test(next) || !/\d/.test(next)) {
-      found.next = "Use upper- and lowercase letters and at least one digit";
-    } else if (next === current) {
-      found.next = "Choose a password different from the current one";
-    }
+    const problem = passwordProblem(next);
+    if (problem) found.next = problem;
+    else if (next === current) found.next = "Choose a password different from the current one";
     if (confirm !== next) found.confirm = "The passwords do not match";
     setErrors(found);
     if (!Object.keys(found).length) change.mutate();

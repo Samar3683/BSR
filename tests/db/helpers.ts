@@ -10,7 +10,7 @@ import pg from "pg";
  * the JWT claims in request.jwt.claims.
  */
 export const DB_URL =
-  process.env.SUPABASE_DB_URL ?? "postgresql://postgres@localhost:54322/postgres";
+  process.env.DATABASE_ADMIN_URL ?? "postgresql://postgres@localhost:54320/bsr";
 
 export type Db = pg.PoolClient;
 

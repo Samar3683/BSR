@@ -1,8 +1,7 @@
-import { AdminError, toAdminError } from "../lib/errors";
+import { AdminError } from "../lib/errors";
 import { allowedFileTypes, maxFileSizeMb } from "../lib/fields/registry";
 import type { FieldDefinition, FileValue } from "../lib/fields/types";
 import { mimeAllowed } from "../lib/fields/validate";
-import { getSupabase } from "../lib/supabase/client";
 
 export const FILES_BUCKET = "entity-files";
 
@@ -18,10 +17,10 @@ function safeName(name: string): string {
 }
 
 /**
- * Uploads a file for an image / file field to the private bucket. The path
- * is `<entity>/<field_key>/<random>-<name>`; Storage policies accept uploads
- * from active administrators only, and the database re-checks type and size
- * from Storage metadata when the record is saved.
+ * Uploads a file for an image / file field to the private store. The path is
+ * `<entity>/<field_key>/<random>-<name>`; the server accepts uploads from
+ * active administrators only, and the database re-checks type and size when
+ * the record is saved.
  */
 export async function uploadFieldFile(def: FieldDefinition, file: File): Promise<FileValue> {
   const type = file.type || "application/octet-stream";
@@ -32,20 +31,28 @@ export async function uploadFieldFile(def: FieldDefinition, file: File): Promise
     throw new AdminError("validation", `The file is larger than ${maxFileSizeMb(def)} MB.`);
   }
   const path = `${def.entity_type}/${def.field_key}/${crypto.randomUUID()}-${safeName(file.name)}`;
-  const { error } = await getSupabase().storage.from(FILES_BUCKET).upload(path, file, {
-    contentType: type,
-    upsert: false,
-    cacheControl: "3600",
-  });
-  if (error) throw toAdminError(error);
+  const form = new FormData();
+  form.set("path", path);
+  form.set("file", file, file.name);
+  let response: Response;
+  try {
+    response = await fetch("/admin/api/files", { method: "POST", body: form, credentials: "same-origin" });
+  } catch {
+    throw new AdminError("network", "The server could not be reached. Check the connection and try again.");
+  }
+  if (!response.ok) {
+    let message = "The file could not be uploaded.";
+    try {
+      message = ((await response.json()) as { error?: { message?: string } }).error?.message ?? message;
+    } catch {
+      // keep the generic message
+    }
+    throw new AdminError(response.status === 401 ? "auth" : "rule", message);
+  }
   return { path, name: file.name.slice(0, 255), size: file.size, mime_type: type };
 }
 
-/** A short-lived URL for a private file (the bucket is never public). */
-export async function signedFileUrl(path: string, expiresIn = 300): Promise<string> {
-  const { data, error } = await getSupabase()
-    .storage.from(FILES_BUCKET)
-    .createSignedUrl(path, expiresIn);
-  if (error || !data) throw toAdminError(error);
-  return data.signedUrl;
+/** The URL of a private file; the session cookie authorizes the request. */
+export async function signedFileUrl(path: string): Promise<string> {
+  return `/admin/api/files?path=${encodeURIComponent(path)}`;
 }

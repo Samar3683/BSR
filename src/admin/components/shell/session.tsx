@@ -4,7 +4,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, type ReactNode } from "react";
 
-import { getSupabase } from "../../lib/supabase/client";
+import { announceSignOut, onSignOutElsewhere, signOut as signOutRequest } from "../../lib/auth-client";
+import { UNAUTHORIZED_EVENT } from "../../lib/db/client";
 
 export interface SessionAdmin {
   id: string;
@@ -43,15 +44,19 @@ export function AdminSessionProvider({
   }, [queryClient, router]);
 
   useEffect(() => {
-    const { data } = getSupabase().auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || (event === "TOKEN_REFRESHED" && !session)) leave();
-      if (event === "SIGNED_IN" && session && session.user.id !== admin.user_id) leave();
-    });
-    return () => data.subscription.unsubscribe();
-  }, [admin.user_id, leave]);
+    // A request answered with 401 (session ended or revoked), or a sign-out in
+    // another tab, returns this tab to the login page.
+    window.addEventListener(UNAUTHORIZED_EVENT, leave);
+    const stop = onSignOutElsewhere(leave);
+    return () => {
+      window.removeEventListener(UNAUTHORIZED_EVENT, leave);
+      stop();
+    };
+  }, [leave]);
 
   const signOut = useCallback(async () => {
-    await getSupabase().auth.signOut();
+    await signOutRequest().catch(() => undefined);
+    announceSignOut();
     leave();
   }, [leave]);
 

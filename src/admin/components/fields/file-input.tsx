@@ -15,7 +15,7 @@ import { Button } from "../ui/button";
 export function useSignedUrl(path: string | null | undefined) {
   return useQuery({
     queryKey: ["signed-url", path],
-    queryFn: () => signedFileUrl(path!, 600),
+    queryFn: () => signedFileUrl(path!),
     enabled: Boolean(path),
     staleTime: 8 * 60_000,
   });

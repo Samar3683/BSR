@@ -125,7 +125,8 @@ const eslintConfig = defineConfig([
     // Vendored decoder copied verbatim from three (pnpm assets:decoders).
     "public/assets/decoders/**",
     "archive/**",
-    // Local Supabase-compatible stack (downloaded binaries and sources).
+    // Local PostgreSQL cluster and mail sink.
+    ".postgres-local/**",
     ".supabase-local/**",
   ]),
 ]);

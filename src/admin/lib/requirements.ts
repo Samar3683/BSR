@@ -32,14 +32,20 @@ export function requirementIssues(
 ): string[] {
   if (!requirements.length || !vehicleAttributes || !driverAttributes) return [];
   const optionById = new Map<string, FieldOption>();
-  for (const list of Object.values(config.options)) for (const option of list) optionById.set(option.id, option);
+  for (const list of Object.values(config.options))
+    for (const option of list) optionById.set(option.id, option);
 
   const accepted = new Map<string, string[]>();
-  for (const r of requirements) accepted.set(r.vehicle_option_id, [...(accepted.get(r.vehicle_option_id) ?? []), r.driver_option_id]);
+  for (const r of requirements)
+    accepted.set(r.vehicle_option_id, [
+      ...(accepted.get(r.vehicle_option_id) ?? []),
+      r.driver_option_id,
+    ]);
 
   const issues: string[] = [];
   for (const vehicleField of config.fields.vehicle) {
-    if (vehicleField.field_type !== "single_select" && vehicleField.field_type !== "multi_select") continue;
+    if (vehicleField.field_type !== "single_select" && vehicleField.field_type !== "multi_select")
+      continue;
     for (const vehicleOptionId of values(vehicleAttributes[vehicleField.field_key])) {
       const driverOptionIds = accepted.get(vehicleOptionId);
       if (!driverOptionIds?.length) continue;

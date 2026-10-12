@@ -37,7 +37,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     // data-lenis-prevent: the public smooth-scroll stays out of the admin's own scroll areas.
     <div className="adm" data-lenis-prevent="" lang={lang} data-theme={theme}>
-      <AdminProviders lang={lang} theme={theme}>{children}</AdminProviders>
+      <AdminProviders lang={lang} theme={theme}>
+        {children}
+      </AdminProviders>
     </div>
   );
 }

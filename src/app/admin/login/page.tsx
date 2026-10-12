@@ -4,14 +4,14 @@ import { redirect } from "next/navigation";
 import { AuthCard } from "@/admin/features/auth/auth-card";
 import { NotConfigured } from "@/admin/features/auth/access-states";
 import { LoginForm } from "@/admin/features/auth/login-form";
-import { getSupabaseEnv } from "@/admin/lib/supabase/env";
-import { safeAdminNext } from "@/admin/lib/supabase/proxy";
-import { resolveAdminGate } from "@/admin/lib/supabase/server";
+import { safeAdminNext } from "@/admin/lib/paths";
+import { isBackendConfigured } from "@/admin/server/config";
+import { resolveAdminGate } from "@/admin/server/gate";
 
 export const metadata: Metadata = { title: "Sign in" };
 
 export default async function LoginPage({ searchParams }: PageProps<"/admin/login">) {
-  if (!getSupabaseEnv()) return <NotConfigured />;
+  if (!isBackendConfigured()) return <NotConfigured />;
   const params = await searchParams;
   const next = typeof params.next === "string" ? params.next : undefined;
   const notice = typeof params.error === "string" ? params.error : undefined;

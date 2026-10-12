@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import { Button } from "../../components/ui/button";
 import { Alert } from "../../components/ui/feedback";
-import { getSupabase } from "../../lib/supabase/client";
+import { signOut } from "../../lib/auth-client";
 import { AuthCard } from "./auth-card";
 
 /** A signed-in user without (active) administrator access. */
@@ -28,7 +28,7 @@ export function NoAccess({ email, inactive }: { email: string | null; inactive: 
         loading={busy}
         onClick={async () => {
           setBusy(true);
-          await getSupabase().auth.signOut();
+          await signOut().catch(() => undefined);
           router.replace("/admin/login");
           router.refresh();
         }}
@@ -43,7 +43,7 @@ export function NotConfigured() {
   return (
     <AuthCard
       title="Backend not configured"
-      intro="The admin panel needs a Supabase project. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY, then rebuild."
+      intro="The admin panel needs a PostgreSQL database. Set DATABASE_URL and SESSION_SECRET, apply the migrations (pnpm db:migrate) and restart."
     >
       <Alert>See docs/admin-backend.md for the setup steps.</Alert>
     </AuthCard>

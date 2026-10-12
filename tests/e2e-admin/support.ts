@@ -2,35 +2,62 @@ import { readdirSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { expect, type Page } from "@playwright/test";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import pg from "pg";
 
+import { createDbClient, type DbClient } from "../../src/admin/lib/db/client";
 import { stackEnv } from "./stack";
 import type { TestUser } from "./users";
 
 export const stack = stackEnv();
 
-const noSession = { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false };
+/** The server under test (the Playwright web server). */
+export const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3200";
 
-/** Service-role client: test setup and verification only (never in the app). */
-export function serviceClient(): SupabaseClient {
-  return createClient(stack.url, stack.serviceKey, { auth: noSession });
+/** Runs SQL with the administrative connection: test fixtures and verification only. */
+export async function adminQuery<T extends pg.QueryResultRow = Record<string, unknown>>(
+  text: string,
+  params: unknown[] = [],
+): Promise<T[]> {
+  const client = new pg.Client({ connectionString: stack.adminUrl });
+  await client.connect();
+  try {
+    return (await client.query<T>(text, params)).rows;
+  } finally {
+    await client.end();
+  }
 }
 
-export function anonClient(): SupabaseClient {
-  return createClient(stack.url, stack.anonKey, { auth: noSession });
-}
-
-/** A client signed in as a test user: goes through RLS exactly like the panel. */
-export async function userClient(
-  user: TestUser,
-): Promise<{ client: SupabaseClient; token: string; userId: string }> {
-  const client = createClient(stack.url, stack.anonKey, { auth: noSession });
-  const { data, error } = await client.auth.signInWithPassword({
-    email: user.email,
-    password: user.password,
+/** A raw call to the panel's API, optionally with a session cookie. */
+export function api(path: string, cookie?: string, init: RequestInit = {}) {
+  return fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(cookie ? { Cookie: cookie } : {}),
+      ...(init.headers ?? {}),
+    },
   });
-  if (error || !data.session) throw error ?? new Error("No session");
-  return { client, token: data.session.access_token, userId: data.user.id };
+}
+
+/** Signs a test user in through the API and returns the session cookie. */
+export async function sessionCookie(user: TestUser): Promise<string> {
+  const response = await api("/admin/api/auth/login", undefined, {
+    method: "POST",
+    body: JSON.stringify({ email: user.email, password: user.password }),
+  });
+  if (!response.ok) throw new Error(`Sign-in failed for ${user.email} (${response.status})`);
+  const cookie = response.headers
+    .getSetCookie()
+    .map((c) => c.split(";")[0])
+    .find((c) => c?.startsWith("bsr-admin-session="));
+  if (!cookie) throw new Error("No session cookie");
+  return cookie;
+}
+
+/** A data client signed in as a test user: goes through the API and RLS exactly like the panel. */
+export async function userClient(user: TestUser): Promise<{ client: DbClient; cookie: string }> {
+  const cookie = await sessionCookie(user);
+  return { client: createDbClient({ baseUrl: BASE_URL, headers: { Cookie: cookie } }), cookie };
 }
 
 export async function login(page: Page, user: TestUser, path = "/admin") {
@@ -64,9 +91,9 @@ interface Mail {
   links: string[];
 }
 
-/** Waits for an email captured by the local stack's SMTP sink. */
+/** Waits for an email captured by the local mail sink. */
 export async function waitForMail(to: string, since: number, timeoutMs = 20_000): Promise<Mail> {
-  const dir = resolve(".supabase-local/mail");
+  const dir = stack.mailDir;
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const files = readdirSync(dir)

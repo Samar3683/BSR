@@ -3,14 +3,7 @@ import { mkdirSync } from "node:fs";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
-import {
-  expectNoHorizontalOverflow,
-  login,
-  openAccountMenu,
-  stack,
-  uid,
-  userClient,
-} from "./support";
+import { expectNoHorizontalOverflow, login, openAccountMenu, uid, userClient } from "./support";
 import { USERS } from "./users";
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -57,7 +50,6 @@ test.describe("admin UI quality", () => {
         delivery_address: { line1: "Via Stretta 2", city: "Genova" },
       },
     });
-    expect(stack.url).toBeTruthy();
   });
 
   test("has no automatically detectable WCAG 2.2 A/AA violations", async ({ page }) => {
@@ -151,16 +143,16 @@ test.describe("public site isolation", () => {
     await login(page, USERS.admin);
     const backendCalls: string[] = [];
     page.on("request", (request) => {
-      if (request.url().startsWith(stack.url)) backendCalls.push(request.url());
+      if (request.url().includes("/admin/api/")) backendCalls.push(request.url());
     });
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
     await expect(page.locator("h1").first()).toBeVisible();
     await expect(page.locator(".adm")).toHaveCount(0);
     // The admin session cookie is not sent outside /admin.
-    expect(response?.request().headers().cookie ?? "").not.toContain("bsr-admin-auth");
+    expect(response?.request().headers().cookie ?? "").not.toContain("bsr-admin-session");
     const cookies = await page.context().cookies(`${baseURL}/`);
-    expect(cookies.some((c) => c.name.startsWith("bsr-admin-auth"))).toBe(false);
+    expect(cookies.some((c) => c.name.startsWith("bsr-admin-session"))).toBe(false);
     // No admin rules in the page's stylesheets.
     const adminRules = await page.evaluate(() =>
       Array.from(document.styleSheets).reduce((n, sheet) => {

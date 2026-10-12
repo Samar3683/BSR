@@ -2,9 +2,9 @@ import { defineConfig } from "vitest/config";
 
 /**
  * Database integration tests (tests/db): migrations, RLS, privileges,
- * triggers and RPCs against a running Supabase database — the local stack
- * (`node tools/supabase-local/cli.mjs start`) or `supabase start`.
- * Connection: SUPABASE_DB_URL (default postgresql://postgres@localhost:54322/postgres).
+ * triggers and RPCs against a running PostgreSQL (`pnpm db:start`, then
+ * `pnpm db:reset`). Connection: DATABASE_ADMIN_URL
+ * (default postgresql://postgres@localhost:54320/bsr).
  */
 export default defineConfig({
   resolve: { tsconfigPaths: true },

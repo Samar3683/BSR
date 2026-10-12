@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { expect, test } from "@playwright/test";
 
-import { anonClient, login, serviceClient, stack, uid, userClient, waitForMail } from "./support";
+import { adminQuery, api, BASE_URL, login, stack, uid, userClient, waitForMail } from "./support";
 import { USERS } from "./users";
 
 /** Master prompt §36: the security model, verified against the real backend. */
@@ -19,56 +19,66 @@ const TABLES = [
   "admin_profiles",
 ];
 
-function rest(path: string, token?: string, init: RequestInit = {}) {
-  return fetch(`${stack.url}/rest/v1/${path}`, {
-    ...init,
-    headers: {
-      apikey: stack.anonKey,
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      "Content-Type": "application/json",
-      ...(init.headers ?? {}),
-    },
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "base64",
+);
+
+function upload(path: string, cookie?: string) {
+  const form = new FormData();
+  form.set("path", path);
+  form.set("file", new Blob([PNG], { type: "image/png" }), "probe.png");
+  return fetch(`${BASE_URL}/admin/api/files`, {
+    method: "POST",
+    headers: cookie ? { Cookie: cookie } : {},
+    body: form,
   });
 }
 
 test.describe("security", () => {
   test("anonymous requests cannot read admin data", async () => {
     for (const table of TABLES) {
-      const res = await rest(`${table}?select=*&limit=1`);
-      expect(res.status, table).toBeGreaterThanOrEqual(400);
+      const res = await api("/admin/api/rest", undefined, {
+        method: "POST",
+        body: JSON.stringify({ table, action: "select", filters: [], order: [], limit: 1 }),
+      });
+      expect(res.status, table).toBe(401);
     }
-    const rpc = await rest("rpc/list_records", undefined, {
+    const rpc = await api("/admin/api/rpc/list_records", undefined, {
       method: "POST",
       body: JSON.stringify({ p_entity: "order" }),
     });
-    expect(rpc.status).toBeGreaterThanOrEqual(400);
-  });
-
-  test("non-admin and inactive-admin tokens see nothing; an active admin does", async () => {
-    const service = serviceClient();
-    const { error } = await service
-      .from("customers")
-      .insert({ attributes: { company_name: `Secret Customer ${uid()}` } });
-    expect(error).toBeNull();
-    for (const user of [USERS.user, USERS.inactive]) {
-      const { token } = await userClient(user);
-      for (const table of TABLES.filter((t) => t !== "admin_profiles")) {
-        const res = await rest(`${table}?select=id&limit=5`, token);
-        expect(res.status, `${table} for ${user.email}`).toBe(200);
-        expect(await res.json(), `${table} for ${user.email}`).toEqual([]);
-      }
-      const write = await rest("customers", token, {
-        method: "POST",
-        body: JSON.stringify({ attributes: { company_name: "X" } }),
-      });
-      expect(write.status).toBeGreaterThanOrEqual(400);
+    expect(rpc.status).toBe(401);
+    // The database itself grants the anonymous role no access either.
+    for (const table of TABLES) {
+      const rows = await adminQuery<{ ok: boolean }>(
+        "select has_table_privilege('anon', $1, 'select') as ok",
+        [`public.${table}`],
+      );
+      expect(rows[0]?.ok, table).toBe(false);
     }
-    const { token } = await userClient(USERS.admin);
-    const res = await rest("customers?select=id&limit=5", token);
-    expect((await res.json()).length).toBeGreaterThan(0);
   });
 
-  test("the service-role key never reaches the browser bundle", async () => {
+  test("non-admin and inactive-admin sessions see nothing; an active admin does", async () => {
+    await adminQuery(`insert into public.customers (attributes) values ($1::jsonb)`, [
+      JSON.stringify({ company_name: `Secret Customer ${uid()}` }),
+    ]);
+    for (const user of [USERS.user, USERS.inactive]) {
+      const { client } = await userClient(user);
+      for (const table of TABLES.filter((t) => t !== "admin_profiles")) {
+        const { data, error } = await client.from(table).select("id").limit(5);
+        expect(error, `${table} for ${user.email}`).toBeNull();
+        expect(data, `${table} for ${user.email}`).toEqual([]);
+      }
+      const write = await client.from("customers").insert({ attributes: { company_name: "X" } });
+      expect(write.error).not.toBeNull();
+    }
+    const { client } = await userClient(USERS.admin);
+    const { data } = await client.from("customers").select("id").limit(5);
+    expect((data as unknown[]).length).toBeGreaterThan(0);
+  });
+
+  test("secrets never reach the browser bundle", async () => {
     const files: string[] = [];
     const walk = (dir: string) => {
       for (const entry of readdirSync(dir)) {
@@ -81,74 +91,64 @@ test.describe("security", () => {
     expect(files.length).toBeGreaterThan(0);
     for (const file of files) {
       const content = readFileSync(file, "utf8");
-      expect(content.includes(stack.serviceKey), file).toBe(false);
-      expect(content.includes("SUPABASE_SERVICE_ROLE_KEY"), file).toBe(false);
+      expect(content.includes(stack.sessionSecret), file).toBe(false);
+      expect(content.includes("DATABASE_URL"), file).toBe(false);
+      expect(content.includes("postgresql://"), file).toBe(false);
     }
   });
 
-  test("private storage stays private", async () => {
-    const { client } = await userClient(USERS.admin);
+  test("private files stay private", async () => {
+    const { cookie } = await userClient(USERS.admin);
     const path = `vehicle/photo/${uid().toLowerCase()}-probe.png`;
-    const png = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-      "base64",
-    );
-    const upload = await client.storage
-      .from("entity-files")
-      .upload(path, png, { contentType: "image/png" });
-    expect(upload.error).toBeNull();
+    expect((await upload(path, cookie)).status).toBe(200);
     // Paths outside the entity/field layout are refused by the storage policy.
-    const stray = await client.storage
-      .from("entity-files")
-      .upload(`elsewhere/${uid()}.png`, png, { contentType: "image/png" });
-    expect(stray.error).not.toBeNull();
+    expect((await upload(`elsewhere/${uid()}.png`, cookie)).status).toBe(403);
     // Overwrites are refused (no update policy).
-    const overwrite = await client.storage
-      .from("entity-files")
-      .upload(path, png, { contentType: "image/png", upsert: true });
-    expect(overwrite.error).not.toBeNull();
-
-    const publicUrl = await fetch(`${stack.url}/storage/v1/object/public/entity-files/${path}`);
-    expect(publicUrl.status).toBeGreaterThanOrEqual(400);
-    const anonymous = await anonClient().storage.from("entity-files").download(path);
-    expect(anonymous.error).not.toBeNull();
-    const nonAdmin = (await userClient(USERS.user)).client;
-    expect((await nonAdmin.storage.from("entity-files").download(path)).error).not.toBeNull();
-    expect(
-      (
-        await nonAdmin.storage
-          .from("entity-files")
-          .upload(`vehicle/photo/${uid()}.png`, png, { contentType: "image/png" })
-      ).error,
-    ).not.toBeNull();
-
-    const signed = await client.storage.from("entity-files").createSignedUrl(path, 60);
-    expect(signed.error).toBeNull();
-    const file = await fetch(signed.data!.signedUrl);
+    expect((await upload(path, cookie)).status).toBeGreaterThanOrEqual(400);
+    // Anonymous users cannot upload or read.
+    expect((await upload(`vehicle/photo/${uid()}.png`)).status).toBe(401);
+    const url = `${BASE_URL}/admin/api/files?path=${encodeURIComponent(path)}`;
+    expect((await fetch(url)).status).toBe(401);
+    // A signed-in user who is not an administrator sees nothing.
+    const outsider = (await userClient(USERS.user)).cookie;
+    expect((await fetch(url, { headers: { Cookie: outsider } })).status).toBe(404);
+    expect((await upload(`vehicle/photo/${uid()}.png`, outsider)).status).toBe(403);
+    // The administrator can read it, as an image, never sniffed.
+    const file = await fetch(url, { headers: { Cookie: cookie } });
     expect(file.status).toBe(200);
+    expect(file.headers.get("content-type")).toBe("image/png");
+    expect(file.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(Buffer.from(await file.arrayBuffer()).equals(PNG)).toBe(true);
   });
 
-  test("the admin-users edge function checks authorization before acting", async () => {
-    const fn = `${stack.url}/functions/v1/admin-users`;
+  test("the invitation endpoint checks authorization before acting", async () => {
     const body = JSON.stringify({
-      action: "invite",
       email: `invited-${uid().toLowerCase()}@bsr.test`,
       display_name: "Invited Admin",
     });
-    const call = (token?: string) =>
-      fetch(fn, {
-        method: "POST",
-        headers: {
-          apikey: stack.anonKey,
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body,
-      });
+    const call = (cookie?: string) =>
+      api("/admin/api/admins/invite", cookie, { method: "POST", body });
     expect((await call()).status).toBe(401);
-    expect((await call(stack.anonKey)).status).toBe(401);
-    expect((await call((await userClient(USERS.user)).token)).status).toBe(403);
-    expect((await call((await userClient(USERS.inactive)).token)).status).toBe(403);
+    expect((await call((await userClient(USERS.user)).cookie)).status).toBe(403);
+    expect((await call((await userClient(USERS.inactive)).cookie)).status).toBe(403);
+  });
+
+  test("the session cookie is httpOnly, scoped to /admin and signed", async ({ page, context }) => {
+    await login(page, USERS.admin);
+    const cookie = (await context.cookies()).find((c) => c.name === "bsr-admin-session");
+    expect(cookie?.httpOnly).toBe(true);
+    expect(cookie?.path).toBe("/admin");
+    expect(cookie?.sameSite).toBe("Lax");
+    // A forged or tampered cookie is rejected.
+    const forged = `bsr-admin-session=${cookie!.value.slice(0, -3)}abc`;
+    expect((await api("/admin/api/auth/session", forged)).status).toBe(401);
+    // Cross-site writes are refused even with a valid cookie.
+    const crossSite = await api("/admin/api/rest", `bsr-admin-session=${cookie!.value}`, {
+      method: "POST",
+      headers: { Origin: "https://evil.example" },
+      body: JSON.stringify({ table: "customers", action: "select", filters: [], order: [] }),
+    });
+    expect(crossSite.status).toBe(403);
   });
 
   test("an administrator invites another administrator from Settings", async ({ page }) => {

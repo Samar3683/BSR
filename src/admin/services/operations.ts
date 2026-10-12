@@ -1,6 +1,6 @@
 import { unwrap } from "../lib/errors";
 import type { DispatchRequirement } from "../lib/requirements";
-import { getSupabase } from "../lib/supabase/client";
+import { getDb } from "../lib/db/client";
 import type { OrderStatus } from "./records";
 
 // --------------------------------------------------------------------------
@@ -37,7 +37,7 @@ export const STATUS_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
 
 export async function changeOrderStatus(orderId: string, status: OrderStatus, note?: string) {
   return unwrap(
-    await getSupabase().rpc("change_order_status", {
+    await getDb().rpc("change_order_status", {
       p_order_id: orderId,
       p_status: status,
       p_note: note || null,
@@ -57,7 +57,7 @@ export interface StatusHistoryEntry {
 
 export async function fetchStatusHistory(orderId: string): Promise<StatusHistoryEntry[]> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("order_status_history")
       .select("*")
       .eq("order_id", orderId)
@@ -91,7 +91,7 @@ const ASSIGNMENT_SELECT =
 
 export async function fetchOrderAssignments(orderId: string): Promise<OrderAssignment[]> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("order_assignments")
       .select(ASSIGNMENT_SELECT)
       .eq("order_id", orderId)
@@ -106,7 +106,7 @@ export async function fetchResourceAssignments(
   limit = 25,
 ): Promise<OrderAssignment[]> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("order_assignments")
       .select(ASSIGNMENT_SELECT)
       .eq(resource === "driver" ? "driver_id" : "vehicle_id", id)
@@ -122,7 +122,7 @@ export async function assignOrder(
   note?: string,
 ) {
   return unwrap(
-    await getSupabase().rpc("assign_order", {
+    await getDb().rpc("assign_order", {
       p_order_id: orderId,
       p_driver_id: driverId,
       p_vehicle_id: vehicleId,
@@ -133,7 +133,7 @@ export async function assignOrder(
 
 export async function unassignOrder(orderId: string, reason?: string) {
   return unwrap(
-    await getSupabase().rpc("unassign_order", { p_order_id: orderId, p_reason: reason || null }),
+    await getDb().rpc("unassign_order", { p_order_id: orderId, p_reason: reason || null }),
   );
 }
 
@@ -158,7 +158,7 @@ export interface DispatchCandidates {
 
 export async function fetchDispatchCandidates(orderId: string): Promise<DispatchCandidates> {
   return unwrap(
-    await getSupabase().rpc("dispatch_candidates", { p_order_id: orderId }),
+    await getDb().rpc("dispatch_candidates", { p_order_id: orderId }),
   ) as DispatchCandidates;
 }
 
@@ -202,7 +202,7 @@ export function isOpenPairing(p: Pairing, now = Date.now()): boolean {
 export async function fetchPairings(
   filter: { driverId?: string; vehicleId?: string; limit?: number } = {},
 ) {
-  let query = getSupabase()
+  let query = getDb()
     .from("driver_vehicle_assignments")
     .select(PAIRING_SELECT)
     .order("starts_at", { ascending: false })
@@ -220,7 +220,7 @@ export async function pairDriverVehicle(input: {
   note?: string;
 }) {
   return unwrap(
-    await getSupabase().rpc("pair_driver_vehicle", {
+    await getDb().rpc("pair_driver_vehicle", {
       p_driver_id: input.driverId,
       p_vehicle_id: input.vehicleId,
       p_starts_at: input.startsAt ?? null,
@@ -231,7 +231,7 @@ export async function pairDriverVehicle(input: {
 }
 
 export async function endPairing(id: string) {
-  return unwrap(await getSupabase().rpc("end_driver_vehicle_pairing", { p_assignment_id: id }));
+  return unwrap(await getDb().rpc("end_driver_vehicle_pairing", { p_assignment_id: id }));
 }
 
 // --------------------------------------------------------------------------
@@ -286,7 +286,7 @@ export interface DashboardSummary {
 }
 
 export async function fetchDashboard(): Promise<DashboardSummary> {
-  return unwrap(await getSupabase().rpc("dashboard_summary")) as DashboardSummary;
+  return unwrap(await getDb().rpc("dashboard_summary")) as DashboardSummary;
 }
 
 export interface CalendarEvent {
@@ -319,7 +319,7 @@ export async function fetchCalendarEvents(
   filters: CalendarFilters,
 ): Promise<CalendarEvent[]> {
   return unwrap(
-    await getSupabase().rpc("calendar_events", {
+    await getDb().rpc("calendar_events", {
       p_from: from.toISOString(),
       p_to: to.toISOString(),
       p_filters: filters,
@@ -333,13 +333,13 @@ export async function fetchCalendarEvents(
 
 export async function fetchRequirements(): Promise<DispatchRequirement[]> {
   return unwrap(
-    await getSupabase().from("dispatch_requirements").select("id, vehicle_option_id, driver_option_id"),
+    await getDb().from("dispatch_requirements").select("id, vehicle_option_id, driver_option_id"),
   ) as DispatchRequirement[];
 }
 
 export async function addRequirement(vehicleOptionId: string, driverOptionId: string) {
   unwrap(
-    await getSupabase()
+    await getDb()
       .from("dispatch_requirements")
       .insert({ vehicle_option_id: vehicleOptionId, driver_option_id: driverOptionId }),
   );
@@ -347,7 +347,7 @@ export async function addRequirement(vehicleOptionId: string, driverOptionId: st
 
 export async function removeRequirement(vehicleOptionId: string, driverOptionId: string) {
   unwrap(
-    await getSupabase()
+    await getDb()
       .from("dispatch_requirements")
       .delete()
       .eq("vehicle_option_id", vehicleOptionId)

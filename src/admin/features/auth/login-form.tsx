@@ -8,7 +8,9 @@ import { useState, type FormEvent } from "react";
 import { Button } from "../../components/ui/button";
 import { Alert } from "../../components/ui/feedback";
 import { Field, Input } from "../../components/ui/form";
-import { getSupabase } from "../../lib/supabase/client";
+import { signIn, signOut } from "../../lib/auth-client";
+import { getDb } from "../../lib/db/client";
+import { toAdminError } from "../../lib/errors";
 
 const LINK_ERRORS: Record<string, string> = {
   link: "This link is invalid or has expired. Request a new one.",
@@ -34,24 +36,24 @@ export function LoginForm({ next, notice }: { next: string; notice?: string }) {
 
     setBusy(true);
     setError(null);
-    const supabase = getSupabase();
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      if (signInError) {
+      try {
+        await signIn(email.trim(), password);
+      } catch (signInError) {
+        const mapped = toAdminError(signInError);
         setError(
-          signInError.status === 429
-            ? "Too many attempts. Wait a moment and try again."
-            : "The email or password is not correct.",
+          mapped.kind === "network"
+            ? mapped.message
+            : /too many/i.test(mapped.message)
+              ? mapped.message
+              : "The email or password is not correct.",
         );
         return;
       }
-      const { data, error: profileError } = await supabase.rpc("current_admin");
+      const { data, error: profileError } = await getDb().rpc("current_admin");
       const admin = Array.isArray(data) ? data[0] : null;
       if (profileError || !admin || !admin.active) {
-        await supabase.auth.signOut();
+        await signOut().catch(() => undefined);
         setError(
           admin && !admin.active
             ? "This administrator account is inactive. Contact another administrator."

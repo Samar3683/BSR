@@ -1,35 +1,42 @@
-# Admin panel and serverless backend
+# Admin panel and PostgreSQL backend
 
 The BSR operations panel lives at `/admin`. It is a separate product inside the same Next.js app.
-The backend is **Supabase**: Postgres with Row Level Security, Auth, Storage, and one Edge
-Function. There is no application server of our own. The public site does not depend on any of
-it.
+The backend is **plain PostgreSQL**: tables, functions, triggers, row-level security and column
+privileges live in the database, and the Next.js server is the only thing that talks to it. There is
+no third-party backend service. The public site does not depend on any of it.
 
 ```text
 Browser (/admin, React client components)
-  │  @supabase/ssr browser client: public URL + anon key, session cookie scoped to /admin
-  ├─► Supabase Auth ......... password sign-in, recovery, invitations (no public sign-up)
-  ├─► PostgREST (Data API) .. tables + RPCs, every row filtered by RLS
-  ├─► Storage ............... private bucket entity-files, signed URLs only
-  └─► Edge Function ......... admin-users (invite an administrator, needs the service role)
-Next.js server (no data access of its own)
-  ├─ src/proxy.ts ........... /admin only: refreshes the session cookie, redirects signed-out visitors
-  └─ app/admin/(panel)/layout  verifies user + active admin profile before rendering the panel
+  │  same-origin calls only; the only credential is an httpOnly session cookie
+  ▼
+Next.js server (route handlers under /admin/api, src/admin/server)
+  ├─ /admin/api/rest ........ table access (select / insert / update / delete), one parameterised statement
+  ├─ /admin/api/rpc/<fn> .... calls a function of the public schema
+  ├─ /admin/api/auth/* ...... login, logout, password reset request, password change
+  ├─ /admin/api/admins/invite  invite an administrator (sends the email)
+  ├─ /admin/api/files ....... private file upload / download
+  ├─ src/proxy.ts ........... /admin only: redirects visitors without a valid session cookie
+  └─ app/admin/(panel)/layout  checks the session row + active admin profile before rendering
+  ▼
+PostgreSQL
+  each request runs in a transaction as role `authenticated` with the user in request.jwt.claims,
+  so RLS, column grants and auth.uid() apply to every statement
 ```
 
 ## Where things are
 
-| Path                                          | Contents                                                                                                                                                                               |
-| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supabase/migrations/`                        | Schema, functions, triggers, RLS, storage, configuration seed (12 migrations)                                                                                                          |
-| `supabase/functions/admin-users/`             | Edge Function (Deno) + unit-tested handler                                                                                                                                             |
-| `supabase/config.toml`, `supabase/templates/` | Supabase CLI config; invite and recovery email templates                                                                                                                               |
-| `src/app/admin/`                              | Routes: login, recovery, `auth/confirm` handler, `(panel)` pages                                                                                                                       |
-| `src/admin/`                                  | The admin area: `lib/` (Supabase clients, field engine, dates, CSV, errors), `services/` (data access), `components/` (UI kit, fields, shell), `features/` (pages), `styles/admin.css` |
-| `src/proxy.ts`                                | Request proxy, matcher `/admin/:path*` only                                                                                                                                            |
-| `scripts/admin/create-admin.mjs`              | Create the first administrator (service role, trusted machine)                                                                                                                         |
-| `tools/supabase-local/`                       | Docker-less local Supabase stack (Windows) — see its README                                                                                                                            |
-| `tests/db/`, `tests/e2e-admin/`               | Database integration tests, admin end-to-end tests                                                                                                                                     |
+| Path                              | Contents                                                                                                                                                                                                                                  |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/bootstrap.sql`                | Request roles, `auth` and `storage` schemas, `auth.uid()`, extensions (idempotent)                                                                                                                                                        |
+| `db/migrations/`                  | Schema, functions, triggers, RLS, storage, configuration seed (13 migrations)                                                                                                                                                             |
+| `scripts/db/migrate.mjs`          | Applies the bootstrap and pending migrations (`pnpm db:migrate`)                                                                                                                                                                          |
+| `src/app/admin/`                  | Pages (login, recovery, `auth/confirm`, `(panel)`) and the API (`api/rest`, `api/rpc`, `api/auth`, `api/admins`, `api/files`)                                                                                                             |
+| `src/admin/server/`               | Server only: configuration, connection pool, request identity, query builder, passwords, sessions, email, auth actions                                                                                                                    |
+| `src/admin/`                      | The admin area: `lib/` (data client, field engine, dates, CSV, errors), `services/` (data access), `components/` (UI kit, fields, shell), `features/` (pages), `styles/admin.css`                                                         |
+| `src/proxy.ts`                    | Request proxy, matcher `/admin/:path*` only                                                                                                                                                                                               |
+| `scripts/admin/create-admin.mjs`  | Create the first administrator (writes to PostgreSQL, trusted machine)                                                                                                                                                                    |
+| `tools/postgres-local/`           | Local PostgreSQL cluster + mail sink for development and tests                                                                                                                                                                            |
+| `tests/db/`, `tests/e2e-admin/`   | Database integration tests, admin end-to-end tests                                                                                                                                                                                        |
 
 Isolation is enforced by ESLint (`eslint.config.mjs`): public code cannot import `@/admin/*`; admin
 code cannot import the public site's features, components, providers, stores or the hero. Admin
@@ -40,6 +47,7 @@ root sets `data-lenis-prevent`, so the public smooth scroll does not affect its 
 
 | Table                                        | Purpose                                                                                                                        |
 | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `auth.users`, `auth.sessions`, `auth.one_time_tokens` | Logins (scrypt password hashes), server-side sessions (token hashes), emailed reset / invitation links                |
 | `admin_profiles`                             | Who may use the panel: `user_id` → `auth.users`, `display_name`, `role` (`admin`), `active`                                    |
 | `entity_configs`                             | The four entities (`order`, `vehicle`, `driver`, `customer`): names, active flag, primary display field                        |
 | `field_definitions`                          | Dynamic fields: key, label, type, rules, default, visibility, search/filter/sort/report flags, relation target, system binding |
@@ -49,12 +57,16 @@ root sets `data-lenis-prevent`, so the public smooth scroll does not affect its 
 | `order_assignments`                          | Driver and/or vehicle reserved for an order's window                                                                           |
 | `order_status_history`                       | Every status change with actor and note                                                                                        |
 | `audit_logs`                                 | Append-only audit trail of every mutation                                                                                      |
+| `storage.buckets`, `storage.objects`         | Private files of image / file fields (bytes in `bytea`) with row-level security                                                |
 
 Order-specific system columns: `order_number` (generated, `BSR-YYYY-NNNNN`), `customer_id`, `status`,
 `pickup_at`, `delivery_at`. Drivers and vehicles have `available`. Every entity has `archived_at`,
 `created_at/by` and `updated_at/by`, all of them set by the database.
 
 ### Migrations
+
+`pnpm db:migrate` applies `db/bootstrap.sql` and then every file of `db/migrations/` that has not
+been applied yet, each in its own transaction, recording them in `db_admin.schema_migrations`.
 
 | File                               | Contents                                                                                 |
 | ---------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -70,38 +82,51 @@ Order-specific system columns: `order_number` (generated, `BSR-YYYY-NNNNN`), `cu
 | `…090900_storage`                  | Private bucket `entity-files` and its policies                                           |
 | `…091000_seed_configuration`       | The four entities and starting fields/options (no records)                               |
 | `…091100_admin_access_and_exports` | `list_admins()`, `create_admin_profile()`, `report_orders_export()`                      |
+| `…20261012090000_admin_ux`         | Field sections, bulk actions, global search, dispatch requirements                       |
 
 ## Security model
 
-- **Authentication.** Supabase Auth, email and password. Public sign-up is disabled
-  (`[auth] enable_signup = false`). Administrators are created by invitation (Settings →
-  Administrators → `admin-users` function) or, for the first one, by `scripts/admin/create-admin.mjs`.
-  Passwords: at least 10 characters with lower- and uppercase letters and a digit.
+- **Authentication.** Email and password, handled by the app. There is no registration endpoint;
+  administrators are created by invitation (Settings → Administrators) or, for the first one, by
+  `scripts/admin/create-admin.mjs`. Passwords are stored as salted scrypt hashes. They need at
+  least 10 characters with lower- and uppercase letters and a digit. Sign-in errors never say
+  whether the email or the password was wrong, and attempts are rate limited.
+- **Sessions.** `bsr-admin-session`: an opaque random token, its expiry and an HMAC signature
+  (`SESSION_SECRET`). The proxy verifies the signature without a database call; every page and
+  API call checks that the session row still exists, and only a SHA-256 hash of the token is stored.
+  httpOnly, SameSite=Lax, path `/admin` (public pages never receive it), Secure on https, 7 days.
+  A password change signs every other session out. Links from email open a 30-minute session that
+  may only set a password.
+- **Cross-site requests.** State-changing API calls must come from this site (`Origin` check on
+  top of SameSite).
 - **Authorization lives in the database.** `private.is_active_admin()` is true only for a user with
   an active `admin` profile. Every table has RLS enabled. Administrators get policies on business
   and configuration tables. A signed-in user without an active profile sees only their own profile
-  row. Anonymous users have no grants at all.
+  row. The anonymous role has no grants at all. The server connects as a limited login role
+  (`bsr_app`) that can only `SET ROLE` into the request roles; each API call runs in a transaction
+  as `authenticated` with `request.jwt.claims` set, so the same RLS and grants apply as for any
+  database client.
+- **Table access is not a free-form SQL channel.** `/admin/api/rest` accepts a structured request
+  (table, filters, ordering, values), validates every identifier, always binds values as
+  parameters and only touches the `public` schema; `/admin/api/rpc/<fn>` only calls functions of
+  `public`. Unit tests cover the statement builder.
 - **Column privileges.** Clients can write only business columns. IDs, stamps, display names, order
   numbers and statuses, and system-field bindings, are set by the database. Statuses change through
   `change_order_status()`. Assignments, pairings and history are written only by `SECURITY DEFINER`
   functions, which check the caller first. INSERT triggers check the caller too, because Postgres
   runs BEFORE triggers ahead of RLS `WITH CHECK`.
-- **The audit log is append-only for everyone.** It has no write grants (the service role
-  included), no write policies, and triggers that reject UPDATE, DELETE and TRUNCATE.
-- **Storage.** Bucket `entity-files` is private. Only active administrators can upload, and only to
-  `<entity>/<field_key>/<file>`. Nobody can overwrite or delete through the API. Files are read
-  through short-lived signed URLs. When a record references a file, the database re-checks its type
-  and size from Storage's own metadata.
-- **Edge Function.** `admin-users` validates the bearer token with Auth and requires an active
-  admin profile (read with the caller's token, so RLS applies) before it uses the service role.
-  The profile is created through `create_admin_profile()` with the caller's token, so the audit log
-  names the inviting administrator.
-- **Secrets.** The browser only receives `NEXT_PUBLIC_SUPABASE_URL` and the anon key. The
-  service-role key is used only by the Edge Function (provided by Supabase), the bootstrap script
-  and the test tooling. A test checks that it never appears in the built client bundle.
-- **Session cookie.** `bsr-admin-auth`, path `/admin`, SameSite=Lax, Secure on https. Public pages
-  never receive it. Admin responses carry `Cache-Control: private, no-store` and
-  `X-Robots-Tag: noindex`.
+- **The audit log is append-only for everyone.** It has no write grants, no write policies, and
+  triggers that reject UPDATE, DELETE and TRUNCATE.
+- **Files.** Bucket `entity-files` is private. Only active administrators can upload, and only to
+  `<entity>/<field_key>/<file>`. Nobody can overwrite or delete. Files are served by
+  `/admin/api/files` to signed-in administrators with `nosniff`, and non-image types download.
+  When a record references a file, the database re-checks its type and size.
+- **Invitations.** `/admin/api/admins/invite` requires an active administrator; the profile is
+  created through `create_admin_profile()` with the caller's identity, so the audit log names the
+  inviting administrator. The email carries a one-time link (7 days).
+- **Secrets.** Nothing secret reaches the browser: `DATABASE_URL`, `SESSION_SECRET` and `SMTP_URL`
+  are read by the server only. A test checks that none of them appears in the built client bundle.
+- Admin responses carry `Cache-Control: private, no-store` and `X-Robots-Tag: noindex`.
 
 ## Dynamic fields
 
@@ -192,7 +217,7 @@ Status workflow (`private.order_status_transition_allowed`):
 | Route                                                                                   | Page                                              |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | `/admin/login`, `/admin/forgot-password`, `/admin/reset-password`                       | Sign-in and recovery (no sign-up)                 |
-| `/admin/auth/confirm`                                                                   | Email-link handler (token hash or PKCE code)      |
+| `/admin/auth/confirm`                                                                   | Email-link handler (one-time token)               |
 | `/admin`                                                                                | Dashboard                                         |
 | `/admin/orders[/new                                                                     | /:id                                              | /:id/edit]` | Orders |
 | `/admin/dispatch`                                                                       | Order queue + assignment, driver–vehicle pairings |
@@ -204,56 +229,58 @@ Status workflow (`private.order_status_transition_allowed`):
 
 ## Environment variables
 
-See `.env.example`.
+See `.env.example`. None of these is ever sent to a browser.
 
-| Variable                        | Where                                                              | Secret                |
-| ------------------------------- | ------------------------------------------------------------------ | --------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | Next.js build/runtime                                              | no                    |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Next.js build/runtime                                              | no (public by design) |
-| `SUPABASE_SERVICE_ROLE_KEY`     | bootstrap script, tests only (Edge Functions get it from Supabase) | **yes**               |
-| `SUPABASE_DB_URL`               | database tests, CI migrations                                      | **yes**               |
-| `ADMIN_SITE_URL`                | Edge Function secret: site origin for invitation links             | no                    |
+| Variable             | Where                                           | Secret  |
+| -------------------- | ----------------------------------------------- | ------- |
+| `DATABASE_URL`       | Web server: the limited application role        | **yes** |
+| `SESSION_SECRET`     | Web server: signs the session cookie (32+ chars) | **yes** |
+| `APP_URL`            | Web server: base URL of emailed links           | no      |
+| `SMTP_URL`, `MAIL_FROM` | Web server: reset and invitation emails      | **yes** |
+| `DATABASE_ADMIN_URL` | `pnpm db:migrate`, `pnpm admin:create`, tests   | **yes** |
+| `DATABASE_APP_ROLE`  | `pnpm db:migrate` (default `bsr_app`)           | no      |
 
-Without the two public variables the panel shows "Backend not configured". The public site is
-unaffected either way.
+Without `DATABASE_URL` and `SESSION_SECRET` the panel shows "Backend not configured". The public
+site is unaffected either way.
 
 ## Local development
 
-On this Windows machine (no Docker):
+PostgreSQL 15 or newer must be installed (its `initdb`, `pg_ctl` and `psql` on `PATH`, or
+`PG_BIN` pointing at its `bin` folder). No Docker is needed:
 
 ```bash
-pnpm supabase:local setup        # once (~7 min): builds/downloads Auth, PostgREST, Storage, Deno
-pnpm supabase:local start        # Postgres + services behind http://localhost:54321
-pnpm supabase:local env          # → copy into .env.local
-pnpm supabase:local reset        # fresh database: all migrations + configuration seed
+pnpm db:start        # private cluster in .postgres-local/ on port 54320 + mail sink on 54325;
+                     # creates the database, the bsr_app role and a .env.local when missing
+pnpm db:reset        # fresh database: bootstrap + all migrations + configuration seed
 pnpm admin:create --email you@example.com --name "Your Name" --password '…'
-pnpm dev                         # http://localhost:3000/admin
+pnpm dev             # http://localhost:3000/admin
+pnpm db:status       # health; pnpm db:stop to shut everything down
 ```
 
-With Docker, `supabase start` then `supabase status` gives the same URL and keys, and
-`supabase db reset` applies the migrations.
+Emails (password reset, invitations) are captured as `.eml` / `.json` files in
+`.postgres-local/mail/` instead of being sent.
 
 ## Deployment
 
-1. Create a Supabase project. In Auth → URL configuration, set the site URL to the public origin
-   and add `https://<origin>/admin/auth/confirm` to the redirect URLs. Disable sign-ups, keep the
-   email provider enabled, and configure SMTP for production email.
-2. Set the email templates (Invite user, Reset password) to the contents of `supabase/templates/`,
-   or run `supabase config push`.
-3. Apply the schema: `supabase link --project-ref <ref>` and then `supabase db push`.
-4. Deploy the function: `supabase functions deploy admin-users`, then
-   `supabase secrets set ADMIN_SITE_URL=https://<origin>`.
-5. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in the hosting environment and
-   redeploy the site.
-6. From a trusted machine, run
-   `SUPABASE_SERVICE_ROLE_KEY=… NEXT_PUBLIC_SUPABASE_URL=… pnpm admin:create --email … --name … --invite --site-url https://<origin>`
-   to invite the first administrator. Invite the others from Settings → Administrators.
+1. Provision a PostgreSQL database (managed or self-hosted). Create the application login role
+   (for example `bsr_app`, with a password) and make sure the migration role can create schemas,
+   roles and extensions (`pgcrypto`, `btree_gist`).
+2. Apply the schema from a trusted machine or CI:
+   `DATABASE_ADMIN_URL=postgresql://… pnpm db:migrate`. It grants the application role what it needs.
+3. Set `DATABASE_URL` (the application role), `SESSION_SECRET`, `APP_URL`, `SMTP_URL` and
+   `MAIL_FROM` in the hosting environment and deploy the Next.js app (a Node.js host: the proxy and
+   API routes use the Node runtime and a persistent connection pool).
+4. Create the first administrator:
+   `DATABASE_ADMIN_URL=… SMTP_URL=… APP_URL=https://<origin> pnpm admin:create --email … --name … --invite`.
+   Invite the others from Settings → Administrators.
+5. Use TLS (`?sslmode=require` in the connection string) and run the application behind HTTPS so the
+   session cookie is marked Secure.
 
 ## Tests
 
-| Command               | What                                                                                                                                                                                                                                                             |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm test`           | Unit tests: field validation, values, keys, dates/DST, CSV, errors, filters, Edge Function handler (plus the existing site tests)                                                                                                                                |
-| `pnpm test:db`        | Database tests against a running Supabase: RLS, privileges, audit immutability, validation engine, field lifecycle, dispatch conflicts and workflow, reports (each test rolls back)                                                                              |
-| `pnpm test:e2e:admin` | Admin E2E on a production build against the real local backend: auth and recovery by email, dynamic-field workflow, dispatch workflow, reports + CSV, audit, security (REST/Storage/Function), WCAG A/AA, responsive at 1440/1024/820/390, public-site isolation |
-| `pnpm test:e2e`       | The public site's existing suite (unchanged)                                                                                                                                                                                                                     |
+| Command               | What                                                                                                                                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm test`           | Unit tests: field validation, values, keys, dates/DST, CSV, errors, filters, the query builder, passwords and session cookies (plus the existing site tests)                                                                           |
+| `pnpm test:db`        | Database tests against a running PostgreSQL: RLS, privileges, audit immutability, validation engine, field lifecycle, dispatch conflicts and workflow, reports (each test rolls back)                                                   |
+| `pnpm test:e2e:admin` | Admin E2E on a production build against the real local database: auth and recovery by email, dynamic-field workflow, dispatch workflow, reports + CSV, audit, security (API, files, sessions), WCAG A/AA, responsive, public isolation |
+| `pnpm test:e2e`       | The public site's existing suite (unchanged)                                                                                                                                                                                          |

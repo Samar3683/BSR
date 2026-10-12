@@ -1,6 +1,6 @@
 import { unwrap } from "../lib/errors";
 import type { EntityKey, FieldType, ValidationRules } from "../lib/fields/types";
-import { getSupabase } from "../lib/supabase/client";
+import { getDb } from "../lib/db/client";
 import type { OrderRow, OrderStatus } from "./records";
 
 export interface ReportFilters {
@@ -73,7 +73,7 @@ export async function fetchReportSummary(
   filters: ReportFilters,
 ): Promise<ReportSummary> {
   return unwrap(
-    await getSupabase().rpc("report_summary", { p_from: from, p_to: to, p_filters: filters }),
+    await getDb().rpc("report_summary", { p_from: from, p_to: to, p_filters: filters }),
   ) as ReportSummary;
 }
 
@@ -85,7 +85,7 @@ export async function fetchFieldBreakdown(
   filters: ReportFilters,
 ): Promise<FieldBreakdown> {
   return unwrap(
-    await getSupabase().rpc("report_field_breakdown", {
+    await getDb().rpc("report_field_breakdown", {
       p_entity: entity,
       p_field_key: fieldKey,
       p_from: from,
@@ -107,6 +107,6 @@ export async function fetchReportOrders(
   filters: ReportFilters,
 ): Promise<ExportOrderRow[]> {
   return unwrap(
-    await getSupabase().rpc("report_orders_export", { p_from: from, p_to: to, p_filters: filters }),
+    await getDb().rpc("report_orders_export", { p_from: from, p_to: to, p_filters: filters }),
   ) as ExportOrderRow[];
 }

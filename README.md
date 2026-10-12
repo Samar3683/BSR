@@ -4,8 +4,8 @@ Frontend for BSR, a freight transportation company operating in Italy: a cinemat
 logistics experience built on a conventional, accessible, conversion-focused website.
 
 The public site is frontend only. The operations panel at `/admin` (orders, dispatch, calendar,
-vehicles, drivers, customers, reports, audit log, configurable fields) runs on a serverless
-Supabase backend — see [docs/admin-backend.md](docs/admin-backend.md). The public site does not
+vehicles, drivers, customers, reports, audit log, configurable fields) runs on a
+PostgreSQL backend — see [docs/admin-backend.md](docs/admin-backend.md). The public site does not
 depend on it.
 
 ## Stack
@@ -20,8 +20,8 @@ depend on it.
 | Shared state    | Zustand                                                       |
 | Testing         | Vitest (units), Playwright + axe-core (browser, a11y)         |
 | Package manager | pnpm (Node ≥ 22)                                              |
-| Admin backend   | Supabase (Postgres + RLS, Auth, Storage, Edge Function)       |
-| Admin data      | @supabase/ssr + supabase-js, TanStack Query                   |
+| Admin backend   | PostgreSQL (RLS, own auth/sessions, files) behind Next.js API |
+| Admin data      | node-postgres (server only), TanStack Query                   |
 
 Drei, React Hook Form, Zod and Radix are part of the planned stack. They get added when the first
 feature needs them.
@@ -46,10 +46,10 @@ pnpm assets:validate-model <file.glb> --role tractor|trailer|dock [--tier high|m
 pnpm assets:capture-hero       # checkpoint captures vs styleframes (needs a running test build)
 
 # Admin panel / backend (docs/admin-backend.md)
-pnpm supabase:local start      # local Supabase-compatible stack (no Docker), or `supabase start`
+pnpm db:start                  # local PostgreSQL + mail sink (no Docker); pnpm db:reset for a fresh schema
 pnpm test:db                   # database tests (RLS, triggers, dispatch, reports)
-pnpm test:e2e:admin            # admin end-to-end tests against the real local backend
-pnpm admin:create --email … --name … --password …   # first administrator (service role)
+pnpm test:e2e:admin            # admin end-to-end tests against the real local PostgreSQL
+pnpm admin:create --email … --name … --password …   # first administrator (writes to PostgreSQL)
 ```
 
 ## Structure

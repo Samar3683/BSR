@@ -7,9 +7,11 @@ import { useState, type FormEvent } from "react";
 import { Button } from "../../components/ui/button";
 import { Alert } from "../../components/ui/feedback";
 import { Field, Input } from "../../components/ui/form";
-import { getSupabase } from "../../lib/supabase/client";
+import { changePassword, requestPasswordReset } from "../../lib/auth-client";
+import { toAdminError } from "../../lib/errors";
+import { MIN_PASSWORD_LENGTH, passwordProblem } from "../../lib/password-policy";
 
-export const MIN_PASSWORD_LENGTH = 10;
+export { MIN_PASSWORD_LENGTH };
 
 /** Requests a recovery email. The answer never reveals whether the account exists. */
 export function ForgotPasswordForm() {
@@ -27,16 +29,15 @@ export function ForgotPasswordForm() {
     setBusy(true);
     setError(null);
     try {
-      const { error: requestError } = await getSupabase().auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/admin/auth/confirm?next=/admin/reset-password`,
-      });
-      if (requestError?.status === 429) {
-        setError("Too many requests. Wait a few minutes and try again.");
-        return;
-      }
+      await requestPasswordReset(email.trim());
       setSent(true);
-    } catch {
-      setError("The server could not be reached. Check the connection and try again.");
+    } catch (requestError) {
+      const mapped = toAdminError(requestError);
+      setError(
+        /too many/i.test(mapped.message)
+          ? "Too many requests. Wait a few minutes and try again."
+          : "The server could not be reached. Check the connection and try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -92,26 +93,20 @@ export function ResetPasswordForm({ email }: { email: string | null }) {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const next: typeof errors = {};
-    if (password.length < MIN_PASSWORD_LENGTH)
-      next.password = `Use at least ${MIN_PASSWORD_LENGTH} characters`;
-    else if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
-      next.password = "Use upper- and lowercase letters and at least one digit";
-    }
+    const problem = passwordProblem(password);
+    if (problem) next.password = problem;
     if (confirm !== password) next.confirm = "The passwords do not match";
     setErrors(next);
     if (Object.keys(next).length) return;
 
     setBusy(true);
     try {
-      const { error } = await getSupabase().auth.updateUser({ password });
-      if (error) {
-        setErrors({ form: error.message || "The password could not be changed." });
-        return;
-      }
+      await changePassword(password);
       router.replace("/admin");
       router.refresh();
-    } catch {
-      setErrors({ form: "The server could not be reached. Check the connection and try again." });
+    } catch (error) {
+      const mapped = toAdminError(error);
+      setErrors({ form: mapped.message || "The password could not be changed." });
     } finally {
       setBusy(false);
     }

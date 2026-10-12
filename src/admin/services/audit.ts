@@ -1,5 +1,5 @@
 import { unwrap } from "../lib/errors";
-import { getSupabase } from "../lib/supabase/client";
+import { getDb } from "../lib/db/client";
 
 export interface AuditEntry {
   id: number;
@@ -68,7 +68,7 @@ export async function fetchAuditLog(
 ): Promise<{ rows: AuditEntry[]; total: number }> {
   const limit = query.limit ?? 50;
   const offset = query.offset ?? 0;
-  let request = getSupabase()
+  let request = getDb()
     .from("audit_logs")
     .select("*", { count: "exact" })
     .order("occurred_at", { ascending: false })

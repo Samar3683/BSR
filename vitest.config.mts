@@ -5,7 +5,7 @@ export default defineConfig({
   // TypeScript and Vitest.
   resolve: { tsconfigPaths: true },
   test: {
-    include: ["src/**/*.test.ts", "supabase/functions/**/*.test.ts"],
+    include: ["src/**/*.test.ts"],
     environment: "node",
   },
 });

@@ -44,8 +44,10 @@ export default defineConfig({
     reuseExistingServer: !isCI,
     timeout: 400_000,
     env: {
-      NEXT_PUBLIC_SUPABASE_URL: stack.url,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: stack.anonKey,
+      DATABASE_URL: stack.databaseUrl,
+      SESSION_SECRET: stack.sessionSecret,
+      SMTP_URL: stack.smtpUrl,
+      MAIL_FROM: "BSR Trasporti <no-reply@bsr.test>",
       // Same test hooks as the public suite, so one build serves both.
       BSR_DESIGN_PREVIEW: "true",
       NEXT_PUBLIC_BSR_HERO_TEST_HOOKS: "true",

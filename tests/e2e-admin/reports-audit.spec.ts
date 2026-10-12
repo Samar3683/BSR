@@ -1,13 +1,13 @@
 import { readFileSync } from "node:fs";
 
 import { expect, test } from "@playwright/test";
-import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { login, romeDate, stack, uid, userClient } from "./support";
+import type { DbClient } from "../../src/admin/lib/db/client";
+import { adminQuery, login, romeDate, uid, userClient } from "./support";
 import { USERS } from "./users";
 
 /** Seeds operational data through the API as an administrator (RLS, triggers, RPCs apply). */
-async function seed(client: SupabaseClient, s: string) {
+async function seed(client: DbClient, s: string) {
   const insert = async (
     table: string,
     attributes: Record<string, unknown>,
@@ -21,17 +21,12 @@ async function seed(client: SupabaseClient, s: string) {
     if (error) throw error;
     return (data as { id: string }).id;
   };
-  const options = await client
-    .from("field_options")
-    .select("id, label, field_definitions!inner(field_key)");
+  const options = await adminQuery<{ id: string; label: string; field_key: string }>(
+    `select o.id, o.label, f.field_key
+       from public.field_options o join public.field_definitions f on f.id = o.field_id`,
+  );
   const option = (key: string, label: string) =>
-    (
-      options.data as unknown as {
-        id: string;
-        label: string;
-        field_definitions: { field_key: string };
-      }[]
-    ).find((o) => o.field_definitions.field_key === key && o.label === label)!.id;
+    options.find((o) => o.field_key === key && o.label === label)!.id;
 
   const customer = await insert("customers", { company_name: `Report Customer ${s}` });
   const driver = await insert("drivers", { full_name: `Report Driver ${s}` });
@@ -163,7 +158,7 @@ test("audit: mutations are recorded with actor, action, entity and before/after,
   page,
 }) => {
   const s = uid();
-  const { client, token } = await userClient(USERS.admin);
+  const { client } = await userClient(USERS.admin);
   const { customer } = await seed(client, s);
   await client
     .from("customers")
@@ -189,29 +184,18 @@ test("audit: mutations are recorded with actor, action, entity and before/after,
     .from("audit_logs")
     .select("id, action", { count: "exact" })
     .eq("entity_id", customer);
-  const headers = {
-    apikey: stack.anonKey,
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-    Prefer: "return=representation",
-  };
-  const patch = await fetch(`${stack.url}/rest/v1/audit_logs?entity_id=eq.${customer}`, {
-    method: "PATCH",
-    headers,
-    body: JSON.stringify({ action: "tampered" }),
-  });
-  expect(patch.status).toBeGreaterThanOrEqual(400);
-  const del = await fetch(`${stack.url}/rest/v1/audit_logs?entity_id=eq.${customer}`, {
-    method: "DELETE",
-    headers,
-  });
-  expect(del.status).toBeGreaterThanOrEqual(400);
-  const insert = await fetch(`${stack.url}/rest/v1/audit_logs`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ actor_label: "x", action: "x", entity_type: "x", entity_id: "x" }),
-  });
-  expect(insert.status).toBeGreaterThanOrEqual(400);
+  const patch = await client
+    .from("audit_logs")
+    .update({ action: "tampered" })
+    .eq("entity_id", customer)
+    .select("id");
+  expect(patch.error ?? (patch.data as unknown[]).length === 0).toBeTruthy();
+  const del = await client.from("audit_logs").delete().eq("entity_id", customer).select("id");
+  expect(del.error ?? (del.data as unknown[]).length === 0).toBeTruthy();
+  const insert = await client
+    .from("audit_logs")
+    .insert({ actor_label: "x", action: "x", entity_type: "x", entity_id: "x" });
+  expect(insert.error).not.toBeNull();
   const after = await client
     .from("audit_logs")
     .select("id, action", { count: "exact" })

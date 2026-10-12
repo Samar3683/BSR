@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-import { fillDateTime, login, openAccountMenu, romeDate, uid } from "./support";
+import {
+  adminQuery,
+  fillDateTime,
+  login,
+  openAccountMenu,
+  romeDate,
+  uid,
+  userClient,
+} from "./support";
 import { USERS } from "./users";
 
 /** Workflow improvements: search, quick create, timeline, week grid, rules, language. */
@@ -52,6 +60,15 @@ test("an order form can create its customer on the spot and save another", async
 });
 
 test("dispatch timeline, calendar hours and dispatch rules render real data", async ({ page }) => {
+  // The timeline needs at least one driver and one vehicle to draw rows.
+  const { client } = await userClient(USERS.admin);
+  const s = uid();
+  await client.from("drivers").insert({ attributes: { full_name: `Timeline Driver ${s}` } });
+  const [van] = await adminQuery<{ id: string }>(
+    `select o.id from public.field_options o join public.field_definitions f on f.id = o.field_id
+      where f.entity_type = 'vehicle' and f.field_key = 'vehicle_type' limit 1`,
+  );
+  await client.from("vehicles").insert({ attributes: { plate: `TL${s}`, vehicle_type: van?.id } });
   await login(page, USERS.admin, "/admin/dispatch?tab=timeline");
   await expect(page.getByRole("table", { name: /by driver/ })).toBeVisible();
   await page.getByRole("button", { name: "Vehicles", exact: true }).click();
@@ -111,25 +128,25 @@ test("an administrator manages their own profile: name and password", async ({ p
 
   // Password: the current one is verified, weak ones are refused.
   await page.getByLabel("Current password").fill("wrong-password");
-  await page.getByLabel("New password", { exact: true }).fill(temporary);
+  await page.getByLabel(/^New password/).fill(temporary);
   await page.getByLabel("Repeat the new password").fill(temporary);
   await page.getByRole("button", { name: "Change password" }).click();
   await expect(page.getByText("The current password is not correct")).toBeVisible();
 
   await page.getByLabel("Current password").fill(user.password);
-  await page.getByLabel("New password", { exact: true }).fill("short");
+  await page.getByLabel(/^New password/).fill("short");
   await page.getByLabel("Repeat the new password").fill("short");
   await page.getByRole("button", { name: "Change password" }).click();
   await expect(page.getByText(/Use at least 10 characters/)).toBeVisible();
 
-  await page.getByLabel("New password", { exact: true }).fill(temporary);
+  await page.getByLabel(/^New password/).fill(temporary);
   await page.getByLabel("Repeat the new password").fill(temporary);
   await page.getByRole("button", { name: "Change password" }).click();
   await expect(page.getByText("Password changed.")).toBeVisible();
 
   // And back, so the shared test account keeps working.
   await page.getByLabel("Current password").fill(temporary);
-  await page.getByLabel("New password", { exact: true }).fill(user.password);
+  await page.getByLabel(/^New password/).fill(user.password);
   await page.getByLabel("Repeat the new password").fill(user.password);
   await page.getByRole("button", { name: "Change password" }).click();
   await expect(page.getByText("Password changed.").first()).toBeVisible();

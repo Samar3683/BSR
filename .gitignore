@@ -47,8 +47,7 @@ next-env.d.ts
 /blob-report/
 /playwright/.cache/
 
-# local Supabase-compatible stack (tools/supabase-local): binaries, data, keys
 /.supabase-local/
-# Supabase CLI local state
-/supabase/.temp/
-/supabase/.branches/
+
+# Local PostgreSQL cluster, mail sink and secrets
+.postgres-local

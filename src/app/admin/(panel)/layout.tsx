@@ -3,11 +3,11 @@ import { redirect } from "next/navigation";
 import { AdminShell } from "@/admin/components/shell/admin-shell";
 import { AdminSessionProvider } from "@/admin/components/shell/session";
 import { NoAccess, NotConfigured } from "@/admin/features/auth/access-states";
-import { resolveAdminGate } from "@/admin/lib/supabase/server";
+import { resolveAdminGate } from "@/admin/server/gate";
 
 /**
- * Every panel page passes this server-side gate: a verified Supabase Auth
- * user with an active administrator profile. RLS enforces the same rule on
+ * Every panel page passes this server-side gate: a valid session of
+ * a user with an active administrator profile. RLS enforces the same rule on
  * each query, so the gate is a user-experience boundary, not the only one.
  */
 export default async function PanelLayout({ children }: LayoutProps<"/admin">) {

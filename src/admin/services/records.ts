@@ -1,7 +1,7 @@
 import { unwrap } from "../lib/errors";
 import type { FilterOperator } from "../lib/fields/registry";
 import type { EntityKey, EntityRecord } from "../lib/fields/types";
-import { getSupabase } from "../lib/supabase/client";
+import { getDb } from "../lib/db/client";
 
 export const ENTITY_TABLES: Record<EntityKey, string> = {
   order: "orders",
@@ -84,7 +84,7 @@ export async function listRecords<T = EntityRecord>(
   query: ListQuery = {},
 ): Promise<ListResult<T>> {
   const result = unwrap(
-    await getSupabase().rpc("list_records", {
+    await getDb().rpc("list_records", {
       p_entity: entity,
       p_search: query.search?.trim() || null,
       p_filters: query.filters ?? [],
@@ -118,7 +118,7 @@ export async function listAllRecords<T = EntityRecord>(
 
 export async function getRecord<T = EntityRecord>(entity: EntityKey, id: string): Promise<T> {
   return unwrap(
-    await getSupabase().from(ENTITY_TABLES[entity]).select("*").eq("id", id).single(),
+    await getDb().from(ENTITY_TABLES[entity]).select("*").eq("id", id).single(),
   ) as T;
 }
 
@@ -132,7 +132,7 @@ export async function createRecord<T = EntityRecord>(
   write: RecordWrite,
 ): Promise<T> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from(ENTITY_TABLES[entity])
       .insert({ ...(write.columns ?? {}), attributes: write.attributes ?? {} })
       .select()
@@ -148,7 +148,7 @@ export async function updateRecord<T = EntityRecord>(
   const patch: Record<string, unknown> = { ...(write.columns ?? {}) };
   if (write.attributes) patch.attributes = write.attributes;
   return unwrap(
-    await getSupabase().from(ENTITY_TABLES[entity]).update(patch).eq("id", id).select().single(),
+    await getDb().from(ENTITY_TABLES[entity]).update(patch).eq("id", id).select().single(),
   ) as T;
 }
 
@@ -158,7 +158,7 @@ export async function setRecordArchived(
   archived: boolean,
 ): Promise<void> {
   unwrap(
-    await getSupabase()
+    await getDb()
       .from(ENTITY_TABLES[entity])
       .update({ archived_at: archived ? new Date().toISOString() : null })
       .eq("id", id)
@@ -173,7 +173,7 @@ export async function setResourceAvailable(
   available: boolean,
 ) {
   unwrap(
-    await getSupabase()
+    await getDb()
       .from(ENTITY_TABLES[entity])
       .update({ available })
       .eq("id", id)
@@ -183,7 +183,7 @@ export async function setResourceAvailable(
 }
 
 export async function deleteRecord(entity: EntityKey, id: string): Promise<void> {
-  const result = await getSupabase().from(ENTITY_TABLES[entity]).delete().eq("id", id).select("id");
+  const result = await getDb().from(ENTITY_TABLES[entity]).delete().eq("id", id).select("id");
   const rows = unwrap(result) as { id: string }[];
   if (!rows.length) throw new Error("The record could not be deleted.");
 }
@@ -200,7 +200,7 @@ export async function searchRecordNames(
   search: string,
   limit = 20,
 ): Promise<RecordName[]> {
-  let query = getSupabase()
+  let query = getDb()
     .from(ENTITY_TABLES[entity])
     .select("id, display_name, archived_at")
     .is("archived_at", null)
@@ -219,7 +219,7 @@ export async function fetchRecordNames(
   const unique = [...new Set(ids)].filter(Boolean);
   if (!unique.length) return [];
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from(ENTITY_TABLES[entity])
       .select("id, display_name, archived_at")
       .in("id", unique),
@@ -229,7 +229,7 @@ export async function fetchRecordNames(
 /** Most recent orders of a customer (the system relation, independent of list filters). */
 export async function fetchCustomerOrders(customerId: string, limit = 10): Promise<OrderRow[]> {
   return unwrap(
-    await getSupabase()
+    await getDb()
       .from("orders")
       .select("*")
       .eq("customer_id", customerId)
@@ -252,7 +252,7 @@ export async function bulkChangeOrderStatus(
   note?: string,
 ): Promise<BulkResult[]> {
   return unwrap(
-    await getSupabase().rpc("bulk_change_order_status", {
+    await getDb().rpc("bulk_change_order_status", {
       p_order_ids: ids,
       p_status: status,
       p_note: note || null,
@@ -267,7 +267,7 @@ export async function bulkSetArchived(
   archived: boolean,
 ): Promise<BulkResult[]> {
   return unwrap(
-    await getSupabase().rpc("bulk_set_archived", { p_entity: entity, p_ids: ids, p_archived: archived }),
+    await getDb().rpc("bulk_set_archived", { p_entity: entity, p_ids: ids, p_archived: archived }),
   ) as BulkResult[];
 }
 
@@ -282,7 +282,7 @@ export interface SearchHit {
 
 /** A few matches per entity, using each entity's searchable fields. */
 export async function globalSearch(query: string, limit = 5): Promise<SearchHit[]> {
-  return unwrap(await getSupabase().rpc("global_search", { p_query: query, p_limit: limit })) as SearchHit[];
+  return unwrap(await getDb().rpc("global_search", { p_query: query, p_limit: limit })) as SearchHit[];
 }
 
 export interface NavCounts {
@@ -292,5 +292,5 @@ export interface NavCounts {
 }
 
 export async function fetchNavCounts(): Promise<NavCounts> {
-  return unwrap(await getSupabase().rpc("nav_counts")) as NavCounts;
+  return unwrap(await getDb().rpc("nav_counts")) as NavCounts;
 }
