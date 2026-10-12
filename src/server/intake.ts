@@ -1,5 +1,5 @@
 import { readConfig } from "./config";
-import { withApp } from "./db";
+import { databaseError, db } from "./db";
 import { sendMail } from "./mail";
 
 /**
@@ -64,16 +64,12 @@ export async function submitQuoteRequest(input: unknown, adminBaseUrl: string): 
   const payload = normalizeQuote(input);
   let reference: string;
   try {
-    reference = await withApp(async (client) => {
-      const { rows } = await client.query<{ reference: string }>(
-        "select intake.submit_quote_request($1::jsonb) as reference",
-        [JSON.stringify(payload)],
-      );
-      return rows[0]!.reference;
-    });
+    const rows = await db().$queryRaw<{ reference: string }[]>`
+      select intake.submit_quote_request(${JSON.stringify(payload)}::jsonb) as reference`;
+    reference = rows[0]!.reference;
   } catch (error) {
-    const e = error as { hint?: string; message: string };
-    if (e.hint === "business_rule") throw new IntakeError(e.message);
+    const e = databaseError(error);
+    if (e?.hint === "business_rule") throw new IntakeError(e.message);
     throw error;
   }
   void notifyTeam(reference, payload, adminBaseUrl).catch(() => undefined);
@@ -113,7 +109,5 @@ async function notifyTeam(reference: string, payload: QuotePayload, baseUrl: str
 
 export async function recordContactEvent(channel: unknown, page: unknown): Promise<void> {
   if (typeof channel !== "string" || typeof page !== "string") return;
-  await withApp((client) =>
-    client.query("select intake.record_contact_event($1, $2)", [channel, page.slice(0, 200)]),
-  );
+  await db().$executeRaw`select intake.record_contact_event(${channel}, ${page.slice(0, 200)})`;
 }

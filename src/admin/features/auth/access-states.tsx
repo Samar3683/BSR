@@ -43,7 +43,7 @@ export function NotConfigured() {
   return (
     <AuthCard
       title="Backend not configured"
-      intro="The admin panel needs a PostgreSQL database. Set DATABASE_URL and SESSION_SECRET, apply the migrations (pnpm db:migrate) and restart."
+      intro="The admin panel needs a PostgreSQL database. Set DATABASE_URL and SESSION_SECRET, apply the migrations (npm run db:migrate) and restart."
     >
       <Alert>See docs/admin-backend.md for the setup steps.</Alert>
     </AuthCard>

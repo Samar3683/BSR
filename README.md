@@ -45,10 +45,13 @@ pnpm assets:decoders           # sync the self-hosted KTX2 (Basis) transcoder fr
 pnpm assets:validate-model <file.glb> --role tractor|trailer|dock [--tier high|medium|low]
 pnpm assets:capture-hero       # checkpoint captures vs styleframes (needs a running test build)
 
-# Admin panel / backend (docs/admin-backend.md)
-pnpm db:start                  # local PostgreSQL + mail sink (no Docker); pnpm db:reset for a fresh schema
+# Admin panel / backend: PostgreSQL + Prisma, Docker (docs/admin-backend.md)
+pnpm db:start                  # PostgreSQL + mail sink in Docker (127.0.0.1:54320 / :54325)
+pnpm db:migrate                # apply prisma/migrations; pnpm db:reset for a fresh database
+pnpm db:pull                   # refresh prisma/schema.prisma + Prisma Client after a migration
+pnpm docker:up                 # the whole app in Docker on 127.0.0.1:3000 (docker:down to stop)
 pnpm test:db                   # database tests (RLS, triggers, dispatch, reports)
-pnpm test:e2e:admin            # admin end-to-end tests against the real local PostgreSQL
+pnpm test:e2e:admin            # admin end-to-end tests against the Docker database
 pnpm admin:create --email … --name … --password …   # first administrator (writes to PostgreSQL)
 ```
 

@@ -125,7 +125,10 @@ const eslintConfig = defineConfig([
     // Vendored decoder copied verbatim from three (pnpm assets:decoders).
     "public/assets/decoders/**",
     "archive/**",
-    // Local PostgreSQL cluster and mail sink.
+    // Prisma Client, generated from prisma/schema.prisma.
+    "src/generated/**",
+    // Captured emails of the Docker mail sink; the old local PostgreSQL cluster.
+    ".local/**",
     ".postgres-local/**",
     ".supabase-local/**",
   ]),

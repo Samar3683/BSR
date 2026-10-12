@@ -1,52 +1,33 @@
-import pg from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 
+import { PrismaClient, type Prisma } from "@/generated/prisma/client";
 import { requireConfig } from "./config";
 
 /**
- * Value parsing for JSON responses: bigint counts become numbers, dates stay
- * plain "YYYY-MM-DD" strings (no timezone shifts), timestamps become ISO strings.
+ * Database access through Prisma Client (prisma/schema.prisma). The server
+ * connects as DATABASE_URL, a role that owns nothing; the database enforces
+ * the rules itself — row-level security, column grants and SECURITY DEFINER
+ * functions, all defined by the SQL migrations in prisma/migrations.
  */
-const typeParsers = {
-  getTypeParser(oid: number, format?: "text" | "binary") {
-    switch (oid) {
-      case 20: // int8
-        return (value: string) => {
-          const n = Number(value);
-          return Number.isSafeInteger(n) ? n : value;
-        };
-      case 1082: // date
-      case 1114: // timestamp without time zone
-        return (value: string) => value;
-      case 1184: // timestamptz
-        return (value: string) => {
-          const date = new Date(value);
-          return Number.isNaN(date.getTime()) ? value : date.toISOString();
-        };
-      default:
-        return pg.types.getTypeParser(oid, format as "text");
-    }
-  },
-};
 
-const globalPool = globalThis as typeof globalThis & { __bsrPool?: pg.Pool };
+const globalDb = globalThis as typeof globalThis & { __bsrPrisma?: PrismaClient };
 
-export function pool(): pg.Pool {
-  if (!globalPool.__bsrPool) {
-    const config = requireConfig();
-    globalPool.__bsrPool = new pg.Pool({
-      connectionString: config.databaseUrl,
+/** The shared client: one connection pool per server process. */
+export function db(): PrismaClient {
+  if (!globalDb.__bsrPrisma) {
+    const adapter = new PrismaPg({
+      connectionString: requireConfig().databaseUrl,
       max: 10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 8_000,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- pg's `types` option
-      types: typeParsers as any,
     });
-    globalPool.__bsrPool.on("error", () => {
-      // An idle client failed; the pool replaces it on next use.
-    });
+    globalDb.__bsrPrisma = new PrismaClient({ adapter });
   }
-  return globalPool.__bsrPool;
+  return globalDb.__bsrPrisma;
 }
+
+/** The transaction client handed to withIdentity() callbacks. */
+export type Tx = Prisma.TransactionClient;
 
 export interface RequestIdentity {
   /** The signed-in user; null for an anonymous request. */
@@ -59,42 +40,79 @@ export interface RequestIdentity {
  * user: the connection switches to the `authenticated` (or `anon`) role and
  * carries the user in `request.jwt.claims`, so row-level security, column
  * grants and auth.uid() all apply exactly as in the database design.
+ *
+ * Use raw SQL inside (tx.$queryRaw): Prisma's model queries read every column
+ * of a table, and the request roles may only see some of them.
  */
 export async function withIdentity<T>(
   identity: RequestIdentity,
-  fn: (client: pg.PoolClient) => Promise<T>,
+  fn: (tx: Tx) => Promise<T>,
 ): Promise<T> {
-  const client = await pool().connect();
+  const role = identity.userId ? "authenticated" : "anon";
+  const claims = identity.userId
+    ? { sub: identity.userId, role, email: identity.email ?? undefined, aud: "authenticated" }
+    : { role };
   try {
-    await client.query("begin");
-    const role = identity.userId ? "authenticated" : "anon";
-    const claims = identity.userId
-      ? { sub: identity.userId, role, email: identity.email ?? undefined, aud: "authenticated" }
-      : { role };
-    await client.query(`set local role ${role}`);
-    await client.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify(claims),
-    ]);
-    await client.query("set local statement_timeout = '20s'");
-    const result = await fn(client);
-    await client.query("commit");
-    return result;
+    return await db().$transaction(
+      async (tx) => {
+        // set_config(…, true) is SET LOCAL: it ends with the transaction.
+        await tx.$executeRaw`select set_config('role', ${role}, true),
+                                    set_config('request.jwt.claims', ${JSON.stringify(claims)}, true),
+                                    set_config('statement_timeout', '20s', true)`;
+        return fn(tx);
+      },
+      { maxWait: 8_000, timeout: 30_000 },
+    );
   } catch (error) {
-    await client.query("rollback").catch(() => undefined);
-    throw error;
-  } finally {
-    client.release();
+    throw databaseError(error) ?? error;
   }
 }
 
-/** The application's own connection, for the auth tables (no request role). */
-export async function withApp<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
-  const client = await pool().connect();
-  try {
-    return await fn(client);
-  } finally {
-    client.release();
+/** An error as PostgreSQL reported it. */
+export class DatabaseError extends Error {
+  constructor(
+    message: string,
+    /** SQLSTATE, e.g. 42501 (not allowed) or 23505 (duplicate). */
+    readonly code: string | null,
+    readonly detail: string | null,
+    readonly hint: string | null,
+  ) {
+    super(message);
+    this.name = "DatabaseError";
   }
+}
+
+interface AdapterCause {
+  originalCode?: string;
+  originalMessage?: string;
+  code?: string;
+  message?: string;
+  detail?: string;
+  hint?: string;
+}
+
+/**
+ * The PostgreSQL error inside an error thrown by Prisma, or null when there is
+ * none (a connection failure, or an error of our own).
+ */
+export function databaseError(error: unknown): DatabaseError | null {
+  if (error instanceof DatabaseError) return error;
+  const e = error as {
+    name?: string;
+    cause?: AdapterCause;
+    meta?: { driverAdapterError?: { cause?: AdapterCause } };
+  } | null;
+  const cause =
+    e?.meta?.driverAdapterError?.cause ?? (e?.name === "DriverAdapterError" ? e.cause : undefined);
+  const message = cause?.originalMessage ?? cause?.message;
+  if (!cause || !message) return null;
+  const code = cause.originalCode ?? cause.code;
+  return new DatabaseError(
+    message,
+    code && code !== "N/A" ? code : null,
+    cause.detail ?? null,
+    cause.hint ?? null,
+  );
 }
 
 export interface DbErrorBody {
@@ -106,11 +124,12 @@ export interface DbErrorBody {
 
 /** The error shape the panel's services understand. */
 export function toErrorBody(error: unknown): DbErrorBody {
-  const e = (error ?? {}) as { message?: string; detail?: string; hint?: string; code?: string };
+  const e = databaseError(error);
+  if (e) return { message: e.message, details: e.detail, hint: e.hint, code: e.code };
   return {
-    message: e.message ?? "Database error",
-    details: e.detail ?? null,
-    hint: e.hint ?? null,
-    code: e.code ?? null,
+    message: (error as { message?: string } | null)?.message ?? "Database error",
+    details: null,
+    hint: null,
+    code: null,
   };
 }

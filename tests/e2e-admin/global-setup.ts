@@ -15,11 +15,14 @@ export default async function globalSetup() {
   const stack = stackEnv();
   if (!stack.sessionSecret) {
     throw new Error(
-      "Admin E2E needs a backend: run `pnpm db:start` or set DATABASE_URL and SESSION_SECRET.",
+      "Admin E2E needs a backend: run `npm run db:start` (with a .env.local) or set DATABASE_URL and SESSION_SECRET.",
     );
   }
   if (stack.local && process.env.BSR_E2E_RESET !== "0") {
-    execFileSync(process.execPath, ["tools/postgres-local/cli.mjs", "reset"], { stdio: "inherit" });
+    execFileSync(process.execPath, ["scripts/db/reset.mjs"], {
+      stdio: "inherit",
+      env: { ...process.env, DATABASE_ADMIN_URL: stack.adminUrl },
+    });
   }
 
   const client = new pg.Client({ connectionString: stack.adminUrl });

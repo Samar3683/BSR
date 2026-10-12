@@ -32,5 +32,12 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "playwright-report", "test-results", ".postgres-local", ".supabase-local"]
+  "exclude": [
+    "node_modules",
+    "playwright-report",
+    "test-results",
+    ".local",
+    ".postgres-local",
+    ".supabase-local"
+  ]
 }

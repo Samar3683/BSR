@@ -3,29 +3,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isBackendConfigured, readConfig } from "@/server/config";
 import { IntakeError, submitQuoteRequest } from "@/server/intake";
 import { clientKey, rateLimited } from "@/server/limits";
+import { isSameSite } from "@/server/request";
 
 const HEADERS = { "Cache-Control": "no-store" };
 const fail = (message: string, status: number) =>
   NextResponse.json({ error: { message } }, { status, headers: HEADERS });
 
-/** Same-site browser requests only (a server-side client has neither header). */
-function sameSite(request: NextRequest): boolean {
-  const origin = request.headers.get("origin");
-  if (origin) {
-    try {
-      return new URL(origin).host === request.nextUrl.host;
-    } catch {
-      return false;
-    }
-  }
-  const site = request.headers.get("sec-fetch-site");
-  return !site || site === "same-origin" || site === "none";
-}
-
 /** The quote form's submission: stored for the dispatch team to answer. */
 export async function POST(request: NextRequest) {
   if (!isBackendConfigured()) return fail("Il servizio non è disponibile.", 503);
-  if (!sameSite(request)) return fail("Richiesta non valida.", 403);
+  if (!isSameSite(request)) return fail("Richiesta non valida.", 403);
 
   if (rateLimited(`quote:ip:${clientKey(request)}`, 5, 60 * 60_000)) {
     return fail("Troppe richieste. Riprova più tardi o scrivici su WhatsApp.", 429);

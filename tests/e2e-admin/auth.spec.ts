@@ -72,6 +72,8 @@ test.describe("admin authentication", () => {
     const since = Date.now();
     await page.goto("/admin/login");
     await page.getByRole("link", { name: "Forgot your password?" }).click();
+    // Client-side navigation: the sign-in form (with its own Email field) is still on screen.
+    await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
     await page.getByLabel("Email").fill(USERS.recovery.email);
     await page.getByRole("button", { name: "Send reset link" }).click();
     await expect(page.getByText(/an email with a reset link is on its way/)).toBeVisible();

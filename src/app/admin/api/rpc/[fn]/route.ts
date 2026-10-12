@@ -22,8 +22,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ fn
   }
 
   try {
-    const data = await withIdentity({ userId: session.userId, email: session.email }, (client) =>
-      executeRpc(client, fn, args),
+    const data = await withIdentity({ userId: session.userId, email: session.email }, (tx) =>
+      executeRpc(tx, fn, args),
     );
     return json({ data, error: null });
   } catch (error) {

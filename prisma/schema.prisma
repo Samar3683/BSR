@@ -1,0 +1,508 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["auth", "intake", "public", "storage"]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model one_time_tokens {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String    @db.Uuid
+  kind       String
+  token_hash Bytes     @unique
+  created_at DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at DateTime  @db.Timestamptz(6)
+  used_at    DateTime? @db.Timestamptz(6)
+  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "one_time_tokens_user_idx")
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model sessions {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String   @db.Uuid
+  token_hash   Bytes    @unique
+  via          String   @default("password")
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  expires_at   DateTime @db.Timestamptz(6)
+  last_seen_at DateTime @default(now()) @db.Timestamptz(6)
+  user_agent   String?
+  users        users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "sessions_user_idx")
+  @@schema("auth")
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model users {
+  id                                                                       String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  aud                                                                      String                       @default("authenticated")
+  role                                                                     String                       @default("authenticated")
+  email                                                                    String
+  encrypted_password                                                       String?
+  raw_user_meta_data                                                       Json                         @default("{}")
+  created_at                                                               DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                                                               DateTime                     @default(now()) @db.Timestamptz(6)
+  last_sign_in_at                                                          DateTime?                    @db.Timestamptz(6)
+  one_time_tokens                                                          one_time_tokens[]
+  sessions                                                                 sessions[]
+  admin_profiles                                                           admin_profiles?
+  customers_customers_created_byTousers                                    customers[]                  @relation("customers_created_byTousers")
+  customers_customers_updated_byTousers                                    customers[]                  @relation("customers_updated_byTousers")
+  dispatch_requirements                                                    dispatch_requirements[]
+  driver_vehicle_assignments_driver_vehicle_assignments_created_byTousers  driver_vehicle_assignments[] @relation("driver_vehicle_assignments_created_byTousers")
+  driver_vehicle_assignments_driver_vehicle_assignments_released_byTousers driver_vehicle_assignments[] @relation("driver_vehicle_assignments_released_byTousers")
+  driver_vehicle_assignments_driver_vehicle_assignments_updated_byTousers  driver_vehicle_assignments[] @relation("driver_vehicle_assignments_updated_byTousers")
+  drivers_drivers_created_byTousers                                        drivers[]                    @relation("drivers_created_byTousers")
+  drivers_drivers_updated_byTousers                                        drivers[]                    @relation("drivers_updated_byTousers")
+  entity_configs                                                           entity_configs[]
+  field_definitions_field_definitions_created_byTousers                    field_definitions[]          @relation("field_definitions_created_byTousers")
+  field_definitions_field_definitions_updated_byTousers                    field_definitions[]          @relation("field_definitions_updated_byTousers")
+  field_options_field_options_created_byTousers                            field_options[]              @relation("field_options_created_byTousers")
+  field_options_field_options_updated_byTousers                            field_options[]              @relation("field_options_updated_byTousers")
+  order_assignments_order_assignments_created_byTousers                    order_assignments[]          @relation("order_assignments_created_byTousers")
+  order_assignments_order_assignments_released_byTousers                   order_assignments[]          @relation("order_assignments_released_byTousers")
+  order_assignments_order_assignments_updated_byTousers                    order_assignments[]          @relation("order_assignments_updated_byTousers")
+  order_status_history                                                     order_status_history[]
+  orders_orders_created_byTousers                                          orders[]                     @relation("orders_created_byTousers")
+  orders_orders_updated_byTousers                                          orders[]                     @relation("orders_updated_byTousers")
+  quote_requests                                                           quote_requests[]
+  vehicles_vehicles_created_byTousers                                      vehicles[]                   @relation("vehicles_created_byTousers")
+  vehicles_vehicles_updated_byTousers                                      vehicles[]                   @relation("vehicles_updated_byTousers")
+
+  @@schema("auth")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model admin_profiles {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String   @unique @db.Uuid
+  display_name String
+  role         String   @default("admin")
+  active       Boolean  @default(true)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @default(now()) @db.Timestamptz(6)
+  users        users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@schema("public")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model audit_logs {
+  id             BigInt   @id @default(autoincrement())
+  occurred_at    DateTime @default(now()) @db.Timestamptz(6)
+  actor_id       String?  @db.Uuid
+  actor_label    String
+  action         String
+  entity_type    String
+  entity_id      String
+  entity_label   String?
+  before_state   Json?
+  after_state    Json?
+  changed_fields String[] @default([])
+  context        Json     @default("{}")
+  transaction_id BigInt?  @default(dbgenerated("txid_current()"))
+
+  @@index([action, occurred_at(sort: Desc)], map: "audit_logs_action_idx")
+  @@index([actor_id, occurred_at(sort: Desc)], map: "audit_logs_actor_idx")
+  @@index([entity_type, entity_id, occurred_at(sort: Desc)], map: "audit_logs_entity_idx")
+  @@index([occurred_at(sort: Desc)], map: "audit_logs_occurred_idx")
+  @@index([transaction_id], map: "audit_logs_transaction_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model contact_events {
+  id         BigInt   @id @default(autoincrement())
+  channel    String
+  page       String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([created_at(sort: Desc)], map: "contact_events_created_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model customers {
+  id                                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  display_name                      String           @default("")
+  attributes                        Json             @default("{}")
+  archived_at                       DateTime?        @db.Timestamptz(6)
+  created_at                        DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at                        DateTime         @default(now()) @db.Timestamptz(6)
+  created_by                        String?          @db.Uuid
+  updated_by                        String?          @db.Uuid
+  users_customers_created_byTousers users?           @relation("customers_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_customers_updated_byTousers users?           @relation("customers_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  orders                            orders[]
+  quote_requests                    quote_requests[]
+
+  @@index([attributes], map: "customers_attributes_gin", type: Gin)
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model dispatch_requirements {
+  id                                                                   String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vehicle_option_id                                                    String        @db.Uuid
+  driver_option_id                                                     String        @db.Uuid
+  created_at                                                           DateTime      @default(now()) @db.Timestamptz(6)
+  created_by                                                           String?       @db.Uuid
+  users                                                                users?        @relation(fields: [created_by], references: [id], onUpdate: NoAction)
+  field_options_dispatch_requirements_driver_option_idTofield_options  field_options @relation("dispatch_requirements_driver_option_idTofield_options", fields: [driver_option_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  field_options_dispatch_requirements_vehicle_option_idTofield_options field_options @relation("dispatch_requirements_vehicle_option_idTofield_options", fields: [vehicle_option_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([vehicle_option_id, driver_option_id], map: "dispatch_requirements_unique")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This table contains exclusion constraints and requires additional setup for migrations. Visit https://pris.ly/d/exclusion-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model driver_vehicle_assignments {
+  id                                                  String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  driver_id                                           String                    @db.Uuid
+  vehicle_id                                          String                    @db.Uuid
+  starts_at                                           DateTime                  @default(now()) @db.Timestamptz(6)
+  ends_at                                             DateTime?                 @db.Timestamptz(6)
+  released_at                                         DateTime?                 @db.Timestamptz(6)
+  released_by                                         String?                   @db.Uuid
+  note                                                String?
+  period                                              Unsupported("tstzrange")? @default(dbgenerated("tstzrange(starts_at, GREATEST(starts_at, COALESCE(LEAST(released_at, ends_at), 'infinity'::timestamp with time zone)), '[)'::text)"))
+  created_at                                          DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at                                          DateTime                  @default(now()) @db.Timestamptz(6)
+  created_by                                          String?                   @db.Uuid
+  updated_by                                          String?                   @db.Uuid
+  users_driver_vehicle_assignments_created_byTousers  users?                    @relation("driver_vehicle_assignments_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  drivers                                             drivers                   @relation(fields: [driver_id], references: [id], onUpdate: NoAction)
+  users_driver_vehicle_assignments_released_byTousers users?                    @relation("driver_vehicle_assignments_released_byTousers", fields: [released_by], references: [id], onUpdate: NoAction)
+  users_driver_vehicle_assignments_updated_byTousers  users?                    @relation("driver_vehicle_assignments_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  vehicles                                            vehicles                  @relation(fields: [vehicle_id], references: [id], onUpdate: NoAction)
+
+  @@index([driver_id, starts_at(sort: Desc)], map: "dva_driver_idx")
+  @@index([vehicle_id, starts_at(sort: Desc)], map: "dva_vehicle_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model drivers {
+  id                              String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  display_name                    String                       @default("")
+  available                       Boolean                      @default(true)
+  attributes                      Json                         @default("{}")
+  archived_at                     DateTime?                    @db.Timestamptz(6)
+  created_at                      DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                      DateTime                     @default(now()) @db.Timestamptz(6)
+  created_by                      String?                      @db.Uuid
+  updated_by                      String?                      @db.Uuid
+  driver_vehicle_assignments      driver_vehicle_assignments[]
+  users_drivers_created_byTousers users?                       @relation("drivers_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_drivers_updated_byTousers users?                       @relation("drivers_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  order_assignments               order_assignments[]
+
+  @@index([attributes], map: "drivers_attributes_gin", type: Gin)
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model entity_configs {
+  entity_key                                                          String              @id
+  display_name                                                        String
+  plural_display_name                                                 String
+  active                                                              Boolean             @default(true)
+  primary_display_field                                               String?
+  created_at                                                          DateTime            @default(now()) @db.Timestamptz(6)
+  updated_at                                                          DateTime            @default(now()) @db.Timestamptz(6)
+  updated_by                                                          String?             @db.Uuid
+  users                                                               users?              @relation(fields: [updated_by], references: [id], onUpdate: NoAction)
+  field_definitions_field_definitions_entity_typeToentity_configs     field_definitions[] @relation("field_definitions_entity_typeToentity_configs")
+  field_definitions_field_definitions_relation_entityToentity_configs field_definitions[] @relation("field_definitions_relation_entityToentity_configs")
+
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model field_definitions {
+  id                                                               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entity_type                                                      String
+  field_key                                                        String
+  label                                                            String
+  field_type                                                       field_type
+  description                                                      String?
+  help_text                                                        String?
+  placeholder                                                      String?
+  required                                                         Boolean         @default(false)
+  active                                                           Boolean         @default(true)
+  archived_at                                                      DateTime?       @db.Timestamptz(6)
+  sort_order                                                       Int             @default(0)
+  show_in_list                                                     Boolean         @default(true)
+  show_in_detail                                                   Boolean         @default(true)
+  show_in_create                                                   Boolean         @default(true)
+  show_in_edit                                                     Boolean         @default(true)
+  searchable                                                       Boolean         @default(false)
+  filterable                                                       Boolean         @default(false)
+  sortable                                                         Boolean         @default(false)
+  reportable                                                       Boolean         @default(false)
+  unique_value                                                     Boolean         @default(false)
+  default_value                                                    Json?
+  validation_rules                                                 Json            @default("{}")
+  relation_entity                                                  String?
+  binding_key                                                      String?
+  is_system                                                        Boolean         @default(false)
+  read_only                                                        Boolean         @default(false)
+  created_at                                                       DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at                                                       DateTime        @default(now()) @db.Timestamptz(6)
+  created_by                                                       String?         @db.Uuid
+  updated_by                                                       String?         @db.Uuid
+  section                                                          String?
+  users_field_definitions_created_byTousers                        users?          @relation("field_definitions_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  entity_configs_field_definitions_entity_typeToentity_configs     entity_configs  @relation("field_definitions_entity_typeToentity_configs", fields: [entity_type], references: [entity_key], onUpdate: NoAction)
+  entity_configs_field_definitions_relation_entityToentity_configs entity_configs? @relation("field_definitions_relation_entityToentity_configs", fields: [relation_entity], references: [entity_key], onDelete: Restrict, onUpdate: NoAction)
+  users_field_definitions_updated_byTousers                        users?          @relation("field_definitions_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  field_options                                                    field_options[]
+
+  @@unique([entity_type, field_key], map: "field_definitions_key_unique")
+  @@index([entity_type, sort_order], map: "field_definitions_entity_order_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model field_options {
+  id                                                                           String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  field_id                                                                     String                  @db.Uuid
+  label                                                                        String
+  sort_order                                                                   Int                     @default(0)
+  archived_at                                                                  DateTime?               @db.Timestamptz(6)
+  created_at                                                                   DateTime                @default(now()) @db.Timestamptz(6)
+  updated_at                                                                   DateTime                @default(now()) @db.Timestamptz(6)
+  created_by                                                                   String?                 @db.Uuid
+  updated_by                                                                   String?                 @db.Uuid
+  dispatch_requirements_dispatch_requirements_driver_option_idTofield_options  dispatch_requirements[] @relation("dispatch_requirements_driver_option_idTofield_options")
+  dispatch_requirements_dispatch_requirements_vehicle_option_idTofield_options dispatch_requirements[] @relation("dispatch_requirements_vehicle_option_idTofield_options")
+  users_field_options_created_byTousers                                        users?                  @relation("field_options_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  field_definitions                                                            field_definitions       @relation(fields: [field_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_field_options_updated_byTousers                                        users?                  @relation("field_options_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+
+  @@index([field_id, sort_order], map: "field_options_field_order_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This table contains exclusion constraints and requires additional setup for migrations. Visit https://pris.ly/d/exclusion-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model order_assignments {
+  id                                         String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_id                                   String                    @unique(map: "oa_one_active_per_order", where: raw("(released_at IS NULL)")) @db.Uuid
+  driver_id                                  String?                   @db.Uuid
+  vehicle_id                                 String?                   @db.Uuid
+  starts_at                                  DateTime                  @db.Timestamptz(6)
+  ends_at                                    DateTime                  @db.Timestamptz(6)
+  released_at                                DateTime?                 @db.Timestamptz(6)
+  released_by                                String?                   @db.Uuid
+  release_reason                             String?
+  note                                       String?
+  period                                     Unsupported("tstzrange")? @default(dbgenerated("tstzrange(starts_at, GREATEST(starts_at, LEAST(COALESCE(released_at, ends_at), ends_at)), '[)'::text)"))
+  created_at                                 DateTime                  @default(now()) @db.Timestamptz(6)
+  updated_at                                 DateTime                  @default(now()) @db.Timestamptz(6)
+  created_by                                 String?                   @db.Uuid
+  updated_by                                 String?                   @db.Uuid
+  users_order_assignments_created_byTousers  users?                    @relation("order_assignments_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  drivers                                    drivers?                  @relation(fields: [driver_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  orders                                     orders                    @relation(fields: [order_id], references: [id], onUpdate: NoAction)
+  users_order_assignments_released_byTousers users?                    @relation("order_assignments_released_byTousers", fields: [released_by], references: [id], onUpdate: NoAction)
+  users_order_assignments_updated_byTousers  users?                    @relation("order_assignments_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  vehicles                                   vehicles?                 @relation(fields: [vehicle_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([driver_id, starts_at], map: "oa_driver_idx")
+  @@index([order_id, created_at(sort: Desc)], map: "oa_order_idx")
+  @@index([period], map: "oa_period_idx", type: Gist)
+  @@index([vehicle_id, starts_at], map: "oa_vehicle_idx")
+  @@schema("public")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model order_status_history {
+  id               BigInt        @id @default(autoincrement())
+  order_id         String        @db.Uuid
+  from_status      order_status?
+  to_status        order_status
+  changed_at       DateTime      @default(now()) @db.Timestamptz(6)
+  changed_by       String?       @db.Uuid
+  changed_by_label String?
+  note             String?
+  users            users?        @relation(fields: [changed_by], references: [id], onUpdate: NoAction)
+  orders           orders        @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([order_id, changed_at(sort: Desc)], map: "order_status_history_order_idx")
+  @@index([to_status, changed_at], map: "order_status_history_to_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model orders {
+  id                             String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  order_number                   String                 @unique(map: "orders_number_unique") @default(dbgenerated("private.next_order_number()"))
+  display_name                   String                 @default("")
+  customer_id                    String                 @db.Uuid
+  status                         order_status           @default(confirmed)
+  pickup_at                      DateTime?              @db.Timestamptz(6)
+  delivery_at                    DateTime?              @db.Timestamptz(6)
+  attributes                     Json                   @default("{}")
+  archived_at                    DateTime?              @db.Timestamptz(6)
+  created_at                     DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at                     DateTime               @default(now()) @db.Timestamptz(6)
+  created_by                     String?                @db.Uuid
+  updated_by                     String?                @db.Uuid
+  order_assignments              order_assignments?
+  order_status_history           order_status_history[]
+  users_orders_created_byTousers users?                 @relation("orders_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  customers                      customers              @relation(fields: [customer_id], references: [id], onUpdate: NoAction)
+  users_orders_updated_byTousers users?                 @relation("orders_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+  quote_requests                 quote_requests[]
+
+  @@index([attributes], map: "orders_attributes_gin", type: Gin)
+  @@index([created_at(sort: Desc)], map: "orders_created_idx")
+  @@index([customer_id], map: "orders_customer_idx")
+  @@index([delivery_at], map: "orders_delivery_idx")
+  @@index([pickup_at], map: "orders_pickup_idx")
+  @@index([status])
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model quote_requests {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  reference    String     @unique
+  status       String     @default("new")
+  name         String
+  email        String?
+  phone        String
+  pickup       Json
+  delivery     Json
+  context      Json       @default("{}")
+  source       String     @default("quote_form")
+  note         String?
+  customer_id  String?    @db.Uuid
+  order_id     String?    @db.Uuid
+  handled_by   String?    @db.Uuid
+  handled_at   DateTime?  @db.Timestamptz(6)
+  created_at   DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime   @default(now()) @db.Timestamptz(6)
+  display_name String?    @default(dbgenerated("((reference || ' · '::text) || name)"))
+  customers    customers? @relation(fields: [customer_id], references: [id], onUpdate: NoAction)
+  users        users?     @relation(fields: [handled_by], references: [id], onUpdate: NoAction)
+  orders       orders?    @relation(fields: [order_id], references: [id], onUpdate: NoAction)
+
+  @@index([status, created_at(sort: Desc)], map: "quote_requests_status_idx")
+  @@schema("public")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model vehicles {
+  id                               String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  display_name                     String                       @default("")
+  available                        Boolean                      @default(true)
+  attributes                       Json                         @default("{}")
+  archived_at                      DateTime?                    @db.Timestamptz(6)
+  created_at                       DateTime                     @default(now()) @db.Timestamptz(6)
+  updated_at                       DateTime                     @default(now()) @db.Timestamptz(6)
+  created_by                       String?                      @db.Uuid
+  updated_by                       String?                      @db.Uuid
+  driver_vehicle_assignments       driver_vehicle_assignments[]
+  order_assignments                order_assignments[]
+  users_vehicles_created_byTousers users?                       @relation("vehicles_created_byTousers", fields: [created_by], references: [id], onUpdate: NoAction)
+  users_vehicles_updated_byTousers users?                       @relation("vehicles_updated_byTousers", fields: [updated_by], references: [id], onUpdate: NoAction)
+
+  @@index([attributes], map: "vehicles_attributes_gin", type: Gin)
+  @@schema("public")
+}
+
+model buckets {
+  id                 String    @id
+  name               String    @unique
+  public             Boolean   @default(false)
+  file_size_limit    BigInt?
+  allowed_mime_types String[]
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  objects            objects[]
+
+  @@schema("storage")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model objects {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bucket_id  String
+  name       String
+  owner      String?  @db.Uuid
+  metadata   Json     @default("{}")
+  content    Bytes    @default("")
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @db.Timestamptz(6)
+  buckets    buckets  @relation(fields: [bucket_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([bucket_id, name])
+  @@schema("storage")
+}
+
+enum field_type {
+  short_text
+  long_text
+  integer
+  decimal
+  currency
+  percentage
+  date
+  time
+  datetime
+  email
+  phone
+  url
+  boolean
+  single_select
+  multi_select
+  relation
+  address
+  image
+  file
+
+  @@schema("public")
+}
+
+/// This enum is commented in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+enum order_status {
+  draft
+  confirmed
+  scheduled
+  in_transit
+  delivered
+  cancelled
+
+  @@schema("public")
+}

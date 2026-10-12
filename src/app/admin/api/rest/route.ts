@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await withIdentity({ userId: session.userId, email: session.email }, (client) =>
-      executeRest(client, op),
+    const result = await withIdentity({ userId: session.userId, email: session.email }, (tx) =>
+      executeRest(tx, op),
     );
     return json({ data: result.data, error: null, count: result.count ?? null });
   } catch (error) {

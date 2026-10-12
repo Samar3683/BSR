@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { readConfig } from "@/server/config";
 import { toErrorBody } from "@/server/db";
 export { clearLimit, clientKey, isBlocked, rateLimited } from "@/server/limits";
+import { isHttps } from "@/server/request";
+export { isSameSite } from "@/server/request";
 import { RestError } from "./rest";
 import {
   cookieOptions,
@@ -41,24 +43,6 @@ export function unauthorized(): NextResponse {
   );
 }
 
-/**
- * Cross-site request guard for state-changing calls (on top of SameSite=Lax):
- * the browser's Origin must be this site. Server-side test clients send neither
- * Origin nor Fetch Metadata and are accepted.
- */
-export function isSameSite(request: NextRequest): boolean {
-  const origin = request.headers.get("origin");
-  if (origin) {
-    try {
-      return new URL(origin).host === request.nextUrl.host;
-    } catch {
-      return false;
-    }
-  }
-  const site = request.headers.get("sec-fetch-site");
-  return !site || site === "same-origin" || site === "none";
-}
-
 export async function currentSession(request: NextRequest): Promise<SessionUser | null> {
   if (!readConfig()) return null;
   return readSession(request.cookies.get(SESSION_COOKIE)?.value);
@@ -77,13 +61,13 @@ export function setSessionCookie(
   response.cookies.set(
     SESSION_COOKIE,
     session.cookieValue,
-    cookieOptions(session.expiresAt, request.nextUrl.protocol === "https:"),
+    cookieOptions(session.expiresAt, isHttps(request)),
   );
 }
 
 export function clearSessionCookie(response: NextResponse, request: NextRequest) {
   response.cookies.set(SESSION_COOKIE, "", {
-    ...cookieOptions(new Date(0), request.nextUrl.protocol === "https:"),
+    ...cookieOptions(new Date(0), isHttps(request)),
     maxAge: 0,
   });
 }
