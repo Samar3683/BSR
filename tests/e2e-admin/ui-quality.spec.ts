@@ -73,6 +73,23 @@ test.describe("admin UI quality", () => {
     expect(dialog.violations).toEqual([]);
   });
 
+  test("dark theme persists across navigation and has no WCAG violations", async ({ page }) => {
+    test.setTimeout(240_000);
+    await login(page, USERS.admin);
+    await page.getByLabel("Color theme").selectOption("dark");
+    await expect(page.locator(".adm")).toHaveAttribute("data-theme", "dark");
+    for (const path of PAGES) {
+      await page.goto(path);
+      await settle(page);
+      await expect(page.locator(".adm"), path).toHaveAttribute("data-theme", "dark");
+      const results = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+      expect(results.violations, path).toEqual([]);
+    }
+    // Back to the default so the other tests see the light theme.
+    await page.getByLabel("Color theme").selectOption("light");
+    await expect(page.locator(".adm")).toHaveAttribute("data-theme", "light");
+  });
+
   for (const width of [1440, 1024, 820, 390]) {
     test(`fits a ${width}px viewport without horizontal page scrolling`, async ({ page }) => {
       await page.setViewportSize({ width, height: width >= 1024 ? 900 : 844 });

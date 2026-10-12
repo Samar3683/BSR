@@ -68,6 +68,8 @@ export interface FieldDefinition {
   field_type: FieldType;
   description: string | null;
   help_text: string | null;
+  /** Group heading in forms and record pages (null = no section). */
+  section: string | null;
   placeholder: string | null;
   required: boolean;
   active: boolean;

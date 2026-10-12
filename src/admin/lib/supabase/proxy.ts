@@ -18,10 +18,15 @@ export function safeAdminNext(value: string | null | undefined): string {
 }
 
 /**
- * Runs before every /admin request: refreshes the Supabase session (writing
- * rotated tokens to the response cookies) and redirects signed-out visitors
- * to the login page. This is an optimistic check; the panel layout verifies
- * the administrator profile and RLS enforces access on every query.
+ * Runs before every /admin request (navigations and link prefetches):
+ * refreshes the Supabase session when it has expired (writing rotated tokens
+ * to the response cookies) and redirects visitors without a session to the
+ * login page.
+ *
+ * This is an optimistic check, read from the session cookie without a round
+ * trip to the Auth server (which would add its latency to every click). The
+ * panel layout verifies the user with the Auth server and the administrator
+ * profile on each page load, and RLS enforces access on every query.
  */
 export async function updateAdminSession(request: NextRequest): Promise<NextResponse> {
   let response = NextResponse.next({ request });
@@ -41,8 +46,11 @@ export async function updateAdminSession(request: NextRequest): Promise<NextResp
     },
   });
 
-  const { data } = await supabase.auth.getClaims();
-  const signedIn = Boolean(data?.claims?.sub);
+  // getSession() refreshes an expired access token itself; otherwise it only
+  // reads the cookie. Only presence and expiry matter here.
+  const { data } = await supabase.auth.getSession();
+  const expiresAt = (data.session?.expires_at ?? 0) * 1000;
+  const signedIn = Boolean(data.session?.access_token) && expiresAt > Date.now();
   const { pathname, search } = request.nextUrl;
 
   const redirectTo = (target: URL) => {
@@ -56,11 +64,8 @@ export async function updateAdminSession(request: NextRequest): Promise<NextResp
     if (pathname !== "/admin") login.searchParams.set("next", `${pathname}${search}`);
     return redirectTo(login);
   }
-  if (signedIn && pathname === "/admin/login") {
-    return redirectTo(
-      new URL(safeAdminNext(request.nextUrl.searchParams.get("next")), request.url),
-    );
-  }
+  // Signed-in visitors of /admin/login are sent on by the login page itself,
+  // after verifying the session (a stale cookie must not cause a loop).
   return withAdminHeaders(response);
 }
 

@@ -12,6 +12,8 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 
+import { useTr } from "../../i18n/provider";
+
 interface FieldProps {
   label: ReactNode;
   help?: ReactNode;
@@ -36,6 +38,7 @@ export function Field({
   children,
   composite,
 }: FieldProps) {
+  const tr = useTr();
   const id = useId();
   const helpId = help ? `${id}-help` : undefined;
   const errorId = error ? `${id}-error` : undefined;
@@ -53,19 +56,19 @@ export function Field({
     <div className={["a-field", wide && "a-field--wide", className].filter(Boolean).join(" ")}>
       {composite ? (
         <span className="a-label" id={`${id}-label`}>
-          {label}
+          {tr(label)}
           {required ? <RequiredMark /> : null}
         </span>
       ) : (
         <label className="a-label" htmlFor={(children.props.id as string | undefined) ?? id}>
-          {label}
+          {tr(label)}
           {required ? <RequiredMark /> : null}
         </label>
       )}
       {control}
       {help ? (
         <p className="a-help" id={helpId}>
-          {help}
+          {tr(help)}
         </p>
       ) : null}
       {error ? (
@@ -86,8 +89,15 @@ function RequiredMark() {
   );
 }
 
-export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={["a-input", className].filter(Boolean).join(" ")} {...rest} />;
+export function Input({ className, placeholder, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
+  const tr = useTr();
+  return (
+    <input
+      className={["a-input", className].filter(Boolean).join(" ")}
+      placeholder={tr(placeholder)}
+      {...rest}
+    />
+  );
 }
 
 export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
@@ -110,6 +120,7 @@ interface ToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "type"
 }
 
 export function Switch({ label, checked, onChange, description, className, ...rest }: ToggleProps) {
+  const tr = useTr();
   return (
     <label className={["a-switch", className].filter(Boolean).join(" ")}>
       <input
@@ -120,10 +131,10 @@ export function Switch({ label, checked, onChange, description, className, ...re
         {...rest}
       />
       <span>
-        {label}
+        {tr(label)}
         {description ? (
           <span className="a-help" style={{ display: "block" }}>
-            {description}
+            {tr(description)}
           </span>
         ) : null}
       </span>
@@ -132,6 +143,7 @@ export function Switch({ label, checked, onChange, description, className, ...re
 }
 
 export function Checkbox({ label, checked, onChange, className, ...rest }: ToggleProps) {
+  const tr = useTr();
   return (
     <label className={["a-check", className].filter(Boolean).join(" ")}>
       <input
@@ -140,7 +152,7 @@ export function Checkbox({ label, checked, onChange, className, ...rest }: Toggl
         onChange={(e) => onChange(e.target.checked)}
         {...rest}
       />
-      <span>{label}</span>
+      <span>{tr(label)}</span>
     </label>
   );
 }
@@ -158,8 +170,9 @@ export function Segmented<T extends string>({
   options,
   onChange,
 }: SegmentedProps<T>) {
+  const tr = useTr();
   return (
-    <div className="a-segmented" role="group" aria-label={label}>
+    <div className="a-segmented" role="group" aria-label={tr(label)}>
       {options.map((option) => (
         <button
           key={option.value}
@@ -167,7 +180,7 @@ export function Segmented<T extends string>({
           aria-pressed={option.value === value}
           onClick={() => onChange(option.value)}
         >
-          {option.label}
+          {tr(option.label)}
         </button>
       ))}
     </div>

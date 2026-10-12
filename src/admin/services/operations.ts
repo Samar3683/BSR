@@ -1,4 +1,5 @@
 import { unwrap } from "../lib/errors";
+import type { DispatchRequirement } from "../lib/requirements";
 import { getSupabase } from "../lib/supabase/client";
 import type { OrderStatus } from "./records";
 
@@ -139,6 +140,7 @@ export async function unassignOrder(orderId: string, reason?: string) {
 export interface DispatchCandidate {
   id: string;
   display_name: string;
+  attributes: Record<string, unknown>;
   conflict: { order_id: string; order_number: string; starts_at: string; ends_at: string } | null;
   paired_vehicle_id?: string | null;
   paired_vehicle_name?: string | null;
@@ -323,4 +325,32 @@ export async function fetchCalendarEvents(
       p_filters: filters,
     }),
   ) as CalendarEvent[];
+}
+
+// --------------------------------------------------------------------------
+// Dispatch requirements (vehicle option → acceptable driver options)
+// --------------------------------------------------------------------------
+
+export async function fetchRequirements(): Promise<DispatchRequirement[]> {
+  return unwrap(
+    await getSupabase().from("dispatch_requirements").select("id, vehicle_option_id, driver_option_id"),
+  ) as DispatchRequirement[];
+}
+
+export async function addRequirement(vehicleOptionId: string, driverOptionId: string) {
+  unwrap(
+    await getSupabase()
+      .from("dispatch_requirements")
+      .insert({ vehicle_option_id: vehicleOptionId, driver_option_id: driverOptionId }),
+  );
+}
+
+export async function removeRequirement(vehicleOptionId: string, driverOptionId: string) {
+  unwrap(
+    await getSupabase()
+      .from("dispatch_requirements")
+      .delete()
+      .eq("vehicle_option_id", vehicleOptionId)
+      .eq("driver_option_id", driverOptionId),
+  );
 }

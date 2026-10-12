@@ -74,6 +74,8 @@ export type OrderStatus =
 export interface ListResult<T = EntityRecord> {
   rows: T[];
   total: number;
+  /** Orders: how many match each status (all other filters applied). */
+  statusCounts?: Partial<Record<OrderStatus, number>>;
 }
 
 /** One page of an entity list: search, filters and sort are applied server-side. */
@@ -91,8 +93,12 @@ export async function listRecords<T = EntityRecord>(
       p_offset: query.offset ?? 0,
       p_archived: query.archived ?? "active",
     }),
-  ) as { rows: T[]; total: number };
-  return { rows: result.rows ?? [], total: Number(result.total ?? 0) };
+  ) as { rows: T[]; total: number; facets?: { status?: Partial<Record<OrderStatus, number>> } };
+  return {
+    rows: result.rows ?? [],
+    total: Number(result.total ?? 0),
+    statusCounts: result.facets?.status,
+  };
 }
 
 /** Every matching row, page by page (CSV exports). */
@@ -230,4 +236,61 @@ export async function fetchCustomerOrders(customerId: string, limit = 10): Promi
       .order("created_at", { ascending: false })
       .limit(limit),
   ) as OrderRow[];
+}
+
+export interface BulkResult {
+  id: string;
+  ok: boolean;
+  changed?: boolean;
+  error?: string;
+}
+
+/** Changes the status of many orders; each succeeds or fails on its own. */
+export async function bulkChangeOrderStatus(
+  ids: string[],
+  status: OrderStatus,
+  note?: string,
+): Promise<BulkResult[]> {
+  return unwrap(
+    await getSupabase().rpc("bulk_change_order_status", {
+      p_order_ids: ids,
+      p_status: status,
+      p_note: note || null,
+    }),
+  ) as BulkResult[];
+}
+
+/** Archives or restores many records; each succeeds or fails on its own. */
+export async function bulkSetArchived(
+  entity: EntityKey,
+  ids: string[],
+  archived: boolean,
+): Promise<BulkResult[]> {
+  return unwrap(
+    await getSupabase().rpc("bulk_set_archived", { p_entity: entity, p_ids: ids, p_archived: archived }),
+  ) as BulkResult[];
+}
+
+export interface SearchHit {
+  entity: EntityKey;
+  id: string;
+  title: string;
+  subtitle: string | null;
+  status: OrderStatus | null;
+  archived: boolean;
+}
+
+/** A few matches per entity, using each entity's searchable fields. */
+export async function globalSearch(query: string, limit = 5): Promise<SearchHit[]> {
+  return unwrap(await getSupabase().rpc("global_search", { p_query: query, p_limit: limit })) as SearchHit[];
+}
+
+export interface NavCounts {
+  awaiting_dispatch: number;
+  overdue: number;
+  in_transit: number;
+}
+
+export async function fetchNavCounts(): Promise<NavCounts> {
+  return unwrap(await getSupabase().rpc("nav_counts")) as NavCounts;
 }

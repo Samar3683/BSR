@@ -1,18 +1,19 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { UserPlus } from "lucide-react";
+import { Pencil, UserPlus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { useSession } from "../../components/shell/session";
 import { Button } from "../../components/ui/button";
+import { Dialog } from "../../components/ui/dialog";
 import { EmptyState, ErrorState, FormError, LoadingState } from "../../components/ui/feedback";
 import { Field, Input, Switch } from "../../components/ui/form";
 import { Panel } from "../../components/ui/layout";
 import { useToast } from "../../components/ui/toast";
 import { formatDateTime } from "../../lib/datetime";
 import { toAdminError } from "../../lib/errors";
-import { fetchAdmins, inviteAdmin, setAdminActive } from "../../services/admins";
+import { fetchAdmins, inviteAdmin, renameAdmin, setAdminActive } from "../../services/admins";
 
 /**
  * Who can use the panel. There is no public sign-up: administrators are
@@ -27,6 +28,7 @@ export function AdministratorsSettings() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
 
   const refresh = () => client.invalidateQueries({ queryKey: ["admins"] });
 
@@ -45,6 +47,16 @@ export function AdministratorsSettings() {
     mutationFn: ({ id, active }: { id: string; active: boolean }) => setAdminActive(id, active),
     onSuccess: async (_, { active }) => {
       toast.success(active ? "Administrator reactivated." : "Administrator deactivated.");
+      await refresh();
+    },
+    onError: (error) => toast.error(toAdminError(error).message),
+  });
+
+  const rename = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => renameAdmin(id, name),
+    onSuccess: async () => {
+      toast.success("Name updated.");
+      setRenaming(null);
       await refresh();
     },
     onError: (error) => toast.error(toAdminError(error).message),
@@ -79,6 +91,9 @@ export function AdministratorsSettings() {
                   <th scope="col">Role</th>
                   <th scope="col">Last sign-in</th>
                   <th scope="col">Access</th>
+                  <th scope="col">
+                    <span className="a-sr-only">Actions</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -112,6 +127,17 @@ export function AdministratorsSettings() {
                           onChange={(active) => toggle.mutate({ id: row.id, active })}
                         />
                       </td>
+                      <td>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          aria-label={`Rename ${row.display_name}`}
+                          onClick={() => setRenaming({ id: row.id, name: row.display_name })}
+                        >
+                          <Pencil aria-hidden="true" />
+                          Rename
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -120,6 +146,40 @@ export function AdministratorsSettings() {
           </div>
         )}
       </Panel>
+
+      <Dialog
+        open={renaming !== null}
+        title="Rename administrator"
+        onClose={() => setRenaming(null)}
+        busy={rename.isPending}
+        onSubmit={() => {
+          if (renaming && renaming.name.trim())
+            rename.mutate({ id: renaming.id, name: renaming.name.trim() });
+        }}
+        footer={
+          <>
+            <Button onClick={() => setRenaming(null)} disabled={rename.isPending}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={rename.isPending}
+              disabled={!renaming?.name.trim()}
+            >
+              Save
+            </Button>
+          </>
+        }
+      >
+        <Field label="Name" required>
+          <Input
+            value={renaming?.name ?? ""}
+            maxLength={120}
+            onChange={(e) => setRenaming((r) => (r ? { ...r, name: e.target.value } : r))}
+          />
+        </Field>
+      </Dialog>
 
       <Panel title="Invite an administrator">
         <form className="a-form" onSubmit={onInvite} noValidate>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -7,9 +8,14 @@ import { useEffect, useState, type ReactNode } from "react";
 
 import { MAIN_CONTENT_ID } from "@/constants/landmarks";
 
-import { isNavActive, NAV_SECTIONS } from "../../config/navigation";
+import { isNavActive, NAV_SECTIONS, type NavItem } from "../../config/navigation";
 import { useAdminConfig } from "../../hooks/use-admin-config";
+import { useI18n } from "../../i18n/provider";
+import { fetchNavCounts } from "../../services/records";
 import { Button } from "../ui/button";
+import { Segmented } from "../ui/form";
+import { CommandPalette } from "./command-palette";
+import { ThemeSelector } from "./theme-selector";
 import { useSession } from "./session";
 
 const COLLAPSE_KEY = "bsr-admin:sidebar";
@@ -36,10 +42,31 @@ function initials(name: string) {
 export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { admin, signOut } = useSession();
+  const { t, lang, setLang } = useI18n();
   const { data: config } = useAdminConfig();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const counts = useQuery({
+    queryKey: ["nav-counts"],
+    queryFn: fetchNavCounts,
+    refetchInterval: 60_000,
+  });
+  const badges: Record<
+    string,
+    { value: number; tone: "red" | "green"; label: string } | undefined
+  > = {
+    "/admin/orders": counts.data?.overdue
+      ? { value: counts.data.overdue, tone: "red", label: `${counts.data.overdue} overdue` }
+      : undefined,
+    "/admin/dispatch": counts.data?.awaiting_dispatch
+      ? {
+          value: counts.data.awaiting_dispatch,
+          tone: "green",
+          label: `${counts.data.awaiting_dispatch} awaiting dispatch`,
+        }
+      : undefined,
+  };
 
   const [navPath, setNavPath] = useState(pathname);
   if (navPath !== pathname) {
@@ -72,12 +99,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
     });
   };
 
-  const items = NAV_SECTIONS.flatMap((section) => section.items);
-  const current = items.find((item) => isNavActive(item, pathname));
-  const labelFor = (item: (typeof items)[number]) =>
-    item.entity && config
-      ? (config.entities[item.entity]?.plural_display_name ?? item.label)
-      : item.label;
+  const labelFor = (item: NavItem) =>
+    t(
+      item.entity && config
+        ? (config.entities[item.entity]?.plural_display_name ?? item.label)
+        : item.label,
+    );
 
   return (
     <div
@@ -86,20 +113,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
       data-mobile-nav={mobileOpen ? "open" : "closed"}
     >
       <aside className="a-sidebar" aria-label="Admin navigation" id="admin-sidebar">
-        <Link href="/admin" className="a-brand">
-          <span className="a-brand-mark" aria-hidden="true">
+        <Link href="/admin" className="a-brand" aria-label="BSR Trasporti admin, dashboard">
+          {/* Same typeset wordmark as the public site (until the official logo exists). */}
+          <span className="a-wordmark" aria-hidden="true">
             BSR
           </span>
-          <span className="a-brand-text">
-            <span className="a-brand-name">BSR Trasporti</span>
-            <br />
+          <span className="a-brand-text" aria-hidden="true">
+            <span className="a-wordmark-tag">Trasporti</span>
             <span className="a-brand-tag">Admin</span>
           </span>
         </Link>
         <nav className="a-nav">
           {NAV_SECTIONS.map((section) => (
             <div key={section.label}>
-              <div className="a-nav-section">{section.label}</div>
+              <div className="a-nav-section">{t(section.label)}</div>
               <ul>
                 {section.items.map((item) => {
                   const active = isNavActive(item, pathname);
@@ -107,6 +134,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   const muted =
                     item.entity && config ? !config.entities[item.entity]?.active : false;
                   const Icon = item.icon;
+                  const badge = badges[item.href];
                   return (
                     <li key={item.href}>
                       <Link
@@ -118,6 +146,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
                       >
                         <Icon aria-hidden="true" />
                         <span className="a-nav-label">{label}</span>
+                        {badge ? (
+                          <span className="a-nav-badge" data-tone={badge.tone}>
+                            <span aria-hidden="true">{badge.value}</span>
+                            <span className="a-sr-only">, {badge.label}</span>
+                          </span>
+                        ) : null}
                       </Link>
                     </li>
                   );
@@ -142,7 +176,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             ) : (
               <PanelLeftClose aria-hidden="true" />
             )}
-            <span className="a-sidebar-foot-label">Collapse</span>
+            <span className="a-sidebar-foot-label">{t("Collapse")}</span>
           </Button>
         </div>
       </aside>
@@ -161,26 +195,43 @@ export function AdminShell({ children }: { children: ReactNode }) {
           >
             <Menu aria-hidden="true" />
           </Button>
-          <span className="a-topbar-title">{current ? labelFor(current) : "BSR Admin"}</span>
+          <CommandPalette />
           <span className="a-topbar-spacer" />
           <div className="a-user">
             <span className="a-avatar" aria-hidden="true">
               {initials(admin.display_name)}
             </span>
-            <span className="a-user-name" title={admin.email ?? undefined}>
-              {admin.display_name}
+            <span className="a-user-meta">
+              <span className="a-user-name" title={admin.email ?? undefined}>
+                {admin.display_name}
+              </span>
+              <span className="a-user-role">
+                {admin.role === "admin" ? t("Administrator") : admin.role}
+              </span>
             </span>
+            <ThemeSelector />
+            <Segmented
+              label="Language"
+              value={lang}
+              onChange={setLang}
+              options={[
+                { value: "it", label: "IT" },
+                { value: "en", label: "EN" },
+              ]}
+            />
             <Button
               variant="ghost"
               size="sm"
+              className="a-signout"
               loading={signingOut}
+              aria-label={t("Sign out")}
               onClick={async () => {
                 setSigningOut(true);
                 await signOut();
               }}
             >
               <LogOut aria-hidden="true" />
-              Sign out
+              <span className="a-signout-label">{t("Sign out")}</span>
             </Button>
           </div>
         </header>

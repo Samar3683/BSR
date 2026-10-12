@@ -3,6 +3,7 @@
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type FormEvent, type ReactNode } from "react";
 
+import { useTr } from "../../i18n/provider";
 import { Button } from "./button";
 
 interface DialogProps {
@@ -34,6 +35,7 @@ export function Dialog({
   busy,
   description,
 }: DialogProps) {
+  const tr = useTr();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -90,8 +92,15 @@ export function Dialog({
       }}
     >
       <div className="a-dialog-head">
-        <h2 id={titleId}>{title}</h2>
-        <Button variant="ghost" size="sm" icon aria-label="Close" onClick={onClose} disabled={busy}>
+        <h2 id={titleId}>{tr(title)}</h2>
+        <Button
+          variant="ghost"
+          size="sm"
+          icon
+          aria-label={tr("Close")}
+          onClick={onClose}
+          disabled={busy}
+        >
           <X aria-hidden="true" />
         </Button>
       </div>
@@ -140,6 +149,7 @@ export function ConfirmDialog({
   onClose,
   children,
 }: ConfirmDialogProps) {
+  const tr = useTr();
   return (
     <Dialog
       open={open}
@@ -157,7 +167,7 @@ export function ConfirmDialog({
         </>
       }
     >
-      <div>{message}</div>
+      <div>{tr(message)}</div>
       {children}
       {error ? (
         <div className="a-alert a-alert--error" role="alert">

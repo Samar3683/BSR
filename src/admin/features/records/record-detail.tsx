@@ -1,25 +1,42 @@
 "use client";
 
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Archive, ArchiveRestore, Pencil, RefreshCcw, Route, Trash } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  Link2,
+  Ellipsis,
+  Pencil,
+  RefreshCcw,
+  Route,
+  Trash,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { ContactActions, FieldValue } from "../../components/fields/field-value";
 import { Button, ButtonLink } from "../../components/ui/button";
-import { ConfirmDialog } from "../../components/ui/dialog";
+import { ConfirmDialog, Dialog } from "../../components/ui/dialog";
 import { EmptyState, ErrorState, LoadingState } from "../../components/ui/feedback";
 import { Switch } from "../../components/ui/form";
 import { Empty, PageHeader, Panel, StatusBadge } from "../../components/ui/layout";
+import { MenuButton, type MenuItem } from "../../components/ui/menu";
 import { useToast } from "../../components/ui/toast";
 import { useAdminConfig, useInvalidateData, useRecordNames } from "../../hooks/use-admin-config";
 import { formatDateTime } from "../../lib/datetime";
 import { toAdminError } from "../../lib/errors";
+import type { FormatContext } from "../../lib/fields/format";
+import { groupBySection } from "../../lib/fields/sections";
 import type { EntityKey, EntityRecord, FieldDefinition } from "../../lib/fields/types";
+import { isEmptyValue } from "../../lib/fields/validate";
 import { recordValue } from "../../lib/fields/values";
 import { detailFields, liveFields, retiredFields, type AdminConfig } from "../../services/config";
 import {
+  changeOrderStatus,
   fetchOrderAssignments,
   fetchResourceAssignments,
   fetchStatusHistory,
@@ -34,6 +51,7 @@ import {
   setRecordArchived,
   setResourceAvailable,
   type OrderRow,
+  type OrderStatus,
   type ResourceRow,
 } from "../../services/records";
 import { ActivityPanel } from "../audit/activity-panel";
@@ -54,12 +72,49 @@ export function RecordDetailView({ entity, id }: { entity: EntityKey; id: string
   if (recordQuery.isError) {
     return (
       <div className="a-page">
-        <ErrorState error={recordQuery.error} onRetry={() => recordQuery.refetch()} />
+        <ErrorState
+          error={recordQuery.error}
+          onRetry={() => recordQuery.refetch()}
+          back={{ href: ENTITY_PATHS[entity], label: `Back to ${entity}s` }}
+        />
       </div>
     );
   }
   if (!configQuery.data || !recordQuery.data) return <LoadingState />;
   return <Detail entity={entity} config={configQuery.data} record={recordQuery.data} />;
+}
+
+/** Which archive / delete actions can succeed (the database decides; this avoids dead ends). */
+function lifecycle(entity: EntityKey, record: EntityRecord) {
+  const archived = Boolean(record.archived_at);
+  if (entity !== "order") return { canArchive: !archived, canRestore: archived, canDelete: true };
+  const status = (record as OrderRow).status;
+  return {
+    canArchive: !archived && ["draft", "delivered", "cancelled"].includes(status),
+    canRestore: archived,
+    canDelete: status === "draft",
+  };
+}
+
+type NextStep =
+  { kind: "status"; status: OrderStatus; label: string } | { kind: "assign"; label: string } | null;
+
+/** The one action that moves an order forward from where it is. */
+export function nextStep(order: Pick<OrderRow, "status">, crewed: boolean): NextStep {
+  switch (order.status) {
+    case "draft":
+      return { kind: "status", status: "confirmed", label: "Confirm order" };
+    case "confirmed":
+      return crewed
+        ? { kind: "status", status: "scheduled", label: "Schedule" }
+        : { kind: "assign", label: "Assign driver and vehicle" };
+    case "scheduled":
+      return { kind: "status", status: "in_transit", label: "Start transit" };
+    case "in_transit":
+      return { kind: "status", status: "delivered", label: "Mark delivered" };
+    default:
+      return null;
+  }
 }
 
 function Detail({
@@ -76,17 +131,24 @@ function Detail({
   const invalidate = useInvalidateData();
   const [confirm, setConfirm] = useState<"archive" | "restore" | "delete" | null>(null);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
   const entityConfig = config.entities[entity];
   const singular = entityConfig?.display_name ?? entity;
   const basePath = ENTITY_PATHS[entity];
   const archived = Boolean(record.archived_at);
   const order = entity === "order" ? (record as OrderRow) : null;
+  const rules = lifecycle(entity, record);
 
-  const fields = detailFields(config, entity);
-  const retired = retiredFields(config, entity).filter((def) => {
-    const value = recordValue(def, record);
-    return value !== null && value !== undefined;
+  const assignments = useQuery({
+    queryKey: ["assignments", "order", record.id],
+    queryFn: () => fetchOrderAssignments(record.id),
+    enabled: Boolean(order),
   });
+  const current = assignments.data?.find((a) => !a.released_at);
+
+  const retired = retiredFields(config, entity).filter(
+    (def) => !isEmptyValue(recordValue(def, record)),
+  );
   const relationIds = collectRelationIds([...liveFields(config, entity), ...retired], [record]);
   const names = {
     ...useRecordNames("order", relationIds.order).data,
@@ -94,7 +156,7 @@ function Detail({
     ...useRecordNames("driver", relationIds.driver).data,
     ...useRecordNames("customer", relationIds.customer).data,
   };
-  const ctx = { optionsByField: config.options, relationNames: names };
+  const ctx: FormatContext = { optionsByField: config.options, relationNames: names };
 
   const action = useMutation({
     mutationFn: async (kind: "archive" | "restore" | "delete") => {
@@ -114,11 +176,65 @@ function Detail({
     },
   });
 
+  const step =
+    order && !archived && !assignments.isLoading
+      ? nextStep(order, Boolean(current?.driver_id && current?.vehicle_id))
+      : null;
+  const advance = useMutation({
+    mutationFn: (status: OrderStatus) => changeOrderStatus(record.id, status),
+    onSuccess: async (_, status) => {
+      await invalidate();
+      toast.success(`Status changed to ${STATUS_LABELS[status]}.`);
+    },
+    onError: (error) => toast.error(toAdminError(error).message),
+  });
+
   const contactFields = liveFields(config, entity).filter(
     (f) =>
       (f.field_type === "phone" || f.field_type === "email") &&
       typeof recordValue(f, record) === "string",
   );
+
+  const moreItems: MenuItem[] = [];
+  if (order && !archived) {
+    moreItems.push({
+      label: "Open in Dispatch",
+      icon: <Route aria-hidden="true" />,
+      href: `/admin/dispatch?order=${order.id}`,
+    });
+  }
+  if (rules.canArchive) {
+    moreItems.push({
+      label: "Archive",
+      icon: <Archive aria-hidden="true" />,
+      onSelect: () => setConfirm("archive"),
+    });
+  }
+  if (rules.canRestore) {
+    moreItems.push({
+      label: "Restore",
+      icon: <ArchiveRestore aria-hidden="true" />,
+      onSelect: () => setConfirm("restore"),
+    });
+  }
+  if (rules.canDelete) {
+    moreItems.push({
+      label: "Delete",
+      icon: <Trash aria-hidden="true" />,
+      tone: "danger",
+      onSelect: () => setConfirm("delete"),
+    });
+  }
+  moreItems.push({
+    label: "Copy record ID",
+    icon: <Copy aria-hidden="true" />,
+    onSelect: () => {
+      void navigator.clipboard?.writeText(record.id).then(
+        () => toast.success("Record ID copied."),
+        () => toast.error("The ID could not be copied."),
+      );
+    },
+  });
 
   return (
     <div className="a-page">
@@ -145,67 +261,52 @@ function Detail({
         }
         actions={
           <>
-            {order && !archived ? (
-              <>
-                <Button onClick={() => setStatusOpen(true)}>
+            {step ? (
+              <Button
+                variant="primary"
+                loading={advance.isPending}
+                onClick={() =>
+                  step.kind === "assign" ? setAssignOpen(true) : advance.mutate(step.status)
+                }
+              >
+                {advance.isPending ? null : step.kind === "assign" ? (
+                  <Link2 aria-hidden="true" />
+                ) : (
                   <RefreshCcw aria-hidden="true" />
-                  Change status
-                </Button>
-                <ButtonLink href={`/admin/dispatch?order=${order.id}`}>
-                  <Route aria-hidden="true" />
-                  Dispatch
-                </ButtonLink>
-              </>
+                )}
+                {step.label}
+              </Button>
             ) : null}
             {!archived ? (
-              <ButtonLink href={`${basePath}/${record.id}/edit`} variant="primary">
+              <ButtonLink
+                href={`${basePath}/${record.id}/edit`}
+                variant={step ? "default" : "primary"}
+              >
                 <Pencil aria-hidden="true" />
                 Edit
               </ButtonLink>
             ) : null}
-            {archived ? (
-              <Button onClick={() => setConfirm("restore")}>
-                <ArchiveRestore aria-hidden="true" />
-                Restore
+            {order && !archived ? (
+              <Button onClick={() => setStatusOpen(true)}>
+                <RefreshCcw aria-hidden="true" />
+                Change status
               </Button>
-            ) : (
-              <Button onClick={() => setConfirm("archive")}>
-                <Archive aria-hidden="true" />
-                Archive
-              </Button>
-            )}
-            <Button variant="danger-ghost" onClick={() => setConfirm("delete")}>
-              <Trash aria-hidden="true" />
-              Delete
-            </Button>
+            ) : null}
+            <MenuButton label="More" icon={<Ellipsis aria-hidden="true" />} items={moreItems} />
           </>
         }
       />
 
-      <div className="a-grid a-grid--main-side">
-        <div className="a-stack">
-          <Panel title="Details">
-            {fields.length === 0 ? (
-              <p className="a-muted">
-                No fields are shown on record pages. Configure them in Settings → Fields.
-              </p>
-            ) : (
-              <dl className="a-dl">
-                {fields.map((def) => (
-                  <div key={def.id}>
-                    <dt>{def.label}</dt>
-                    <dd>
-                      {def.binding_key === "customer_id" && order ? (
-                        <CustomerLink id={order.customer_id} name={names[order.customer_id]} />
-                      ) : (
-                        <FieldValue def={def} value={recordValue(def, record)} ctx={ctx} />
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </Panel>
+      <div className="a-detail">
+        <div className="a-detail-main a-stack">
+          <DetailsPanel
+            entity={entity}
+            config={config}
+            record={record}
+            ctx={ctx}
+            order={order}
+            names={names}
+          />
 
           {retired.length ? (
             <Panel title="Values of retired fields">
@@ -239,11 +340,14 @@ function Detail({
           {entity === "customer" ? <CustomerOrdersPanel customerId={record.id} /> : null}
         </div>
 
-        <div className="a-stack">
+        <div className="a-detail-summary a-stack">
           {order ? (
-            <Panel title="Driver and vehicle">
-              <AssignmentEditor orderId={order.id} status={order.status} />
-            </Panel>
+            <CrewPanel
+              order={order}
+              current={current}
+              loading={assignments.isLoading}
+              onAssign={() => setAssignOpen(true)}
+            />
           ) : null}
           {entity === "driver" || entity === "vehicle" ? (
             <AvailabilityPanel entity={entity} record={record as ResourceRow} />
@@ -267,6 +371,9 @@ function Detail({
               </div>
             </Panel>
           ) : null}
+        </div>
+
+        <div className="a-detail-side a-stack">
           <ActivityPanel entityType={entity} entityId={record.id} />
           <Panel title="Record">
             <dl className="a-dl">
@@ -278,23 +385,35 @@ function Detail({
                 <dt>Last updated</dt>
                 <dd>{formatDateTime(record.updated_at)}</dd>
               </div>
-              <div>
-                <dt>ID</dt>
-                <dd className="a-mono a-small">{record.id}</dd>
-              </div>
             </dl>
           </Panel>
         </div>
       </div>
 
       {order ? (
-        <StatusDialog
-          key={order.status}
-          orderId={order.id}
-          status={order.status}
-          open={statusOpen}
-          onClose={() => setStatusOpen(false)}
-        />
+        <>
+          <StatusDialog
+            key={order.status}
+            orderId={order.id}
+            status={order.status}
+            open={statusOpen}
+            onClose={() => setStatusOpen(false)}
+          />
+          <Dialog
+            open={assignOpen}
+            wide
+            title={current ? "Change driver and vehicle" : "Assign driver and vehicle"}
+            onClose={() => setAssignOpen(false)}
+          >
+            {assignOpen ? (
+              <AssignmentEditor
+                orderId={order.id}
+                status={order.status}
+                onDone={() => setAssignOpen(false)}
+              />
+            ) : null}
+          </Dialog>
+        </>
       ) : null}
 
       <ConfirmDialog
@@ -330,6 +449,166 @@ function Detail({
         }}
       />
     </div>
+  );
+}
+
+/**
+ * The record's fields, grouped by section. The field that names the record
+ * (already the page title) and empty values are folded away by default.
+ */
+function DetailsPanel({
+  entity,
+  config,
+  record,
+  ctx,
+  order,
+  names,
+}: {
+  entity: EntityKey;
+  config: AdminConfig;
+  record: EntityRecord;
+  ctx: FormatContext;
+  order: OrderRow | null;
+  names: Record<string, string>;
+}) {
+  const [showEmpty, setShowEmpty] = useState(false);
+  const primary = config.entities[entity]?.primary_display_field;
+  const fields = detailFields(config, entity).filter((def) => def.field_key !== primary);
+  const empty = fields.filter((def) => isEmptyValue(recordValue(def, record)));
+  const shown = showEmpty ? fields : fields.filter((def) => !empty.includes(def));
+  const sections = groupBySection(shown);
+
+  return (
+    <Panel
+      title="Details"
+      actions={
+        empty.length ? (
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setShowEmpty((value) => !value)}
+            aria-expanded={showEmpty}
+          >
+            {showEmpty ? <ChevronUp aria-hidden="true" /> : <ChevronDown aria-hidden="true" />}
+            {showEmpty
+              ? "Hide empty fields"
+              : `Show ${empty.length} empty ${empty.length === 1 ? "field" : "fields"}`}
+          </Button>
+        ) : null
+      }
+    >
+      {fields.length === 0 ? (
+        <p className="a-muted">
+          No fields are shown on record pages. Configure them in Settings → Fields.
+        </p>
+      ) : shown.length === 0 ? (
+        <p className="a-muted">No details filled in yet.</p>
+      ) : (
+        <div className="a-stack" style={{ gap: 14 }}>
+          {sections.map((section) => (
+            <section key={section.name ?? "_"} aria-label={section.name ?? undefined}>
+              {section.name && sections.length > 1 ? (
+                <h3 className="a-section-title">{section.name}</h3>
+              ) : null}
+              <dl className="a-dl">
+                {section.fields.map((def) => (
+                  <div key={def.id}>
+                    <dt>{def.label}</dt>
+                    <dd>
+                      {def.binding_key === "customer_id" && order ? (
+                        <CustomerLink id={order.customer_id} name={names[order.customer_id]} />
+                      ) : (
+                        <FieldValue def={def} value={recordValue(def, record)} ctx={ctx} />
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+          ))}
+        </div>
+      )}
+    </Panel>
+  );
+}
+
+/** Who and what is booked for the order, with the way to change it. */
+function CrewPanel({
+  order,
+  current,
+  loading,
+  onAssign,
+}: {
+  order: OrderRow;
+  current: OrderAssignment | undefined;
+  loading: boolean;
+  onAssign: () => void;
+}) {
+  const dispatchable =
+    ["confirmed", "scheduled", "in_transit"].includes(order.status) && !order.archived_at;
+  return (
+    <Panel
+      title="Driver and vehicle"
+      actions={
+        dispatchable ? (
+          <Button size="sm" onClick={onAssign}>
+            <Link2 aria-hidden="true" />
+            {current ? "Change" : "Assign"}
+          </Button>
+        ) : null
+      }
+    >
+      {loading ? (
+        <LoadingState />
+      ) : (
+        <dl className="a-dl">
+          <div>
+            <dt>Driver</dt>
+            <dd>
+              {current?.driver_id ? (
+                <Link className="a-link" href={`/admin/drivers/${current.driver_id}`}>
+                  {current.driver?.display_name}
+                </Link>
+              ) : (
+                <span className="a-badge a-badge--outline">Not assigned</span>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Vehicle</dt>
+            <dd>
+              {current?.vehicle_id ? (
+                <Link className="a-link" href={`/admin/vehicles/${current.vehicle_id}`}>
+                  {current.vehicle?.display_name}
+                </Link>
+              ) : (
+                <span className="a-badge a-badge--outline">Not assigned</span>
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Window</dt>
+            <dd>
+              {order.pickup_at ? formatDateTime(order.pickup_at) : <Empty>No pickup</Empty>} →{" "}
+              {order.delivery_at ? formatDateTime(order.delivery_at) : <Empty>No delivery</Empty>}
+            </dd>
+          </div>
+          {current?.note ? (
+            <div>
+              <dt>Note</dt>
+              <dd>{current.note}</dd>
+            </div>
+          ) : null}
+        </dl>
+      )}
+      {!dispatchable && !order.archived_at ? (
+        <p className="a-help" style={{ marginTop: 8 }}>
+          {order.status === "draft"
+            ? "Confirm the order to dispatch it."
+            : "Completed and cancelled orders keep their assignment history."}
+        </p>
+      ) : null}
+    </Panel>
   );
 }
 

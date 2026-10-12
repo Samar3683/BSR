@@ -20,10 +20,11 @@ import {
   TextCursorInput,
   Trash,
 } from "lucide-react";
-import { useState, type DragEvent, type ReactNode } from "react";
+import { useState, type DragEvent } from "react";
 
 import { Button } from "../../components/ui/button";
-import { ConfirmDialog } from "../../components/ui/dialog";
+import { FieldControl } from "../../components/fields/field-control";
+import { ConfirmDialog, Dialog } from "../../components/ui/dialog";
 import { ErrorState, LoadingState } from "../../components/ui/feedback";
 import { Checkbox, Segmented } from "../../components/ui/form";
 import { Panel } from "../../components/ui/layout";
@@ -31,10 +32,13 @@ import { useToast } from "../../components/ui/toast";
 import { useAdminConfig, useInvalidateConfig } from "../../hooks/use-admin-config";
 import { toAdminError } from "../../lib/errors";
 import { FIELD_TYPES } from "../../lib/fields/registry";
+import { toFormValue } from "../../lib/fields/values";
+import { groupBySection } from "../../lib/fields/sections";
 import { ENTITY_KEYS, type EntityKey, type FieldDefinition } from "../../lib/fields/types";
 import {
   deleteField,
   fetchFieldUsage,
+  formFields,
   isLive,
   reorderFields,
   setFieldArchived,
@@ -82,6 +86,7 @@ function FieldList({ entity, config }: { entity: EntityKey; config: AdminConfig 
   const [editing, setEditing] = useState<FieldDefinition | "new" | null>(null);
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [showArchived, setShowArchived] = useState(false);
+  const [preview, setPreview] = useState(false);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropId, setDropId] = useState<string | null>(null);
   const [handleId, setHandleId] = useState<string | null>(null);
@@ -207,18 +212,7 @@ function FieldList({ entity, config }: { entity: EntityKey; config: AdminConfig 
           <span className="a-badge a-badge--outline">{FIELD_TYPES[field.field_type].label}</span>
         </div>
         <div className="a-field-caps">
-          <span className="a-icons" aria-label="Shown in">
-            <Flag on={field.show_in_list} label="List" icon={<List />} />
-            <Flag on={field.show_in_detail} label="Record page" icon={<Eye />} />
-            <Flag on={field.show_in_create} label="Create form" icon={<TextCursorInput />} />
-            <Flag on={field.show_in_edit} label="Edit form" icon={<SquarePen />} />
-          </span>
-          <span className="a-icons" aria-label="Behaviour">
-            <Flag on={field.searchable} label="Searchable" icon={<Search />} />
-            <Flag on={field.filterable} label="Filterable" icon={<Funnel />} />
-            <Flag on={field.sortable} label="Sortable" icon={<ArrowUpDown />} />
-            <Flag on={field.reportable} label="Reportable" icon={<ChartColumn />} />
-          </span>
+          <FieldUsage field={field} />
         </div>
         <div className="a-row" style={{ flexWrap: "nowrap", gap: 2 }}>
           {!field.archived_at ? (
@@ -332,6 +326,10 @@ function FieldList({ entity, config }: { entity: EntityKey; config: AdminConfig 
               checked={showArchived}
               onChange={setShowArchived}
             />
+            <Button size="sm" onClick={() => setPreview(true)}>
+              <Eye aria-hidden="true" />
+              Preview form
+            </Button>
             <Button variant="primary" size="sm" onClick={() => setEditing("new")}>
               <Plus aria-hidden="true" />
               New field
@@ -339,6 +337,33 @@ function FieldList({ entity, config }: { entity: EntityKey; config: AdminConfig 
           </>
         }
       >
+        <ul className="a-legend" aria-label="Legend">
+          <li>
+            <List aria-hidden="true" /> Shown in the list
+          </li>
+          <li>
+            <Eye aria-hidden="true" /> Record page
+          </li>
+          <li>
+            <TextCursorInput aria-hidden="true" /> Create form
+          </li>
+          <li>
+            <SquarePen aria-hidden="true" /> Edit form
+          </li>
+          <li>
+            <Search aria-hidden="true" /> Searchable
+          </li>
+          <li>
+            <Funnel aria-hidden="true" /> Filterable
+          </li>
+          <li>
+            <ArrowUpDown aria-hidden="true" /> Sortable
+          </li>
+          <li>
+            <ChartColumn aria-hidden="true" /> Reportable
+          </li>
+          <li className="a-help">Dimmed icon = off</li>
+        </ul>
         <div
           className="a-fields"
           role="list"
@@ -353,6 +378,15 @@ function FieldList({ entity, config }: { entity: EntityKey; config: AdminConfig 
           Archived fields keep their values on existing records and leave every form.
         </p>
       </Panel>
+
+      <Dialog
+        open={preview}
+        wide
+        title={`${config.entities[entity]?.display_name} form preview`}
+        onClose={() => setPreview(false)}
+      >
+        {preview ? <FormPreview entity={entity} config={config} /> : null}
+      </Dialog>
 
       {editing ? (
         <FieldEditorDialog
@@ -393,13 +427,67 @@ function FieldList({ entity, config }: { entity: EntityKey; config: AdminConfig 
   );
 }
 
-function Flag({ on, label, icon }: { on: boolean; label: string; icon: ReactNode }) {
+
+/** The create form as people will see it (inputs are inert). */
+function FormPreview({ entity, config }: { entity: EntityKey; config: AdminConfig }) {
+  const fields = formFields(config, entity, "create");
+  if (!fields.length) return <p className="a-muted">No fields are shown in the create form.</p>;
   return (
-    <span data-on={on} title={`${label}: ${on ? "yes" : "no"}`}>
-      {icon}
-      <span className="a-sr-only">
-        {label}: {on ? "yes" : "no"}
-      </span>
-    </span>
+    <fieldset disabled className="a-form" style={{ border: 0, padding: 0, margin: 0 }}>
+      {groupBySection(fields).map((section) => (
+        <div key={section.name ?? "_"} className="a-form-section">
+          {section.name ? <h3 className="a-section-title">{section.name}</h3> : null}
+          <div className="a-form-grid">
+            {section.fields.map((def) => (
+              <FieldControl
+                key={def.id}
+                def={def}
+                value={toFormValue(def, def.default_value)}
+                options={config.options[def.id]}
+                onChange={() => undefined}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </fieldset>
+  );
+}
+
+/** Where a field appears and what it can do, in words. */
+function FieldUsage({ field }: { field: FieldDefinition }) {
+  const groups: { title: string; items: string[] }[] = [
+    {
+      title: "Display",
+      items: [field.show_in_list && "List", field.show_in_detail && "Record page"].filter(
+        Boolean,
+      ) as string[],
+    },
+    {
+      title: "Forms",
+      items: [field.show_in_create && "Create", field.show_in_edit && "Edit"].filter(
+        Boolean,
+      ) as string[],
+    },
+    {
+      title: "Discovery",
+      items: [
+        field.searchable && "Search",
+        field.filterable && "Filter",
+        field.sortable && "Sort",
+      ].filter(Boolean) as string[],
+    },
+    { title: "Reporting", items: field.reportable ? ["Reports"] : [] },
+  ];
+  return (
+    <div className="a-field-usage">
+      {groups
+        .filter((g) => g.items.length)
+        .map((g) => (
+          <span key={g.title}>
+            <b>{g.title}:</b> {g.items.join(", ")}
+          </span>
+        ))}
+    </div>
   );
 }

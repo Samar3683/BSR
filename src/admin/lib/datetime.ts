@@ -106,18 +106,6 @@ export function endOfMonth(date: string): string {
   return addDays(addMonths(startOfMonth(date), 1), -1);
 }
 
-export function daysBetween(from: string, to: string): number {
-  const a = Date.parse(`${from}T00:00:00Z`);
-  const b = Date.parse(`${to}T00:00:00Z`);
-  return Math.round((b - a) / 86_400_000);
-}
-
-const dateFormatter = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: BUSINESS_TIME_ZONE,
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-});
 const dateTimeFormatter = new Intl.DateTimeFormat(LOCALE, {
   timeZone: BUSINESS_TIME_ZONE,
   day: "2-digit",
@@ -151,13 +139,6 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   if (!value) return "";
   const date = typeof value === "string" ? new Date(value) : value;
   return Number.isNaN(date.getTime()) ? "" : dateTimeFormatter.format(date);
-}
-
-/** 12/10/2026 — for instants (shown in the business zone). */
-export function formatInstantDate(value: string | Date | null | undefined): string {
-  if (!value) return "";
-  const date = typeof value === "string" ? new Date(value) : value;
-  return Number.isNaN(date.getTime()) ? "" : dateFormatter.format(date);
 }
 
 /** 14:30 */

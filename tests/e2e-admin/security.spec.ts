@@ -156,7 +156,7 @@ test.describe("security", () => {
     const since = Date.now();
     await login(page, USERS.admin, "/admin/settings/administrators");
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Name").fill("Invited Colleague");
+    await page.getByLabel(/^Name/).fill("Invited Colleague");
     await page.getByRole("button", { name: "Send invitation" }).click();
     await expect(page.getByText(`Invitation sent to ${email}.`)).toBeVisible();
     await expect(page.getByRole("row", { name: /Invited Colleague/ })).toContainText(email);

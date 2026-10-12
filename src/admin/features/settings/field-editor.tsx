@@ -94,6 +94,7 @@ type Draft = Required<
   description: string;
   help_text: string;
   placeholder: string;
+  section: string;
   validation_rules: ValidationRules;
   relation_entity: EntityKey | null;
   default_value: FormValue;
@@ -118,6 +119,7 @@ function draftFrom(field: FieldDefinition | null): Draft {
     description: field?.description ?? "",
     help_text: field?.help_text ?? "",
     placeholder: field?.placeholder ?? "",
+    section: field?.section ?? "",
     validation_rules: field?.validation_rules ?? {},
     relation_entity: field?.relation_entity ?? null,
     default_value: field ? toFormValue(field, field.default_value) : null,
@@ -166,6 +168,7 @@ export function FieldEditorDialog({
     required: false,
     help_text: null,
     placeholder: null,
+    section: null,
     binding_key: null,
     read_only: false,
   } as FieldDefinition;
@@ -177,6 +180,7 @@ export function FieldEditorDialog({
         description: draft.description.trim() || null,
         help_text: draft.help_text.trim() || null,
         placeholder: draft.placeholder.trim() || null,
+        section: draft.section.trim() || null,
         required: draft.required,
         active: draft.active,
         show_in_list: draft.show_in_list,
@@ -406,6 +410,27 @@ export function FieldEditorDialog({
               onChange={(e) => set("help_text", e.target.value)}
             />
           </Field>
+          <>
+            <Field label="Section" help="Groups fields under a heading in forms and record pages.">
+              <Input
+                list="field-sections"
+                value={draft.section}
+                maxLength={60}
+                onChange={(e) => set("section", e.target.value)}
+              />
+            </Field>
+            <datalist id="field-sections">
+              {[
+                ...new Set(
+                  config.fields[entity]
+                    .map((f) => f.section)
+                    .filter((v): v is string => Boolean(v)),
+                ),
+              ].map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </>
           <Field label="Placeholder">
             <Input
               value={draft.placeholder}

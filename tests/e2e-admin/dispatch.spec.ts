@@ -73,9 +73,14 @@ test("dispatch: create, pair, assign, detect conflicts, unassign, change status"
 
   // Order + assignment: the paired vehicle is suggested with the driver.
   const first = await createOrder(page, customer, day, "08:00", "14:00");
-  const assignment = page.locator("section", {
-    has: page.getByRole("heading", { name: "Driver and vehicle" }),
-  });
+  // On the order page the crew editor opens in a dialog.
+  const openAssignment = () =>
+    page
+      .getByRole("button", { name: /^(Assign( driver and vehicle)?|Change)$/ })
+      .first()
+      .click();
+  await openAssignment();
+  const assignment = page.getByRole("dialog", { name: /driver and vehicle/i });
   await assignment.getByRole("radiogroup", { name: "Driver" }).getByText(driver).click();
   await expect(
     assignment
@@ -112,6 +117,7 @@ test("dispatch: create, pair, assign, detect conflicts, unassign, change status"
 
   // Unassign the first order: history is kept.
   await page.goto(firstUrl);
+  await openAssignment();
   await assignment.getByRole("button", { name: "Unassign" }).click();
   await page
     .getByRole("dialog", { name: "Unassign driver and vehicle?" })
@@ -125,6 +131,7 @@ test("dispatch: create, pair, assign, detect conflicts, unassign, change status"
 
   // Now the second order can take the driver.
   await page.goto(secondUrl);
+  await openAssignment();
   await assignment.getByRole("radiogroup", { name: "Driver" }).getByText(driver).click();
   await assignment.getByRole("radiogroup", { name: "Vehicle" }).getByText(plate2).click();
   await assignment.getByRole("button", { name: "Assign", exact: true }).click();

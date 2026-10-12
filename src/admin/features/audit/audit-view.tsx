@@ -21,7 +21,7 @@ import {
 import { ENTITY_PATHS } from "../../services/records";
 import type { EntityKey } from "../../lib/fields/types";
 import { useUrlState } from "../records/url-state";
-import { AuditChanges, describeChange } from "./audit-diff";
+import { AuditChanges, auditSentence, useAuditNames } from "./audit-diff";
 
 const PAGE_SIZE = 50;
 
@@ -83,6 +83,7 @@ export function AuditView() {
     placeholderData: keepPreviousData,
   });
   const scoped = query.entityId || query.orderId;
+  const names = useAuditNames(log.data?.rows ?? []);
 
   return (
     <div className="a-page">
@@ -198,20 +199,23 @@ export function AuditView() {
                     <th scope="col">Action</th>
                     <th scope="col">Entity</th>
                     <th scope="col">Record</th>
-                    <th scope="col">Changed</th>
+                    <th scope="col">What happened</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {log.data.rows.map((entry) => {
+                  {log.data.rows.map((entry, index, rows) => {
                     const open = expanded === entry.id;
                     const href = recordHref(entry);
-                    const changed = entry.changed_fields
-                      .slice(0, 4)
-                      .map((key) => describeChange(entry, key, config).label)
-                      .join(", ");
+                    // Entries of one database transaction are one action: shown together.
+                    const previous = rows[index - 1];
+                    const sameAction =
+                      previous !== undefined &&
+                      entry.transaction_id !== null &&
+                      previous.transaction_id === entry.transaction_id &&
+                      previous.actor_id === entry.actor_id;
                     return (
                       <Fragment key={entry.id}>
-                        <tr>
+                        <tr data-follows={sameAction || undefined}>
                           <td style={{ width: 40 }}>
                             <Button
                               size="sm"
@@ -228,8 +232,14 @@ export function AuditView() {
                               )}
                             </Button>
                           </td>
-                          <td className="a-nowrap">{formatDateTime(entry.occurred_at)}</td>
-                          <td>{entry.actor_label}</td>
+                          <td className="a-nowrap">
+                            {sameAction ? (
+                              <span className="a-muted a-small">same action</span>
+                            ) : (
+                              formatDateTime(entry.occurred_at)
+                            )}
+                          </td>
+                          <td>{sameAction ? "" : entry.actor_label}</td>
                           <td>
                             <span
                               className={`a-badge${entry.action === "delete" ? "a-badge--red" : ""}`}
@@ -247,12 +257,7 @@ export function AuditView() {
                               (entry.entity_label ?? entry.entity_id)
                             )}
                           </td>
-                          <td className="a-muted">
-                            {changed}
-                            {entry.changed_fields.length > 4
-                              ? ` +${entry.changed_fields.length - 4}`
-                              : ""}
-                          </td>
+                          <td>{auditSentence(entry, config, names)}</td>
                         </tr>
                         {open ? (
                           <tr>
@@ -269,7 +274,7 @@ export function AuditView() {
                                     ? ` · note: “${entry.context.note}”`
                                     : ""}
                                 </span>
-                                <AuditChanges entry={entry} config={config} />
+                                <AuditChanges entry={entry} config={config} names={names} />
                               </div>
                             </td>
                           </tr>

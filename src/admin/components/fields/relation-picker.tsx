@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { useRecordNames } from "../../hooks/use-admin-config";
@@ -15,6 +15,8 @@ interface RelationPickerProps {
   onChange: (id: string | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** Adds a "Create new…" entry to the list. */
+  onCreate?: (term: string) => void;
   id?: string;
   "aria-describedby"?: string;
   "aria-invalid"?: boolean;
@@ -29,6 +31,7 @@ export function RelationPicker({
   onChange,
   placeholder = "Search…",
   disabled,
+  onCreate,
   id,
   ...aria
 }: RelationPickerProps) {
@@ -149,6 +152,22 @@ export function RelationPicker({
               {item.id === value ? <span className="a-small">Selected</span> : null}
             </li>
           ))}
+          {onCreate ? (
+            <li
+              role="option"
+              aria-selected={false}
+              className="a-combo-item a-combo-create"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setOpen(false);
+                onCreate(term.trim());
+                setTerm("");
+              }}
+            >
+              <Plus size={14} aria-hidden="true" />
+              <span>{term.trim() ? `Create “${term.trim()}”…` : "Create new…"}</span>
+            </li>
+          ) : null}
         </ul>
       ) : null}
     </div>

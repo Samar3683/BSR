@@ -20,6 +20,7 @@ function def(
     field_type,
     description: null,
     help_text: null,
+    section: null,
     placeholder: null,
     required: false,
     active: true,

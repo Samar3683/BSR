@@ -225,14 +225,6 @@ export function isSelectType(type: FieldType): boolean {
   return type === "single_select" || type === "multi_select";
 }
 
-export function isNumericType(type: FieldType): boolean {
-  return type === "integer" || type === "decimal" || type === "currency" || type === "percentage";
-}
-
-export function isFileType(type: FieldType): boolean {
-  return type === "image" || type === "file";
-}
-
 /** Field types whose value can name a record (mirrors validate_entity_config). */
 export const PRIMARY_DISPLAY_TYPES: readonly FieldType[] = [
   "short_text",

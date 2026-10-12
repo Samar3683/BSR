@@ -19,7 +19,7 @@ test("an administrator configures a field and the whole panel follows it", async
   await login(page, USERS.admin, "/admin/settings/fields");
 
   // 1–6. Settings → Vehicles → new single-select field with options and behaviour.
-  await page.getByRole("button", { name: "Vehicles" }).click();
+  await page.getByRole("button", { name: "Vehicles", exact: true }).click();
   await expect(page).toHaveURL(/entity=vehicle/);
   await page.getByRole("button", { name: "New field" }).click();
   const dialog = page.getByRole("dialog", { name: /New field/ });

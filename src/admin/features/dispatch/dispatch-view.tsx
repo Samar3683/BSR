@@ -10,6 +10,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../components/ui/feedba
 import { Checkbox, Input, Select } from "../../components/ui/form";
 import { Empty, PageHeader, Panel, StatusBadge } from "../../components/ui/layout";
 import { useAdminConfig, useRecordNames } from "../../hooks/use-admin-config";
+import { useT } from "../../i18n/provider";
 import { addDays, businessToInstant, businessToday, formatDateTime } from "../../lib/datetime";
 import { recordValue } from "../../lib/fields/values";
 import { detailFields } from "../../services/config";
@@ -17,6 +18,7 @@ import { getRecord, listRecords, type OrderRow, type RecordFilter } from "../../
 import { useUrlState } from "../records/url-state";
 import { AssignmentEditor } from "./assignment-editor";
 import { PairingsBoard } from "./pairings";
+import { DispatchTimeline } from "./timeline";
 
 type Range = "today" | "7d" | "30d" | "all";
 
@@ -36,7 +38,8 @@ function rangeFilter(range: Range): RecordFilter | null {
 
 export function DispatchView() {
   const { get, update } = useUrlState();
-  const tab = get("tab") === "pairings" ? "pairings" : "queue";
+  const t = useT();
+  const tab = get("tab") === "pairings" || get("tab") === "timeline" ? get("tab") : "queue";
   return (
     <div className="a-page">
       <PageHeader
@@ -51,21 +54,30 @@ export function DispatchView() {
           role="tab"
           className="a-tab"
           aria-selected={tab === "queue"}
-          onClick={() => update({ tab: null })}
+          onClick={() => update({ tab: null, day: null, lanes: null })}
         >
-          Order queue
+          {t("Order queue")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          className="a-tab"
+          aria-selected={tab === "timeline"}
+          onClick={() => update({ tab: "timeline", order: null })}
+        >
+          {t("Day timeline")}
         </button>
         <button
           type="button"
           role="tab"
           className="a-tab"
           aria-selected={tab === "pairings"}
-          onClick={() => update({ tab: "pairings", order: null })}
+          onClick={() => update({ tab: "pairings", order: null, day: null, lanes: null })}
         >
-          Driver–vehicle pairings
+          {t("Driver–vehicle pairings")}
         </button>
       </div>
-      {tab === "queue" ? <Queue /> : <PairingsBoard />}
+      {tab === "queue" ? <Queue /> : tab === "timeline" ? <DispatchTimeline /> : <PairingsBoard />}
     </div>
   );
 }

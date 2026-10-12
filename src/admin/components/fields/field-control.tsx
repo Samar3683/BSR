@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleAlert } from "lucide-react";
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import type {
   AddressPart,
@@ -13,6 +13,7 @@ import type {
 import type { DateTimeParts, FormValue } from "../../lib/fields/values";
 import { Checkbox, Field, Input, Select, Textarea } from "../ui/form";
 import { FileInput } from "./file-input";
+import { QuickCreateDialog } from "./quick-create";
 import { RelationPicker } from "./relation-picker";
 
 const ADDRESS_LABELS: Record<AddressPart, string> = {
@@ -169,6 +170,7 @@ export function FieldControl({
               />
               <Input
                 type="time"
+                step={900}
                 aria-label={`${def.label} time`}
                 value={parts.time}
                 onChange={(e) => onChange({ ...parts, time: e.target.value })}
@@ -269,7 +271,7 @@ export function FieldControl({
     case "relation":
       return (
         <Field {...common}>
-          <RelationPicker
+          <RelationControl
             entity={def.relation_entity!}
             value={(value as string) || null}
             onChange={(id) => onChange(id ?? "")}
@@ -278,37 +280,16 @@ export function FieldControl({
           />
         </Field>
       );
-    case "address": {
-      const address = (value as AddressValue) ?? {};
-      const required = rules.required_parts ?? ["line1", "city"];
+    case "address":
       return (
-        <Composite {...common}>
-          {(ids) => (
-            <div
-              className="a-form-grid"
-              role="group"
-              aria-labelledby={ids.label}
-              aria-describedby={ids.describedBy}
-              style={{ gap: "8px 12px" }}
-            >
-              {(Object.keys(ADDRESS_LABELS) as AddressPart[]).map((part, index) => (
-                <Input
-                  key={part}
-                  id={index === 0 ? ids.control : undefined}
-                  aria-label={`${def.label}: ${ADDRESS_LABELS[part]}${required.includes(part) ? " (required)" : ""}`}
-                  placeholder={`${ADDRESS_LABELS[part]}${required.includes(part) ? " *" : ""}`}
-                  value={address[part] ?? ""}
-                  onChange={(e) => onChange({ ...address, [part]: e.target.value })}
-                  disabled={disabled}
-                  aria-invalid={error ? true : undefined}
-                  autoComplete="off"
-                />
-              ))}
-            </div>
-          )}
-        </Composite>
+        <AddressControl
+          {...common}
+          def={def}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+        />
       );
-    }
     case "image":
     case "file":
       return (
@@ -383,3 +364,133 @@ function Composite({
     </div>
   );
 }
+
+/** Relation picker with a "Create new…" dialog for the entity. */
+function RelationControl({
+  entity,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+  ...aria
+}: {
+  entity: NonNullable<FieldDefinition["relation_entity"]>;
+  value: string | null;
+  onChange: (id: string | null) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}) {
+  const [creating, setCreating] = useState<string | null>(null);
+  return (
+    <>
+      <RelationPicker
+        entity={entity}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        disabled={disabled}
+        onCreate={entity === "customer" ? (term) => setCreating(term) : undefined}
+        {...aria}
+      />
+      {creating !== null ? (
+        <QuickCreateDialog
+          entity={entity}
+          term={creating}
+          onClose={() => setCreating(null)}
+          onCreated={(id) => {
+            setCreating(null);
+            onChange(id);
+          }}
+        />
+      ) : null}
+    </>
+  );
+}
+
+const PRIMARY_PARTS: AddressPart[] = ["line1", "postal_code", "city"];
+const MORE_PARTS: AddressPart[] = ["line2", "province", "country"];
+
+/** Street, postcode and city up front; the rest behind "More". */
+function AddressControl({
+  def,
+  value,
+  onChange,
+  error,
+  disabled,
+  ...common
+}: {
+  def: FieldDefinition;
+  value: FormValue;
+  onChange: (value: FormValue) => void;
+  error?: string;
+  disabled?: boolean;
+  label: string;
+  help?: string;
+  required?: boolean;
+  wide?: boolean;
+}) {
+  const address = (value as AddressValue) ?? {};
+  const required = def.validation_rules?.required_parts ?? ["line1", "city"];
+  const hasMore = MORE_PARTS.some((part) => {
+    if (part === "country" && address.country === DEFAULT_COUNTRY) return false;
+    return Boolean(address[part]);
+  });
+  const [expanded, setExpanded] = useState(false);
+  const showMore = expanded || hasMore || MORE_PARTS.some((p) => required.includes(p));
+  const parts = showMore ? [...PRIMARY_PARTS, ...MORE_PARTS] : PRIMARY_PARTS;
+  return (
+    <Composite {...common} error={error}>
+      {(ids) => (
+        <div
+          className="a-address-grid"
+          role="group"
+          aria-labelledby={ids.label}
+          aria-describedby={ids.describedBy}
+        >
+          {parts.map((part, index) => (
+            <label
+              key={part}
+              className={[
+                "a-address-field",
+                (part === "line1" || part === "line2") && "a-address-wide",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <span>
+                {ADDRESS_LABELS[part]}
+                {required.includes(part) ? (
+                  <span className="a-required" aria-hidden="true">
+                    {" "}
+                    *
+                  </span>
+                ) : null}
+              </span>
+              <Input
+                id={index === 0 ? ids.control : undefined}
+                aria-label={`${def.label}: ${ADDRESS_LABELS[part]}${required.includes(part) ? " (required)" : ""}`}
+                value={address[part] ?? ""}
+                onChange={(e) => onChange({ ...address, [part]: e.target.value })}
+                disabled={disabled}
+                aria-invalid={error ? true : undefined}
+                autoComplete="off"
+              />
+            </label>
+          ))}
+          {!showMore ? (
+            <button
+              type="button"
+              className="a-cal-more a-address-more"
+              onClick={() => setExpanded(true)}
+            >
+              More (additional line, province, country)
+            </button>
+          ) : null}
+        </div>
+      )}
+    </Composite>
+  );
+}
+
+/** Pre-filled in new address fields; dropped again when nothing else is typed. */
+export const DEFAULT_COUNTRY = "Italia";

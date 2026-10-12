@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTr } from "../../i18n/provider";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 export type ButtonVariant = "default" | "primary" | "danger" | "danger-ghost" | "ghost";
@@ -45,6 +46,7 @@ export function Button({
   type,
   ...rest
 }: ButtonProps) {
+  const tr = useTr();
   return (
     <button
       type={type ?? "button"}
@@ -54,7 +56,7 @@ export function Button({
       {...rest}
     >
       {loading ? <span className="a-spinner" aria-hidden="true" /> : null}
-      {children}
+      {tr(children)}
     </button>
   );
 }

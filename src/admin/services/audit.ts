@@ -14,6 +14,8 @@ export interface AuditEntry {
   after_state: Record<string, unknown> | null;
   changed_fields: string[];
   context: Record<string, unknown>;
+  /** Entries written by the same database transaction belong to one action. */
+  transaction_id: number | null;
 }
 
 export interface AuditQuery {
@@ -41,6 +43,7 @@ export const AUDIT_ENTITY_LABELS: Record<string, string> = {
   field_option: "Field option",
   entity_config: "Entity settings",
   admin_profile: "Administrator",
+  dispatch_requirement: "Dispatch rule",
 };
 
 export const AUDIT_ACTION_LABELS: Record<string, string> = {

@@ -30,6 +30,7 @@ import {
   type CalendarFilters,
 } from "../../services/operations";
 import { useUrlState } from "../records/url-state";
+import { WeekGrid } from "./week-grid";
 
 type View = "month" | "week" | "agenda";
 type Group = "none" | "driver" | "vehicle";
@@ -165,11 +166,11 @@ export function CalendarView() {
             />
             {view === "week" ? (
               <Segmented
-                label="Group week by"
+                label="Week layout"
                 value={group}
                 onChange={(g) => update({ group: g === "none" ? null : g })}
                 options={[
-                  { value: "none", label: "All" },
+                  { value: "none", label: "By hour" },
                   { value: "driver", label: "By driver" },
                   { value: "vehicle", label: "By vehicle" },
                 ]}
@@ -257,7 +258,11 @@ export function CalendarView() {
             </div>
           </div>
         ) : view === "week" ? (
-          <WeekLanes days={days} events={events} group={group} today={today} />
+          group === "none" ? (
+            <WeekGrid days={days} events={events} today={today} />
+          ) : (
+            <WeekLanes days={days} events={events} group={group} today={today} />
+          )
         ) : (
           <Agenda days={days} events={events} />
         )}
@@ -288,11 +293,10 @@ function WeekLanes({
 }: {
   days: string[];
   events: CalendarEvent[];
-  group: Group;
+  group: Exclude<Group, "none">;
   today: string;
 }) {
   const lanes = useMemo(() => {
-    if (group === "none") return [{ key: "all", name: "All orders", events }];
     const map = new Map<string, { key: string; name: string; events: CalendarEvent[] }>();
     for (const event of events) {
       const id = group === "driver" ? event.driver_id : event.vehicle_id;
@@ -319,7 +323,7 @@ function WeekLanes({
       <div className="a-lanes" role="table" aria-label="Week by resource">
         <div className="a-lane-row a-lane-row--head" role="row">
           <div role="columnheader">
-            {group === "driver" ? "Driver" : group === "vehicle" ? "Vehicle" : "Orders"}
+            {group === "driver" ? "Driver" : "Vehicle"}
           </div>
           {days.map((day) => (
             <div

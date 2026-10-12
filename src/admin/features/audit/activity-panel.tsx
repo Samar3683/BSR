@@ -7,8 +7,8 @@ import { ErrorState, LoadingState } from "../../components/ui/feedback";
 import { Panel } from "../../components/ui/layout";
 import { useAdminConfig } from "../../hooks/use-admin-config";
 import { formatDateTime, formatRelative } from "../../lib/datetime";
-import { AUDIT_ACTION_LABELS, AUDIT_ENTITY_LABELS, fetchAuditLog } from "../../services/audit";
-import { describeChange } from "./audit-diff";
+import { fetchAuditLog } from "../../services/audit";
+import { auditSentence, useAuditNames } from "./audit-diff";
 
 /** Recent audit entries about one record (orders include their assignments). */
 export function ActivityPanel({ entityType, entityId }: { entityType: string; entityId: string }) {
@@ -22,6 +22,7 @@ export function ActivityPanel({ entityType, entityId }: { entityType: string; en
           : { entityType, entityId, limit: 12 },
       ),
   });
+  const names = useAuditNames(query.data?.rows ?? []);
   const auditHref =
     entityType === "order"
       ? `/admin/audit?order=${entityId}`
@@ -45,10 +46,6 @@ export function ActivityPanel({ entityType, entityId }: { entityType: string; en
       ) : (
         <ol className="a-timeline">
           {query.data.rows.map((entry) => {
-            const summary = entry.changed_fields
-              .slice(0, 3)
-              .map((key) => describeChange(entry, key, config).label)
-              .join(", ");
             return (
               <li
                 key={entry.id}
@@ -56,18 +53,7 @@ export function ActivityPanel({ entityType, entityId }: { entityType: string; en
                   entry.action === "delete" || entry.action === "archive" ? "red" : "green"
                 }
               >
-                <span>
-                  <strong>{AUDIT_ACTION_LABELS[entry.action] ?? entry.action}</strong>
-                  {entry.entity_type !== entityType ? (
-                    <span className="a-muted">
-                      {" "}
-                      · {AUDIT_ENTITY_LABELS[entry.entity_type] ?? entry.entity_type}
-                    </span>
-                  ) : null}
-                  {summary && entry.action === "update" ? (
-                    <span className="a-muted"> · {summary}</span>
-                  ) : null}
-                </span>
+                <span>{auditSentence(entry, config, names)}</span>
                 <span className="a-small a-muted" title={formatDateTime(entry.occurred_at)}>
                   {entry.actor_label} · {formatRelative(entry.occurred_at)}
                 </span>

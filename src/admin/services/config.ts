@@ -115,6 +115,7 @@ export type FieldInput = Partial<
     | "label"
     | "field_type"
     | "description"
+    | "section"
     | "help_text"
     | "placeholder"
     | "required"

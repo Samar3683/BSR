@@ -81,19 +81,32 @@ function EntityCard({
     <Panel
       title={current.plural_display_name}
       footer={
-        <Button
-          variant="primary"
-          size="sm"
-          disabled={!dirty || !displayName.trim() || !plural.trim()}
-          loading={save.isPending}
-          onClick={() => {
-            setErrors({});
-            save.mutate();
-          }}
-        >
-          {save.isPending ? null : <Save aria-hidden="true" />}
-          Save
-        </Button>
+        <>
+          <span className="a-saved-state" role="status" style={{ marginRight: "auto" }}>
+            {save.isPending
+              ? "Saving…"
+              : save.isError
+                ? "Save failed"
+                : dirty
+                  ? "Unsaved changes"
+                  : save.isSuccess
+                    ? "Saved"
+                    : "No unsaved changes"}
+          </span>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!dirty || !displayName.trim() || !plural.trim()}
+            loading={save.isPending}
+            onClick={() => {
+              setErrors({});
+              save.mutate();
+            }}
+          >
+            {save.isPending ? null : <Save aria-hidden="true" />}
+            Save
+          </Button>
+        </>
       }
     >
       <div className="a-form">

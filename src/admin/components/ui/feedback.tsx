@@ -3,8 +3,9 @@
 import { CircleAlert, CircleCheck, Inbox, RefreshCw, ShieldAlert, WifiOff } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { useTr } from "../../i18n/provider";
 import { toAdminError } from "../../lib/errors";
-import { Button } from "./button";
+import { Button, ButtonLink } from "./button";
 
 export function EmptyState({
   title,
@@ -17,21 +18,23 @@ export function EmptyState({
   icon?: ReactNode;
   actions?: ReactNode;
 }) {
+  const tr = useTr();
   return (
     <div className="a-empty">
       {icon ?? <Inbox aria-hidden="true" />}
-      <h3>{title}</h3>
-      {message ? <p>{message}</p> : null}
+      <h3>{tr(title)}</h3>
+      {message ? <p>{tr(message)}</p> : null}
       {actions ? <div className="a-actions">{actions}</div> : null}
     </div>
   );
 }
 
 export function LoadingState({ label = "Loading…" }: { label?: string }) {
+  const tr = useTr();
   return (
     <div className="a-loading" role="status">
       <span className="a-spinner" aria-hidden="true" />
-      {label}
+      {tr(label)}
     </div>
   );
 }
@@ -64,19 +67,43 @@ export function ErrorState({
   error,
   onRetry,
   title,
+  back,
 }: {
   error: unknown;
   onRetry?: () => void;
   title?: string;
+  /** Where to go instead when the record is missing or off limits. */
+  back?: { href: string; label: string };
 }) {
+  const tr = useTr();
   const mapped = toAdminError(error);
   const Icon =
     mapped.kind === "network" ? WifiOff : mapped.kind === "forbidden" ? ShieldAlert : CircleAlert;
   return (
     <div className="a-empty" role="alert">
       <Icon aria-hidden="true" />
-      <h3>{title ?? (mapped.kind === "not_found" ? "Not found" : "Could not load this")}</h3>
-      <p>{mapped.message}</p>
+      <h3>
+        {tr(
+          title ??
+            (mapped.kind === "not_found"
+              ? "This record is unavailable"
+              : mapped.kind === "forbidden"
+                ? "You do not have access"
+                : "Could not load this"),
+        )}
+      </h3>
+      <p>
+        {mapped.kind === "not_found"
+          ? tr("It could not be found or is no longer available.")
+          : tr(mapped.message)}
+      </p>
+      {back ? (
+        <div className="a-actions">
+          <ButtonLink href={back.href} variant="primary">
+            {tr(back.label)}
+          </ButtonLink>
+        </div>
+      ) : null}
       {onRetry && mapped.kind !== "not_found" && mapped.kind !== "forbidden" ? (
         <div className="a-actions">
           <Button onClick={onRetry}>
