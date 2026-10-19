@@ -24,23 +24,66 @@ export async function sendMail(mail: Mail): Promise<void> {
 export function recoveryMail(to: string, link: string): Mail {
   return {
     to,
-    subject: "Reset your BSR Trasporti admin password",
-    html: `<h2>BSR Trasporti — password reset</h2>
-<p>We received a request to reset the password of your admin account.</p>
-<p><a href="${escapeHtml(link)}">Choose a new password</a></p>
-<p>The link works once and expires in 1 hour. If you did not request this, you can ignore this email; your password stays unchanged.</p>`,
-    text: `BSR Trasporti — password reset\n\nChoose a new password: ${link}\n\nThe link works once and expires in 1 hour. If you did not request this, ignore this email.`,
+    subject: "Reimposta la password del pannello BSR Trasporti",
+    html: `<h2>BSR Trasporti — reimpostazione della password</h2>
+<p>Abbiamo ricevuto una richiesta di reimpostazione della password del tuo account amministratore.</p>
+<p><a href="${escapeHtml(link)}">Scegli una nuova password</a></p>
+<p>Il link funziona una sola volta e scade tra 1 ora. Se non l'hai richiesto, puoi ignorare questa email: la tua password resta invariata.</p>`,
+    text: `BSR Trasporti — reimpostazione della password\n\nScegli una nuova password: ${link}\n\nIl link funziona una sola volta e scade tra 1 ora. Se non l'hai richiesto, ignora questa email.`,
   };
 }
 
 export function inviteMail(to: string, link: string): Mail {
   return {
     to,
-    subject: "Your BSR Trasporti admin access",
-    html: `<h2>BSR Trasporti — admin access</h2>
-<p>You have been invited to the BSR Trasporti operations panel.</p>
-<p><a href="${escapeHtml(link)}">Choose your password</a></p>
-<p>The link works once and expires in 7 days. If you did not expect this invitation, you can ignore this email.</p>`,
-    text: `BSR Trasporti — admin access\n\nChoose your password: ${link}\n\nThe link works once and expires in 7 days. If you did not expect this invitation, ignore this email.`,
+    subject: "Il tuo accesso al pannello BSR Trasporti",
+    html: `<h2>BSR Trasporti — accesso al pannello</h2>
+<p>Sei stato invitato al pannello operativo di BSR Trasporti.</p>
+<p><a href="${escapeHtml(link)}">Scegli la tua password</a></p>
+<p>Il link funziona una sola volta e scade tra 7 giorni. Se non aspettavi questo invito, puoi ignorare questa email.</p>`,
+    text: `BSR Trasporti — accesso al pannello\n\nScegli la tua password: ${link}\n\nIl link funziona una sola volta e scade tra 7 giorni. Se non aspettavi questo invito, ignora questa email.`,
+  };
+}
+
+// ------------------------------------------------- public-facing mail (Italian)
+
+const trackingLink = (baseUrl: string, code: string) =>
+  `${baseUrl.replace(/\/+$/, "")}/tracciamento?codice=${encodeURIComponent(code)}`;
+
+/** The logo at the top of a visitor's email (a PNG: every mail client shows it). */
+const logoHtml = (baseUrl: string) =>
+  `<p><img src="${escapeHtml(baseUrl.replace(/\/+$/, ""))}/assets/images/brand/bsr-logo-email.png" alt="BSR Trasporti" width="200" style="display:block;border:0;height:auto"></p>`;
+
+/** Sent to a visitor who left an email address: the code they can follow the request with. */
+export function receiptMail(
+  to: string,
+  kind: "quote" | "message",
+  code: string,
+  baseUrl: string,
+): Mail {
+  const link = trackingLink(baseUrl, code);
+  const what = kind === "quote" ? "la tua richiesta di preventivo" : "il tuo messaggio";
+  return {
+    to,
+    subject: `BSR Trasporti — abbiamo ricevuto ${what} (${code})`,
+    html: `${logoHtml(baseUrl)}
+<p>Abbiamo ricevuto ${what}.</p>
+<p>Il tuo codice di tracciamento è <strong>${escapeHtml(code)}</strong>.</p>
+<p><a href="${escapeHtml(link)}">Segui lo stato e le risposte</a></p>
+<p>Conserva il codice: serve per controllare lo stato e leggere le nostre risposte.</p>`,
+    text: `BSR Trasporti\n\nAbbiamo ricevuto ${what}.\nCodice di tracciamento: ${code}\nSegui lo stato e le risposte: ${link}\n\nConserva il codice: serve per controllare lo stato e leggere le nostre risposte.`,
+  };
+}
+
+/** A reply from the team, with the way back to the conversation. */
+export function replyMail(to: string, code: string, reply: string, baseUrl: string): Mail {
+  const link = trackingLink(baseUrl, code);
+  return {
+    to,
+    subject: `BSR Trasporti — risposta alla tua richiesta (${code})`,
+    html: `${logoHtml(baseUrl)}
+<p style="white-space:pre-wrap">${escapeHtml(reply)}</p>
+<p><a href="${escapeHtml(link)}">Apri la conversazione</a> — codice <strong>${escapeHtml(code)}</strong></p>`,
+    text: `BSR Trasporti\n\n${reply}\n\nApri la conversazione: ${link}\nCodice: ${code}`,
   };
 }

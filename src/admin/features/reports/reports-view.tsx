@@ -648,7 +648,7 @@ function BreakdownResult({ data }: { data: FieldBreakdown }) {
           <span className="a-bar-value">{row.count}</span>
         </div>
       ))}
-      <p className="a-help">{data.total_records} records in the selection.</p>
+      <p className="a-help">{`${data.total_records} records in the selection.`}</p>
     </div>
   );
 }

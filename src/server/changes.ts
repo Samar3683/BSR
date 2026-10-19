@@ -19,6 +19,7 @@ export interface Change {
 type Listener = (change: Change) => void;
 
 interface Hub {
+  clock: ReturnType<typeof setInterval> | null;
   listeners: Set<Listener>;
   client: pg.Client | null;
   connecting: boolean;
@@ -30,6 +31,7 @@ const globalHub = globalThis as typeof globalThis & { __bsrChanges?: Hub };
 
 function hub(): Hub {
   globalHub.__bsrChanges ??= {
+    clock: null,
     listeners: new Set(),
     client: null,
     connecting: false,
@@ -86,7 +88,17 @@ export function subscribeToChanges(listener: Listener): () => void {
   const h = hub();
   h.listeners.add(listener);
   void connect(h);
+  // Figures that depend on the time of day (overdue, due soon, free now) change
+  // without any edit: one shared tick a minute tells every open screen, instead
+  // of every screen polling on its own. It only runs while someone is listening.
+  h.clock ??= setInterval(() => {
+    for (const each of h.listeners) each({ t: "clock", op: "TICK" });
+  }, 60_000);
   return () => {
     h.listeners.delete(listener);
+    if (h.listeners.size === 0 && h.clock) {
+      clearInterval(h.clock);
+      h.clock = null;
+    }
   };
 }

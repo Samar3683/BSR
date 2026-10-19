@@ -39,7 +39,7 @@ const SECTIONS = [
   "flotta",
   "copertura",
   "sicurezza",
-  "clienti",
+  "collaboratori",
   "recensioni",
   "chi-siamo",
   "richiesta",
@@ -90,13 +90,13 @@ test.describe("page structure", () => {
   // cut-outs rendered from the hero's own truck model reach public pages (never
   // an alternative livery or an archived draft); every image has an alt
   // (meaningful, or "" when decorative) and loads lazily.
-  test("images outside the hero: the background set, maps and truck cut-outs only, alt text, lazy loading", async ({
+  test("images outside the hero: the background set, maps, truck cut-outs and collaborator logos only, alt text, lazy loading", async ({
     page,
   }) => {
     await page.goto("/");
     const images = await page.evaluate(() =>
       [...document.querySelectorAll("img")]
-        .filter((img) => !img.closest("[data-hero]"))
+        .filter((img) => !img.closest("[data-hero]") && !img.closest("header"))
         .map((img) => ({
           src: decodeURIComponent(img.getAttribute("src") ?? ""),
           alt: img.getAttribute("alt"),
@@ -106,7 +106,7 @@ test.describe("page structure", () => {
     expect(images.length).toBeGreaterThanOrEqual(10);
     for (const image of images) {
       expect(image.src).toContain("/assets/images/content/");
-      expect(image.src).toMatch(/\/(backgrounds|maps|cutouts)\//);
+      expect(image.src).toMatch(/\/(backgrounds|maps|cutouts|logos)\//);
       expect(image.alt, image.src).not.toBeNull();
       expect(image.loading, image.src).toBe("lazy");
     }

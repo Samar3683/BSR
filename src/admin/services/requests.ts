@@ -29,6 +29,7 @@ export interface QuoteRequest {
   id: string;
   reference: string;
   status: RequestStatus;
+  needs_reply: boolean;
   name: string;
   email: string | null;
   phone: string;

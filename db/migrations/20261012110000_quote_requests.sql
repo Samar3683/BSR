@@ -164,7 +164,8 @@ begin
   v_ref := 'RQ-' || to_char(now() at time zone 'Europe/Rome', 'YYYY') || '-'
            || lpad(nextval('public.quote_request_seq')::text, 5, '0');
   insert into public.quote_requests (reference, name, email, phone, pickup, delivery, context)
-  values (v_ref, v_name, v_email, v_phone, v_pickup, v_delivery, v_context);
+  values (v_ref, v_name, v_email, v_phone, v_pickup, v_delivery, v_context)
+  returning reference into v_ref;
   return v_ref;
 end;
 $$;

@@ -138,7 +138,7 @@ export function VehiclesSection() {
                   <figure
                     key={vehicle.id}
                     data-step-item={i}
-                    className="flex swap-media flex-col gap-2 pin:absolute pin:inset-0"
+                    className="swap-media flex flex-col gap-2 pin:absolute pin:inset-0"
                   >
                     <MediaSlot
                       name={`fleet-${vehicle.id}`}

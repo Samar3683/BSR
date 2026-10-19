@@ -1,6 +1,6 @@
 import { readConfig } from "./config";
 import { withApp } from "./db";
-import { sendMail } from "./mail";
+import { receiptMail, sendMail } from "./mail";
 
 /**
  * The public site's way into the database: a quote request, and anonymous
@@ -77,6 +77,7 @@ export async function submitQuoteRequest(input: unknown, adminBaseUrl: string): 
     throw error;
   }
   void notifyTeam(reference, payload, adminBaseUrl).catch(() => undefined);
+  void confirmToVisitor("quote", reference, payload.email, adminBaseUrl).catch(() => undefined);
   return reference;
 }
 
@@ -116,4 +117,104 @@ export async function recordContactEvent(channel: unknown, page: unknown): Promi
   await withApp((client) =>
     client.query("select intake.record_contact_event($1, $2)", [channel, page.slice(0, 200)]),
   );
+}
+
+/** Tells the visitor their code by email (when they left an address and mail is configured). */
+async function confirmToVisitor(
+  kind: "quote" | "message",
+  code: string,
+  email: unknown,
+  baseUrl: string,
+) {
+  if (typeof email !== "string" || !email || !readConfig()?.smtpUrl) return;
+  await sendMail(receiptMail(email, kind, code, baseUrl));
+}
+
+export interface MessagePayload {
+  name?: unknown;
+  email?: unknown;
+  phone?: unknown;
+  subject?: unknown;
+  message?: unknown;
+}
+
+export async function submitContactMessage(input: unknown, baseUrl: string): Promise<string> {
+  const raw = (input && typeof input === "object" ? input : {}) as MessagePayload;
+  const payload = {
+    name: text(raw.name, 300),
+    email: text(raw.email, 300),
+    phone: text(raw.phone, 100),
+    subject: text(raw.subject, 300),
+    message: text(raw.message, 5000),
+  };
+  let reference: string;
+  try {
+    reference = await withApp(async (client) => {
+      const { rows } = await client.query<{ reference: string }>(
+        "select intake.submit_message($1::jsonb) as reference",
+        [JSON.stringify(payload)],
+      );
+      return rows[0]!.reference;
+    });
+  } catch (error) {
+    const e = error as { hint?: string; message: string };
+    if (e.hint === "business_rule") throw new IntakeError(e.message);
+    throw error;
+  }
+  void notifyMessage(reference, payload, baseUrl).catch(() => undefined);
+  void confirmToVisitor("message", reference, payload.email, baseUrl).catch(() => undefined);
+  return reference;
+}
+
+async function notifyMessage(reference: string, payload: MessagePayload, baseUrl: string) {
+  const config = readConfig();
+  if (!config?.smtpUrl || !config.notifyEmail.length) return;
+  const body = [
+    `Nuovo messaggio dal sito ${reference}`,
+    "",
+    `Nome: ${payload.name}`,
+    payload.email ? `Email: ${payload.email}` : null,
+    payload.phone ? `Telefono: ${payload.phone}` : null,
+    payload.subject ? `Oggetto: ${payload.subject}` : null,
+    "",
+    String(payload.message ?? ""),
+    "",
+    `Rispondi dal pannello: ${baseUrl.replace(/\/+$/, "")}/admin/messages`,
+  ]
+    .filter((l): l is string => l !== null)
+    .join("\n");
+  await sendMail({
+    to: config.notifyEmail.join(", "),
+    subject: `Nuovo messaggio dal sito ${reference}`,
+    text: body,
+    html: `<pre style="font:14px/1.5 sans-serif;white-space:pre-wrap">${escapeHtml(body)}</pre>`,
+  });
+}
+
+/** What a visitor may see for a tracking code, or null when the code is unknown. */
+export async function trackCode(code: unknown): Promise<unknown> {
+  if (typeof code !== "string" || code.length > 60) return null;
+  return withApp(async (client) => {
+    const { rows } = await client.query<{ result: unknown }>("select intake.track($1) as result", [
+      code,
+    ]);
+    return rows[0]?.result ?? null;
+  });
+}
+
+export async function addVisitorMessage(code: unknown, message: unknown): Promise<boolean> {
+  if (typeof code !== "string" || code.length > 60 || typeof message !== "string") return false;
+  try {
+    return await withApp(async (client) => {
+      const { rows } = await client.query<{ ok: boolean }>(
+        "select intake.add_visitor_message($1, $2) as ok",
+        [code, message.slice(0, 2000)],
+      );
+      return Boolean(rows[0]?.ok);
+    });
+  } catch (error) {
+    const e = error as { hint?: string; message: string };
+    if (e.hint === "business_rule") throw new IntakeError(e.message);
+    throw error;
+  }
 }

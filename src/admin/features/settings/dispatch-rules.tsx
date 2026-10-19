@@ -9,6 +9,7 @@ import { Field, Select } from "../../components/ui/form";
 import { Panel } from "../../components/ui/layout";
 import { useToast } from "../../components/ui/toast";
 import { useAdminConfig } from "../../hooks/use-admin-config";
+import { useT, useTr } from "../../i18n/provider";
 import { toAdminError } from "../../lib/errors";
 import type { FieldDefinition } from "../../lib/fields/types";
 import { addRequirement, fetchRequirements, removeRequirement } from "../../services/operations";
@@ -23,6 +24,8 @@ const isSelect = (field: FieldDefinition) =>
  * of the ticked options; it does not block the assignment.
  */
 export function DispatchRules() {
+  const t = useT();
+  const tr = useTr();
   const { data: config, isLoading, error, refetch } = useAdminConfig();
   const client = useQueryClient();
   const toast = useToast();
@@ -91,10 +94,13 @@ export function DispatchRules() {
     <div className="a-stack">
       <Panel title="Dispatch rules">
         <p className="a-muted" style={{ marginBottom: 14 }}>
-          Tick the {driverField.label.toLowerCase()} that qualify a driver for each{" "}
-          {vehicleField.label.toLowerCase()}. A driver qualifies with any one ticked option; rows
-          with nothing ticked accept every driver. Dispatch shows a warning when a pair does not
-          qualify — it never blocks the assignment.
+          {t(
+            "Tick the {driver} that qualify a driver for each {vehicle}. A driver qualifies with any one ticked option; rows with nothing ticked accept every driver. Dispatch shows a warning when a pair does not qualify — it never blocks the assignment.",
+            {
+              driver: tr(driverField.label).toLowerCase(),
+              vehicle: tr(vehicleField.label).toLowerCase(),
+            },
+          )}
         </p>
         <div className="a-form-grid" style={{ maxWidth: 640 }}>
           <Field label="Vehicle field">
@@ -128,7 +134,10 @@ export function DispatchRules() {
           <div className="a-table-wrap">
             <table className="a-table a-matrix">
               <caption className="a-sr-only">
-                {driverField.label} required for each {vehicleField.label}
+                {t("{driver} required for each {vehicle}", {
+                  driver: tr(driverField.label),
+                  vehicle: tr(vehicleField.label),
+                })}
               </caption>
               <thead>
                 <tr>

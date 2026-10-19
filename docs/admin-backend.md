@@ -25,18 +25,18 @@ PostgreSQL
 
 ## Where things are
 
-| Path                              | Contents                                                                                                                                                                                                                                  |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `db/bootstrap.sql`                | Request roles, `auth` and `storage` schemas, `auth.uid()`, extensions (idempotent)                                                                                                                                                        |
-| `db/migrations/`                  | Schema, functions, triggers, RLS, storage, configuration seed (13 migrations)                                                                                                                                                             |
-| `scripts/db/migrate.mjs`          | Applies the bootstrap and pending migrations (`pnpm db:migrate`)                                                                                                                                                                          |
-| `src/app/admin/`                  | Pages (login, recovery, `auth/confirm`, `(panel)`) and the API (`api/rest`, `api/rpc`, `api/auth`, `api/admins`, `api/files`)                                                                                                             |
-| `src/admin/server/`               | Server only: configuration, connection pool, request identity, query builder, passwords, sessions, email, auth actions                                                                                                                    |
-| `src/admin/`                      | The admin area: `lib/` (data client, field engine, dates, CSV, errors), `services/` (data access), `components/` (UI kit, fields, shell), `features/` (pages), `styles/admin.css`                                                         |
-| `src/proxy.ts`                    | Request proxy, matcher `/admin/:path*` only                                                                                                                                                                                               |
-| `scripts/admin/create-admin.mjs`  | Create the first administrator (writes to PostgreSQL, trusted machine)                                                                                                                                                                    |
-| `tools/postgres-local/`           | Local PostgreSQL cluster + mail sink for development and tests                                                                                                                                                                            |
-| `tests/db/`, `tests/e2e-admin/`   | Database integration tests, admin end-to-end tests                                                                                                                                                                                        |
+| Path                             | Contents                                                                                                                                                                          |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/bootstrap.sql`               | Request roles, `auth` and `storage` schemas, `auth.uid()`, extensions (idempotent)                                                                                                |
+| `db/migrations/`                 | Schema, functions, triggers, RLS, storage, configuration seed (13 migrations)                                                                                                     |
+| `scripts/db/migrate.mjs`         | Applies the bootstrap and pending migrations (`pnpm db:migrate`)                                                                                                                  |
+| `src/app/admin/`                 | Pages (login, recovery, `auth/confirm`, `(panel)`) and the API (`api/rest`, `api/rpc`, `api/auth`, `api/admins`, `api/files`)                                                     |
+| `src/admin/server/`              | Server only: configuration, connection pool, request identity, query builder, passwords, sessions, email, auth actions                                                            |
+| `src/admin/`                     | The admin area: `lib/` (data client, field engine, dates, CSV, errors), `services/` (data access), `components/` (UI kit, fields, shell), `features/` (pages), `styles/admin.css` |
+| `src/proxy.ts`                   | Request proxy, matcher `/admin/:path*` only                                                                                                                                       |
+| `scripts/admin/create-admin.mjs` | Create the first administrator (writes to PostgreSQL, trusted machine)                                                                                                            |
+| `tools/postgres-local/`          | Local PostgreSQL cluster + mail sink for development and tests                                                                                                                    |
+| `tests/db/`, `tests/e2e-admin/`  | Database integration tests, admin end-to-end tests                                                                                                                                |
 
 Isolation is enforced by ESLint (`eslint.config.mjs`): public code cannot import `@/admin/*`; admin
 code cannot import the public site's features, components, providers, stores or the hero. Admin
@@ -45,19 +45,19 @@ root sets `data-lenis-prevent`, so the public smooth scroll does not affect its 
 
 ## Data model
 
-| Table                                        | Purpose                                                                                                                        |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `auth.users`, `auth.sessions`, `auth.one_time_tokens` | Logins (scrypt password hashes), server-side sessions (token hashes), emailed reset / invitation links                |
-| `admin_profiles`                             | Who may use the panel: `user_id` → `auth.users`, `display_name`, `role` (`admin`), `active`                                    |
-| `entity_configs`                             | The four entities (`order`, `vehicle`, `driver`, `customer`): names, active flag, primary display field                        |
-| `field_definitions`                          | Dynamic fields: key, label, type, rules, default, visibility, search/filter/sort/report flags, relation target, system binding |
-| `field_options`                              | Options of select fields (records store option ids)                                                                            |
-| `customers`, `drivers`, `vehicles`, `orders` | System columns + `attributes jsonb` (dynamic values by `field_key`) + derived `display_name`                                   |
-| `driver_vehicle_assignments`                 | Driver ↔ vehicle pairings over time                                                                                            |
-| `order_assignments`                          | Driver and/or vehicle reserved for an order's window                                                                           |
-| `order_status_history`                       | Every status change with actor and note                                                                                        |
-| `audit_logs`                                 | Append-only audit trail of every mutation                                                                                      |
-| `storage.buckets`, `storage.objects`         | Private files of image / file fields (bytes in `bytea`) with row-level security                                                |
+| Table                                                 | Purpose                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `auth.users`, `auth.sessions`, `auth.one_time_tokens` | Logins (scrypt password hashes), server-side sessions (token hashes), emailed reset / invitation links                         |
+| `admin_profiles`                                      | Who may use the panel: `user_id` → `auth.users`, `display_name`, `role` (`admin`), `active`                                    |
+| `entity_configs`                                      | The four entities (`order`, `vehicle`, `driver`, `customer`): names, active flag, primary display field                        |
+| `field_definitions`                                   | Dynamic fields: key, label, type, rules, default, visibility, search/filter/sort/report flags, relation target, system binding |
+| `field_options`                                       | Options of select fields (records store option ids)                                                                            |
+| `customers`, `drivers`, `vehicles`, `orders`          | System columns + `attributes jsonb` (dynamic values by `field_key`) + derived `display_name`                                   |
+| `driver_vehicle_assignments`                          | Driver ↔ vehicle pairings over time                                                                                            |
+| `order_assignments`                                   | Driver and/or vehicle reserved for an order's window                                                                           |
+| `order_status_history`                                | Every status change with actor and note                                                                                        |
+| `audit_logs`                                          | Append-only audit trail of every mutation                                                                                      |
+| `storage.buckets`, `storage.objects`                  | Private files of image / file fields (bytes in `bytea`) with row-level security                                                |
 
 Order-specific system columns: `order_number` (generated, `BSR-YYYY-NNNNN`), `customer_id`, `status`,
 `pickup_at`, `delivery_at`. Drivers and vehicles have `available`. Every entity has `archived_at`,
@@ -227,18 +227,40 @@ Status workflow (`private.order_status_transition_allowed`):
 | `/admin/audit`                                                                          | Audit log (read-only)                             |
 | `/admin/settings/fields`, `/entities`, `/administrators`                                | Field builder, entity settings, administrators    |
 
+## Messages, tracking and replies
+
+- `/contatti` ("Scrivici un messaggio") and the quote form store their input through
+  `intake.submit_message` / `intake.submit_quote_request` (SECURITY DEFINER, executable only by the
+  application role). Each gets a tracking code: the reference plus 6 random characters, e.g.
+  `RQ-2026-00042-K7F3QX` or `MS-2026-00007-AB23CD`. The reference alone is guessable; the suffix is not.
+- `/tracciamento` (noindex) looks a code up with `intake.track`. It returns status, route, the
+  conversation and, once a request became an order, the order's progress — never name, phone or email.
+  Lookups are limited per address (wrong codes count double).
+- A visitor's follow-up (`intake.add_visitor_message`) reopens the item. The panel's **Requests** and
+  **Messages** pages show the thread and a reply box; `public.reply_to_thread` stores the answer, and
+  the server emails it when the visitor left an address. Replies are always visible on the tracking page.
+- Personal-data tables (requests, messages, thread entries) are deliberately outside the append-only
+  audit log so they can be erased.
+- Live updates: one LISTEN connection per server process, a shared 60 s tick, at most 4 streams per
+  user, hidden tabs release their stream, and polling happens only when the stream is down.
+- Language: the panel and its emails are Italian by default for new visitors with an Italian browser; the
+  switch is in the account menu. Interface text is translated from `src/admin/i18n` (dictionary,
+  patterns, database messages); `tests/e2e-admin/aa-italian.spec.ts` scans every page in Italian and
+  fails on leftover English words.
+
 ## Environment variables
 
 See `.env.example`. None of these is ever sent to a browser.
 
-| Variable             | Where                                           | Secret  |
-| -------------------- | ----------------------------------------------- | ------- |
-| `DATABASE_URL`       | Web server: the limited application role        | **yes** |
-| `SESSION_SECRET`     | Web server: signs the session cookie (32+ chars) | **yes** |
-| `APP_URL`            | Web server: base URL of emailed links           | no      |
-| `SMTP_URL`, `MAIL_FROM` | Web server: reset and invitation emails      | **yes** |
-| `DATABASE_ADMIN_URL` | `pnpm db:migrate`, `pnpm admin:create`, tests   | **yes** |
-| `DATABASE_APP_ROLE`  | `pnpm db:migrate` (default `bsr_app`)           | no      |
+| Variable                | Where                                                             | Secret  |
+| ----------------------- | ----------------------------------------------------------------- | ------- |
+| `DATABASE_URL`          | Web server: the limited application role                          | **yes** |
+| `SESSION_SECRET`        | Web server: signs the session cookie (32+ chars)                  | **yes** |
+| `APP_URL`               | Web server: base URL of emailed links                             | no      |
+| `SMTP_URL`, `MAIL_FROM` | Web server: reset and invitation emails                           | **yes** |
+| `NOTIFY_EMAIL`          | Web server: team address(es) told about new requests and messages | no      |
+| `DATABASE_ADMIN_URL`    | `pnpm db:migrate`, `pnpm admin:create`, tests                     | **yes** |
+| `DATABASE_APP_ROLE`     | `pnpm db:migrate` (default `bsr_app`)                             | no      |
 
 Without `DATABASE_URL` and `SESSION_SECRET` the panel shows "Backend not configured". The public
 site is unaffected either way.
@@ -278,9 +300,9 @@ Emails (password reset, invitations) are captured as `.eml` / `.json` files in
 
 ## Tests
 
-| Command               | What                                                                                                                                                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Command               | What                                                                                                                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm test`           | Unit tests: field validation, values, keys, dates/DST, CSV, errors, filters, the query builder, passwords and session cookies (plus the existing site tests)                                                                           |
-| `pnpm test:db`        | Database tests against a running PostgreSQL: RLS, privileges, audit immutability, validation engine, field lifecycle, dispatch conflicts and workflow, reports (each test rolls back)                                                   |
+| `pnpm test:db`        | Database tests against a running PostgreSQL: RLS, privileges, audit immutability, validation engine, field lifecycle, dispatch conflicts and workflow, reports (each test rolls back)                                                  |
 | `pnpm test:e2e:admin` | Admin E2E on a production build against the real local database: auth and recovery by email, dynamic-field workflow, dispatch workflow, reports + CSV, audit, security (API, files, sessions), WCAG A/AA, responsive, public isolation |
-| `pnpm test:e2e`       | The public site's existing suite (unchanged)                                                                                                                                                                                          |
+| `pnpm test:e2e`       | The public site's existing suite (unchanged)                                                                                                                                                                                           |

@@ -34,7 +34,7 @@ import { WeekGrid } from "./week-grid";
 
 type View = "month" | "week" | "agenda";
 type Group = "none" | "driver" | "vehicle";
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]; // translated on screen
 
 /** Does an event overlap the business day? */
 function onDay(event: CalendarEvent, day: string): boolean {

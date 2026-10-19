@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
@@ -10,7 +11,7 @@ import { MAIN_CONTENT_ID } from "@/constants/landmarks";
 
 import { isNavActive, NAV_SECTIONS, type NavItem } from "../../config/navigation";
 import { useAdminConfig } from "../../hooks/use-admin-config";
-import { useRealtime } from "../../hooks/use-realtime";
+import { useLiveStatus, useRealtime } from "../../hooks/use-realtime";
 import { useI18n } from "../../i18n/provider";
 import { fetchNavCounts } from "../../services/records";
 import { Button } from "../ui/button";
@@ -33,18 +34,27 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { t } = useI18n();
   useRealtime();
+  const live = useLiveStatus();
   const { data: config } = useAdminConfig();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const counts = useQuery({
     queryKey: ["nav-counts"],
     queryFn: fetchNavCounts,
-    refetchInterval: 60_000,
+    // The server's minute tick refreshes this while the live connection is up.
+    refetchInterval: live ? false : 60_000,
   });
   const badges: Record<
     string,
     { value: number; tone: "red" | "green"; label: string } | undefined
   > = {
+    "/admin/messages": counts.data?.new_messages
+      ? {
+          value: counts.data.new_messages,
+          tone: "green",
+          label: `${counts.data.new_messages} messages waiting`,
+        }
+      : undefined,
     "/admin/requests": counts.data?.new_requests
       ? {
           value: counts.data.new_requests,
@@ -110,13 +120,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
     >
       <aside className="a-sidebar" aria-label="Admin navigation" id="admin-sidebar">
         <Link href="/admin" className="a-brand" aria-label="BSR Trasporti admin, dashboard">
-          {/* Same typeset wordmark as the public site (until the official logo exists). */}
-          <span className="a-wordmark" aria-hidden="true">
-            BSR
-          </span>
-          <span className="a-brand-text" aria-hidden="true">
-            <span className="a-wordmark-tag">Trasporti</span>
-            <span className="a-brand-tag">Admin</span>
+          {/* The supplied logo on a light plate; the square icon when the sidebar is collapsed. */}
+          <Image
+            className="a-brand-logo"
+            src="/assets/images/content/logos/bsr-logo.webp"
+            alt=""
+            width={397}
+            height={160}
+            priority
+          />
+          <Image
+            className="a-brand-icon"
+            src="/assets/images/content/logos/bsr-icon.webp"
+            alt=""
+            width={96}
+            height={96}
+            priority
+          />
+          <span className="a-brand-tag" aria-hidden="true">
+            Admin
           </span>
         </Link>
         <nav className="a-nav">

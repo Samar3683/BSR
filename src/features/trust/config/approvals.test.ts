@@ -21,8 +21,8 @@ describe("clients and testimonials", () => {
     ).toEqual(["A"]);
   });
 
-  it("publishes no client and no testimonial until BSR approves them", () => {
-    expect(approvedClients(networkContent.partners)).toEqual([]);
+  it("publishes the six collaborators BSR supplied and no testimonial until approved", () => {
+    expect(approvedClients(networkContent.partners)).toHaveLength(6);
     expect(approvedTestimonials(reviewsContent.testimonials)).toEqual([]);
   });
 });

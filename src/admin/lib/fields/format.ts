@@ -1,8 +1,6 @@
-import { formatCalendarDate, formatDateTime } from "../datetime";
+import { dateLocale, formatCalendarDate, formatDateTime } from "../datetime";
 import type { AddressValue, FieldDefinition, FieldOption, FileValue } from "./types";
 import { ADDRESS_PARTS } from "./types";
-
-const LOCALE = "en-GB";
 
 export interface FormatContext {
   optionsByField: Readonly<Record<string, readonly FieldOption[]>>;
@@ -11,14 +9,14 @@ export interface FormatContext {
 }
 
 export function formatNumber(value: number, fractionDigits?: number): string {
-  return new Intl.NumberFormat(LOCALE, {
+  return new Intl.NumberFormat(dateLocale(), {
     maximumFractionDigits: fractionDigits ?? 6,
   }).format(value);
 }
 
 export function formatCurrency(value: number, currency = "EUR", precision = 2): string {
   try {
-    return new Intl.NumberFormat(LOCALE, {
+    return new Intl.NumberFormat(dateLocale(), {
       style: "currency",
       currency,
       minimumFractionDigits: Math.min(precision, 2),

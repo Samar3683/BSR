@@ -11,7 +11,7 @@ export const coverageContent = {
   /** The title as the act sets it, one entry per line (same words). */
   titleLines: ["Dall'Italia", "all'Europa."] as const,
   act: { act: "07", name: "La rete", meta: "Carpi → Italia → Europa" },
- 
+
   stages: [
     { id: "base", label: "Base operativa", headline: coverage.base, detail: "44.78° N · 10.88° E" },
     {

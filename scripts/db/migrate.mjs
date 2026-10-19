@@ -88,7 +88,7 @@ export async function migrate({ url, appRole = "bsr_app", log = console.log }) {
       // Public-site intake: the only way the web server writes visitor submissions.
       await client.query(`grant usage on schema intake to "${appRole}"`);
       await client.query(
-        `grant execute on function intake.submit_quote_request(jsonb), intake.record_contact_event(text, text) to "${appRole}"`,
+        `grant execute on function intake.submit_quote_request(jsonb), intake.record_contact_event(text, text), intake.submit_message(jsonb), intake.track(text), intake.add_visitor_message(text, text) to "${appRole}"`,
       );
     } else {
       log(`note: role ${appRole} does not exist yet; create it and run this again to grant access`);

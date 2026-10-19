@@ -1,8 +1,19 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+
+import { setDateLocale } from "../lib/datetime";
 
 import { IT } from "./dictionary";
+import { italianFor, translateTree } from "./dom-translate";
 
 import { LANG_COOKIE, type Lang } from "./lang";
 
@@ -26,7 +37,7 @@ export function translate(
   text: string,
   values?: Record<string, string | number>,
 ): string {
-  return fill(lang === "it" ? (IT[text] ?? text) : text, values);
+  return fill(lang === "it" ? (IT[text] ?? italianFor(text) ?? text) : text, values);
 }
 
 export function LanguageProvider({ initial, children }: { initial: Lang; children: ReactNode }) {
@@ -36,13 +47,20 @@ export function LanguageProvider({ initial, children }: { initial: Lang; childre
     document.cookie = `${LANG_COOKIE}=${next}; path=/admin; max-age=31536000; samesite=lax`;
     document.documentElement.lang = next;
   }, []);
+  // Dates and numbers follow the language; set while rendering so the first paint is right.
+  setDateLocale(lang);
+  // Everything built from words in code is translated on screen, including toasts and dialogs.
+  useEffect(() => {
+    if (lang !== "it") return;
+    return translateTree(document.body);
+  }, [lang]);
   const value = useMemo<I18n>(
     () => ({ lang, setLang, t: (text, values) => translate(lang, text, values) }),
     [lang, setLang],
   );
   return (
     <Context.Provider value={value}>
-      <div lang={lang} style={{ display: "contents" }}>
+      <div key={lang} lang={lang} style={{ display: "contents" }}>
         {children}
       </div>
     </Context.Provider>

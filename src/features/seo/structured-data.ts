@@ -18,6 +18,7 @@ export function organizationJsonLd() {
     description: siteConfig.description,
     url: siteConfig.url,
     image: `${siteConfig.url}/opengraph-image.jpg`,
+    logo: `${siteConfig.url}/assets/images/content/logos/bsr-logo.webp`,
     telephone: contact.phoneE164,
     email: contact.email,
     vatID: `${address.countryCode}${company.vatNumber}`,

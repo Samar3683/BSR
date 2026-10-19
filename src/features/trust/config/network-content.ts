@@ -1,13 +1,8 @@
 /**
- * Clients. A client appears only with `permission: true` — the relationship
- * AND the right to show its mark confirmed in writing by BSR (record where in
- * `source`). The list is empty: the official site shows six partner marks
- * whose relationships and permissions are unconfirmed (docs/content-audit.md),
- * so none is carried over. Until an approved entry exists the section shows
- * its logo grid as an empty, clearly-labelled frame ("Spazio logo") with the
- * policy stated beside it — never a placeholder company, a sample mark or a
- * generated brand. Adding an approved entry fills the next cell: no layout
- * change.
+ * Collaborators. A collaborator appears only with `permission: true` — the
+ * relationship AND the right to show its mark confirmed by BSR (record where in
+ * `source`). The six marks below were supplied by BSR for this section. Adding
+ * an approved entry fills the next cell: no layout change.
  */
 export interface ClientEntry {
   name: string;
@@ -29,19 +24,55 @@ export const approvedClients = (entries: readonly ClientEntry[]) =>
   entries.filter((entry) => entry.permission === true);
 
 export const networkContent = {
-  id: "clienti",
-  /** The act's mark (ACT 08 — Fiducia: clients and reviews). */
-  chapter: { index: "08", name: "Fiducia · Clienti", context: "Con il loro consenso" },
-  label: "Clienti",
-  title: "Aziende che scelgono BSR.",
-  titleLines: ["Aziende che", "scelgono BSR."] as const,
+  id: "collaboratori",
+  /** The act's mark (ACT 08 — Fiducia: collaborators and reviews). */
+  chapter: { index: "08", name: "Fiducia · Collaboratori", context: "Con il loro consenso" },
+  label: "Collaboratori",
+  title: "Aziende che collaborano con BSR.",
+  titleLines: ["Aziende che", "collaborano con BSR."] as const,
   intro:
-    "Imprese che devono spedire con tempi chiari e un contatto diretto: dalla produzione ai punti vendita, fino all'e-commerce.",
-  /** Stated where marks would be: names appear only with written consent. */
-  policy: "Pubblichiamo nomi e loghi dei clienti solo con il loro consenso scritto.",
+    "Imprese e operatori con cui lavoriamo ogni giorno: dal trasporto alla logistica, fino all'e-commerce.",
+  /** Stated where marks appear: names are shown with consent. */
+  policy: "Pubblichiamo nomi e loghi dei collaboratori solo con il loro consenso.",
   /** How many cells the grid shows (filled by approved entries first). */
   cells: 8,
   emptyCell: "Spazio logo",
-  partnersLabel: "Alcuni clienti",
-  partners: [] as ClientEntry[],
+  partnersLabel: "Alcuni collaboratori",
+  partners: [
+    {
+      name: "Transcoop",
+      logo: "/assets/images/content/logos/collab-1.webp",
+      width: 414,
+      height: 120,
+    },
+    {
+      name: "Transmec Group",
+      logo: "/assets/images/content/logos/collab-2.webp",
+      width: 438,
+      height: 120,
+    },
+    {
+      name: "One Express",
+      logo: "/assets/images/content/logos/collab-3.webp",
+      width: 347,
+      height: 120,
+    },
+    { name: "LogiCo", logo: "/assets/images/content/logos/collab-4.webp", width: 374, height: 120 },
+    {
+      name: "Done Deliveries",
+      logo: "/assets/images/content/logos/collab-5.webp",
+      width: 235,
+      height: 120,
+    },
+    {
+      name: "Expedia",
+      logo: "/assets/images/content/logos/collab-6.webp",
+      width: 504,
+      height: 120,
+    },
+  ].map((entry) => ({
+    ...entry,
+    permission: true,
+    source: "Loghi forniti da BSR",
+  })) as ClientEntry[],
 } as const;

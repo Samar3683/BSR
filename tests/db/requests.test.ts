@@ -38,7 +38,7 @@ describe("quote requests from the public site", () => {
     await inTransaction(async (db) => {
       const users = await createUsers(db);
       const reference = await submit(db);
-      expect(reference).toMatch(/^RQ-\d{4}-\d{5}$/);
+      expect(reference).toMatch(/^RQ-\d{4}-\d{5}-[A-Z2-9]{6}$/);
 
       const stored = await one<{
         name: string;

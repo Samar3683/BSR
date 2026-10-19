@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 import { MAIN_CONTENT_ID } from "@/constants/landmarks";
@@ -16,13 +17,15 @@ export function AuthCard({
     <main id={MAIN_CONTENT_ID} className="a-auth" tabIndex={-1}>
       <div className="a-auth-card">
         <div className="a-auth-brand">
-          <span className="a-brand-mark" aria-hidden="true">
-            BSR
-          </span>
-          <div>
-            <div className="a-brand-name">BSR Trasporti</div>
-            <div className="a-brand-tag">Admin</div>
-          </div>
+          <Image
+            className="a-auth-logo"
+            src="/assets/images/content/logos/bsr-logo.webp"
+            alt="BSR Trasporti"
+            width={397}
+            height={160}
+            priority
+          />
+          <div className="a-brand-tag">Admin</div>
         </div>
         <div style={{ display: "grid", gap: 6 }}>
           <h1>{title}</h1>

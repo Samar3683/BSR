@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { Container } from "@/components/layout/container";
 import { Eyebrow } from "@/components/layout/eyebrow";
 import { Surface } from "@/components/layout/surface";
@@ -30,6 +31,7 @@ export default function NotFound() {
           className="-z-10 [mask-image:radial-gradient(ellipse_60%_60%_at_60%_50%,black_40%,transparent_95%)] object-cover opacity-50"
         />
         <Container className="flex min-h-svh flex-col justify-center gap-6 py-section-sm">
+          <BrandLogo heightClass="h-16" className="self-start" />
           <Eyebrow>Errore 404 · Pagina non trovata</Eyebrow>
           <h1 className="max-w-[14ch] type-display-lg max-sm:text-[2.375rem]">
             Questa pagina non esiste.

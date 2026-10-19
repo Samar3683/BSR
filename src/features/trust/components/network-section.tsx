@@ -19,7 +19,8 @@ import { approvedClients, networkContent as network } from "../config/network-co
  */
 export function NetworkSection() {
   const partners = approvedClients(network.partners);
-  const cells = Math.max(network.cells, Math.ceil(partners.length / 4) * 4);
+  // Only the approved marks get a cell: no empty frames.
+  const cells = partners.length;
   const titleId = `${network.id}-title`;
 
   return (
@@ -47,13 +48,12 @@ export function NetworkSection() {
           {partners.length > 0 ? (
             <ul
               aria-label={network.partnersLabel}
-              className="grid grid-cols-2 border-t border-l border-hairline sm:grid-cols-4"
+              className="grid grid-cols-2 gap-4 sm:grid-cols-3"
             >
               {Array.from({ length: cells }, (_, i) => {
                 const partner = partners[i];
                 return (
                   <li key={partner?.name ?? `cell-${i}`} className={cell}>
-                    <Index i={i} />
                     {partner &&
                       (partner.website ? (
                         <a href={partner.website} className="group rounded-sm">
@@ -75,7 +75,6 @@ export function NetworkSection() {
             >
               {Array.from({ length: cells }, (_, i) => (
                 <div key={i} className={cell}>
-                  <Index i={i} />
                   <span className="ed-meta text-text-secondary">{network.emptyCell}</span>
                 </div>
               ))}
@@ -88,15 +87,7 @@ export function NetworkSection() {
 }
 
 const cell =
-  "relative flex aspect-[16/10] items-center justify-center border-r border-b border-hairline ed-ticks p-6";
-
-function Index({ i }: { i: number }) {
-  return (
-    <span aria-hidden="true" className="absolute top-3 left-3.5 ed-meta text-text-secondary">
-      {String(i + 1).padStart(2, "0")}
-    </span>
-  );
-}
+  "group/cell relative flex aspect-[16/10] items-center justify-center rounded-2xl bg-background-primary p-6 shadow-[0_2px_14px_rgb(0_0_0/0.07)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_10px_28px_rgb(0_0_0/0.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 function Mark({ partner }: { partner: ReturnType<typeof approvedClients>[number] }) {
   return (
@@ -105,7 +96,7 @@ function Mark({ partner }: { partner: ReturnType<typeof approvedClients>[number]
       alt={partner.name}
       width={partner.width}
       height={partner.height}
-      className="h-9 w-auto opacity-70 grayscale transition duration-500 group-hover:opacity-100 group-hover:grayscale-0 group-focus-visible:opacity-100 group-focus-visible:grayscale-0 motion-reduce:transition-none"
+      className="ease-out h-12 w-auto max-w-full object-contain transition duration-500 group-hover/cell:scale-110 motion-reduce:transition-none motion-reduce:group-hover/cell:scale-100"
     />
   );
 }

@@ -290,6 +290,7 @@ export interface NavCounts {
   overdue: number;
   in_transit: number;
   new_requests: number;
+  new_messages: number;
 }
 
 export async function fetchNavCounts(): Promise<NavCounts> {

@@ -59,7 +59,11 @@ export const siteFooter = {
   labels: { phone: "Telefono", email: "Email", pec: "PEC" },
   legalLabel: "Informazioni legali",
   /** Legal pages that exist (only link to pages that do). */
-  legal: [{ label: "Privacy e cookie", href: siteConfig.routes.privacy }],
+  legal: [
+    { label: "Scrivici un messaggio", href: "/contatti" },
+    { label: "Traccia la tua richiesta", href: "/tracciamento" },
+    { label: "Privacy e cookie", href: siteConfig.routes.privacy },
+  ],
   vatLabel: "P. IVA",
   reaLabel: "REA",
   copyright: company.brand,

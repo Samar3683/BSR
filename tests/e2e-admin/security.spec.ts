@@ -163,7 +163,7 @@ test.describe("security", () => {
     await expect(page.getByText(`Invitation sent to ${email}.`)).toBeVisible();
     await expect(page.getByRole("row", { name: /Invited Colleague/ })).toContainText(email);
     const mail = await waitForMail(email, since);
-    expect(mail.subject).toBe("Your BSR Trasporti admin access");
+    expect(mail.subject).toBe("Il tuo accesso al pannello BSR Trasporti");
 
     // Self-deactivation is impossible; deactivating someone else works and is effective.
     await expect(

@@ -78,12 +78,12 @@ export function DashboardView() {
   const query = useQuery({
     queryKey: ["dashboard"],
     queryFn: fetchDashboard,
-    refetchInterval: 60_000,
+    refetchInterval: live ? false : 60_000,
   });
   const requests = useQuery({
     queryKey: ["requests", "dashboard"],
     queryFn: () => fetchRequests("new", 5),
-    refetchInterval: 60_000,
+    refetchInterval: live ? false : 60_000,
   });
 
   if (query.isError) {

@@ -9,6 +9,9 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const HEARTBEAT_MS = 20_000;
+/** Open streams per signed-in user: more tabs than this close the oldest one. */
+const MAX_STREAMS_PER_USER = 4;
+const streams = new Map<string, Set<() => void>>();
 /** Administrators who lose access (sign out, deactivation) are cut off within this time. */
 const RECHECK_MS = 60_000;
 
@@ -77,11 +80,30 @@ export async function GET(request: NextRequest) {
         }
       }, RECHECK_MS);
 
+      const close = () => {
+        cleanup();
+        try {
+          controller.close();
+        } catch {
+          // already closed
+        }
+      };
+      const mine = streams.get(session.userId) ?? new Set<() => void>();
+      streams.set(session.userId, mine);
+      mine.add(close);
+      while (mine.size > MAX_STREAMS_PER_USER) {
+        const oldest = mine.values().next().value as () => void;
+        mine.delete(oldest);
+        oldest();
+      }
+
       cleanup = () => {
         unsubscribe();
         clearInterval(heartbeat);
         clearInterval(recheck);
         if (flush) clearTimeout(flush);
+        mine.delete(close);
+        if (mine.size === 0) streams.delete(session.userId);
         cleanup = () => {};
       };
       request.signal.addEventListener("abort", () => cleanup());

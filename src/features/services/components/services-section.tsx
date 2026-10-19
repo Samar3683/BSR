@@ -155,7 +155,7 @@ export function ServicesSection() {
                 <figure
                   key={item.id}
                   data-step-item={i}
-                  className="flex swap-media flex-col gap-2 lg:pin:absolute lg:pin:inset-0"
+                  className="swap-media flex flex-col gap-2 lg:pin:absolute lg:pin:inset-0"
                 >
                   <MediaSlot
                     name={`service-${item.id}`}

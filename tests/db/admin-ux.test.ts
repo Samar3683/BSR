@@ -82,7 +82,7 @@ describe("admin UX backend", () => {
       const counts = (
         await one<{ r: Record<string, number> }>(db, "select public.nav_counts() as r")
       ).r;
-      expect(Object.keys(counts).sort()).toEqual(["awaiting_dispatch", "in_transit", "new_requests", "overdue"]);
+      expect(Object.keys(counts).sort()).toEqual(["awaiting_dispatch", "in_transit", "new_messages", "new_requests", "overdue"]);
 
       await actAs(db, "anon");
       const denied = await expectFailure(db, "select public.global_search('x')");

@@ -96,7 +96,7 @@ export const ACTS = [
   {
     act: "08",
     name: "Fiducia",
-    sections: ["clienti", "recensioni"],
+    sections: ["collaboratori", "recensioni"],
     tone: "light",
     route: "network",
     media: [],

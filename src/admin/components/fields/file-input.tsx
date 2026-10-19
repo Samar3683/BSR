@@ -117,7 +117,7 @@ export function FileInput({ def, value, onChange, disabled, id, ...aria }: FileI
             Remove
           </Button>
         ) : null}
-        <span className="a-help">Up to {maxFileSizeMb(def)} MB</span>
+        <span className="a-help">{`Up to ${maxFileSizeMb(def)} MB`}</span>
       </div>
       {error ? (
         <p className="a-error-text" role="alert">

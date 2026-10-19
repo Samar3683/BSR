@@ -66,16 +66,16 @@ export async function withIdentity<T>(
 ): Promise<T> {
   const client = await pool().connect();
   try {
-    await client.query("begin");
     const role = identity.userId ? "authenticated" : "anon";
     const claims = identity.userId
       ? { sub: identity.userId, role, email: identity.email ?? undefined, aud: "authenticated" }
       : { role };
-    await client.query(`set local role ${role}`);
-    await client.query("select set_config('request.jwt.claims', $1, true)", [
-      JSON.stringify(claims),
-    ]);
-    await client.query("set local statement_timeout = '20s'");
+    // One round trip: transaction, request role, claims and timeout together.
+    await client.query(
+      `begin; set local role ${role}; ` +
+        `select set_config('request.jwt.claims', ${client.escapeLiteral(JSON.stringify(claims))}, true); ` +
+        "set local statement_timeout = '20s'",
+    );
     const result = await fn(client);
     await client.query("commit");
     return result;

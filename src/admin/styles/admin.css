@@ -1886,6 +1886,8 @@
 .adm .a-event {
   display: block;
   width: 100%;
+  min-height: 24px;
+  line-height: 20px;
   padding: 2px 6px;
   border: 0;
   border-left: 3px solid var(--a-titanium);
@@ -1932,6 +1934,7 @@
 }
 
 .adm .a-cal-more {
+  min-height: 24px;
   border: 0;
   background: none;
   padding: 0 4px;
@@ -4827,4 +4830,76 @@
   .adm .a-live-dot {
     animation: none;
   }
+}
+
+/* Conversations (requests and messages) */
+.adm .a-thread {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adm .a-thread-entry {
+  display: grid;
+  gap: 4px;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--a-soft);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.adm .a-thread-entry[data-direction="out"] {
+  justify-self: end;
+  background: var(--a-green-tint);
+}
+
+.adm .a-thread-entry p {
+  margin: 0;
+}
+
+/* Supplied logo: a light plate in the sidebar, the square icon when collapsed; above the sign-in card. */
+.adm .a-brand-logo {
+  height: 36px;
+  width: auto;
+  padding: 3px 6px;
+  border-radius: var(--a-radius-sm);
+  background: rgb(255 255 255 / 92%);
+}
+
+.adm .a-brand-icon {
+  display: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--a-radius-sm);
+}
+
+.adm .a-shell[data-sidebar="collapsed"] .a-brand-logo {
+  display: none;
+}
+
+.adm .a-shell[data-sidebar="collapsed"] .a-brand-icon {
+  display: block;
+}
+
+.adm .a-auth-brand {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.adm .a-auth-logo {
+  height: 52px;
+  width: auto;
+  padding: 4px 8px;
+  border-radius: var(--a-radius-sm);
+  background: #fff;
+  border: 1px solid var(--a-border);
+}
+
+.adm .a-shell[data-sidebar="collapsed"] .a-sidebar .a-brand-tag {
+  display: none;
 }

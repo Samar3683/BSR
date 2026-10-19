@@ -25,6 +25,7 @@ import {
   type RequestAddress,
 } from "../../services/requests";
 import { RequestStatusBadge } from "./requests-view";
+import { ThreadPanel } from "./thread-panel";
 
 const address = (a: RequestAddress) =>
   [a.street, [a.zip, a.city, a.province && `(${a.province})`].filter(Boolean).join(" ")]
@@ -210,6 +211,8 @@ function Detail({ request }: { request: QuoteRequest }) {
           </dl>
         </Panel>
       </div>
+
+      <ThreadPanel kind="quote" id={request.id} canEmail={Boolean(request.email)} />
 
       <Panel title="Handling">
         <div className="a-form">

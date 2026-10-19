@@ -1,4 +1,4 @@
-import { BrandMark } from "@/components/brand/brand-mark";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { Surface } from "@/components/layout/surface";
 import { siteConfig } from "@/config/site";
 
@@ -30,7 +30,7 @@ export function SiteFooter() {
       <div className="ed-frame flex flex-col gap-8 py-10 lg:py-12">
         <div className="ed-grid gap-y-8">
           <div className="col-span-4 flex flex-col gap-3 md:col-span-8 lg:col-span-5">
-            <BrandMark />
+            <BrandLogo plate heightClass="h-14" className="self-start" />
             <p className="max-w-[30ch] ed-small text-text-secondary">{footer.tagline}</p>
           </div>
 

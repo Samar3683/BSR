@@ -1,9 +1,12 @@
+import { EXTRA } from "./dictionary-extra";
+import { MESSAGES } from "./dictionary-messages";
+
 /**
  * Italian translations, keyed by the English text used in the interface.
  * Text without an entry stays in English, so coverage can grow screen by
  * screen. Keys may contain {name} placeholders filled by t(text, values).
  */
-export const IT: Record<string, string> = {
+const CORE: Record<string, string> = {
   // Navigation and shell
   Operations: "Operazioni",
   Resources: "Risorse",
@@ -249,3 +252,5 @@ export const IT: Record<string, string> = {
   "Confirmed — ready for dispatch": "Confermato — pronto per il dispatch",
   "Today's date": "Data di oggi",
 };
+
+export const IT: Record<string, string> = { ...CORE, ...EXTRA, ...MESSAGES };

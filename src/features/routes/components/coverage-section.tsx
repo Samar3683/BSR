@@ -9,7 +9,6 @@ import { CoverageMap } from "./coverage-map";
 
 const STEPS = [0.2, 0.92] as const;
 
-
 export function CoverageSection() {
   const titleId = `${coverage.id}-title`;
   const act = actOf(coverage.id);
@@ -140,13 +139,6 @@ export function CoverageSection() {
       >
         <CoverageMap className="absolute inset-0 [mask-image:radial-gradient(ellipse_62%_62%_at_50%_50%,black_55%,transparent_100%)]" />
       </div>
-
-      {/* Day comes back from below (the next act is on White). */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 z-20 hidden bg-white seg pinned:block pinned:[clip-path:inset(calc((1-var(--e))*100%)_0_0_0)]"
-        style={seg(0.94, 1)}
-      />
     </PinnedScene>
   );
 }

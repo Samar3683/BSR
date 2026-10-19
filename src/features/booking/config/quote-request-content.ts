@@ -25,6 +25,8 @@ export const quoteRequestContent = {
     sentReference: "Riferimento",
     sentBody: "Ti ricontattiamo per confermare mezzo, tempi e prezzo prima di partire.",
     sentAlso: "Vuoi scriverci anche subito?",
+    sentTrack: "Segui la tua richiesta",
+    sentCodeLabel: "Codice di tracciamento",
     errorsTitle: "Controlla i campi indicati.",
   },
   send: {

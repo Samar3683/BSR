@@ -3,6 +3,7 @@ import {
   ChartColumn,
   IdCard,
   Inbox,
+  MessageSquare,
   LayoutDashboard,
   Package,
   Route,
@@ -31,6 +32,7 @@ export const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
       { href: "/admin/requests", label: "Requests", icon: Inbox },
+      { href: "/admin/messages", label: "Messages", icon: MessageSquare },
       { href: "/admin/orders", label: "Orders", icon: Package, entity: "order" },
       { href: "/admin/dispatch", label: "Dispatch", icon: Route },
       { href: "/admin/calendar", label: "Calendar", icon: CalendarDays },

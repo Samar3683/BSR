@@ -157,6 +157,12 @@ export function QuoteComposer({
             {content.submit.sentReference}: <span className="tabular-nums">{state.reference}</span>
           </p>
           <p className="type-body-sm text-text-secondary">{content.submit.sentBody}</p>
+          <Link
+            href={`/tracciamento?codice=${encodeURIComponent(state.reference)}`}
+            className="self-start underline underline-offset-2"
+          >
+            {content.submit.sentTrack}
+          </Link>
         </div>
       ) : (
         <div className="flex flex-col gap-3">

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { BrandMark } from "@/components/brand/brand-mark";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { ActionLink } from "@/components/editorial/action";
 
 import { siteNavigation as nav } from "../config/site-navigation";
@@ -49,7 +49,9 @@ export function SiteHeader() {
   useEffect(() => {
     if (!home) return;
     const regions = Object.keys(nav.sections)
-      .map((id) => (id === "hero" ? document.querySelector("[data-hero]") : document.getElementById(id)))
+      .map((id) =>
+        id === "hero" ? document.querySelector("[data-hero]") : document.getElementById(id),
+      )
       .filter((element): element is Element => element !== null);
     const regionOf = (element: Element) =>
       element.hasAttribute("data-hero") ? "hero" : element.id;
@@ -91,7 +93,8 @@ export function SiteHeader() {
           aria-label={nav.home.label}
           className="inline-flex min-h-(--target-min) items-center rounded-sm"
         >
-          <BrandMark />
+          {/* The logo is dark: over the hero's dark opening frame it sits on a light plate. */}
+          <BrandLogo plate={overHero} priority />
         </a>
         <nav aria-label={nav.label} className="hidden xl:block">
           <ul className="flex items-center gap-7">

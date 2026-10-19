@@ -14,6 +14,10 @@ interface Change {
 }
 
 const CONFIG_TABLES = new Set(["entity_configs", "field_definitions", "field_options"]);
+/** What the server's minute tick refreshes: only the figures that depend on the time of day. */
+const CLOCK_KEYS = new Set(["dashboard", "nav-counts", "calendar", "dispatch-candidates"]);
+/** A tab hidden for this long lets go of its connection (it reconnects when shown again). */
+const HIDDEN_GRACE_MS = 120_000;
 
 // Connection state, shared by whoever wants to show it ("Live").
 let live = false;
@@ -66,12 +70,14 @@ export function useRealtime() {
     const refresh = () => {
       timer = null;
       const config = [...touched].some((table) => CONFIG_TABLES.has(table));
+      const onlyClock = touched.size === 1 && touched.has("clock");
       const editing = /\/(edit|new)$/.test(window.location.pathname);
       touched.clear();
       void queryClient.invalidateQueries({
         predicate: (query) => {
           const key = query.queryKey[0];
           if (key === CONFIG_KEY[0]) return config;
+          if (onlyClock) return typeof key === "string" && CLOCK_KEYS.has(key);
           // Do not reset a form someone is filling in.
           if (editing && (key === "record" || key === "request")) return false;
           return true;
@@ -79,8 +85,12 @@ export function useRealtime() {
       });
     };
 
+    let hiddenTimer: ReturnType<typeof setTimeout> | null = null;
+    let suspended = false;
+
     const connect = () => {
       if (stopped) return;
+      source?.close();
       source = new EventSource("/admin/api/events");
       source.addEventListener("ready", () => {
         setLive(true);
@@ -122,8 +132,31 @@ export function useRealtime() {
       };
     };
 
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenTimer ??= setTimeout(() => {
+          hiddenTimer = null;
+          suspended = true;
+          source?.close();
+          setLive(false);
+        }, HIDDEN_GRACE_MS);
+        return;
+      }
+      if (hiddenTimer) {
+        clearTimeout(hiddenTimer);
+        hiddenTimer = null;
+      }
+      if (suspended) {
+        suspended = false;
+        connect();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     connect();
     return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (hiddenTimer) clearTimeout(hiddenTimer);
       stopped = true;
       source?.close();
       setLive(false);

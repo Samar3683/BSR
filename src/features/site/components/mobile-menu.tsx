@@ -3,7 +3,7 @@
 import { ArrowRight, Menu, MessageCircle, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { BrandMark } from "@/components/brand/brand-mark";
+import { BrandLogo } from "@/components/brand/brand-logo";
 import { ActionLink } from "@/components/editorial/action";
 import { IconButton } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
@@ -67,10 +67,10 @@ export function MobileMenu({
         aria-label={nav.menu.title}
         data-lenis-prevent
         data-surface="green"
-        className="menu-in m-0 h-dvh max-h-none w-full max-w-none overflow-y-auto overscroll-contain bg-green-800 text-text-primary backdrop:bg-transparent open:flex open:flex-col"
+        className="m-0 h-dvh max-h-none w-full max-w-none menu-in overflow-y-auto overscroll-contain bg-green-800 text-text-primary backdrop:bg-transparent open:flex open:flex-col"
       >
         <div className="ed-frame flex h-(--header-height) shrink-0 items-center justify-between">
-          <BrandMark />
+          <BrandLogo plate />
           <IconButton icon={X} label={nav.menu.close} variant="ghost" onClick={close} autoFocus />
         </div>
         <div className="ed-frame flex flex-1 flex-col justify-between gap-12 pt-8 pb-12">
@@ -117,10 +117,16 @@ export function MobileMenu({
               </ActionLink>
             </div>
             <div className="flex flex-col">
-              <a href={siteConfig.contact.phoneHref} className="inline-flex min-h-10 items-center ed-small tabular-nums">
+              <a
+                href={siteConfig.contact.phoneHref}
+                className="inline-flex min-h-10 items-center ed-small tabular-nums"
+              >
                 {siteConfig.contact.phoneDisplay}
               </a>
-              <a href={`mailto:${siteConfig.contact.email}`} className="inline-flex min-h-10 items-center ed-small">
+              <a
+                href={`mailto:${siteConfig.contact.email}`}
+                className="inline-flex min-h-10 items-center ed-small"
+              >
                 {siteConfig.contact.email}
               </a>
             </div>

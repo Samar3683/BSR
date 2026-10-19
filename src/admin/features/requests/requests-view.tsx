@@ -139,6 +139,11 @@ export function RequestsView() {
                     </td>
                     <td data-label={t("Status")}>
                       <RequestStatusBadge status={row.status} />
+                      {row.needs_reply && row.status !== "new" && row.status !== "discarded" ? (
+                        <span className="a-badge a-badge--warn" style={{ marginLeft: 6 }}>
+                          Awaiting reply
+                        </span>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

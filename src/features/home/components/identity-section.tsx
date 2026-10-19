@@ -49,7 +49,6 @@ export function IdentitySection() {
         {/* The light on the horizon. */}
         <div className="absolute inset-x-0 top-[40%] h-[50%] bg-[radial-gradient(ellipse_55%_45%_at_50%_60%,rgb(63_191_134/0.28),transparent_100%)]" />
         <div className="relative ed-frame flex h-full flex-col pt-[clamp(3rem,12svh,7rem)]">
-
           {/* The route out of Carpi, with the truck on it. */}
           <div className="relative mt-[clamp(4rem,14svh,9rem)]">
             <div className="relative h-px bg-hairline-strong">
@@ -105,7 +104,6 @@ export function IdentitySection() {
       </div>
 
       <div className="relative ed-frame pb-[clamp(4rem,10svh,8rem)]">
-
         <div className="mt-[clamp(2rem,5svh,4rem)] ed-grid gap-y-14">
           <h2 id={titleId} className="col-span-4 flex flex-col gap-5 md:col-span-8 lg:col-span-16">
             <span className="flex flex-col cine-statement">

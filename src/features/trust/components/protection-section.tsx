@@ -32,7 +32,6 @@ export function ProtectionSection() {
       </div>
 
       <div className="relative ed-frame pt-[clamp(5rem,14svh,9rem)] pb-[clamp(4rem,10svh,7rem)]">
-
         <div className="mt-[clamp(2rem,5svh,3.5rem)] ed-grid gap-y-14">
           <div className="col-span-4 flex flex-col gap-8 md:col-span-8 lg:col-span-9">
             <InkTitle

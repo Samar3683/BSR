@@ -79,6 +79,15 @@ export async function openAccountMenu(page: Page) {
 }
 
 /** A short unique suffix so reruns without a reset do not collide. */
+/**
+ * A fresh visitor address for the public forms, which allow a few requests per
+ * address and hour; every test plays its own visitor.
+ */
+export function visitorIp(): string {
+  const n = () => Math.floor(Math.random() * 254) + 1;
+  return `198.51.${n()}.${n()}`;
+}
+
 export function uid(): string {
   return Date.now().toString(36).slice(-5).toUpperCase();
 }

@@ -73,7 +73,7 @@ export function SectorsSection() {
           </div>
           {sectors.items.map((sector, i) =>
             sector.media ? (
-              <div key={sector.id} data-step-item={i} className="absolute inset-0 swap-media">
+              <div key={sector.id} data-step-item={i} className="swap-media absolute inset-0">
                 <MediaSlot
                   name={`sector-${sector.id}`}
                   media={sector.media}

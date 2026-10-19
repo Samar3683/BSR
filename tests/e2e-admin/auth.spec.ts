@@ -77,7 +77,7 @@ test.describe("admin authentication", () => {
     await expect(page.getByText(/an email with a reset link is on its way/)).toBeVisible();
 
     const mail = await waitForMail(USERS.recovery.email, since);
-    expect(mail.subject).toMatch(/Reset your BSR Trasporti admin password/);
+    expect(mail.subject).toMatch(/Reimposta la password del pannello BSR Trasporti/);
     await page.goto(panelLink(mail, baseURL!));
     await expect(page).toHaveURL(/\/admin\/reset-password$/);
     const password = "Recovered-pass-2026";

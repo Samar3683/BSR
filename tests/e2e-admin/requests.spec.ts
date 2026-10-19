@@ -1,6 +1,15 @@
 import { expect, test } from "@playwright/test";
 
-import { adminQuery, api, BASE_URL, fillDateTime, login, romeDate, uid } from "./support";
+import {
+  adminQuery,
+  api,
+  BASE_URL,
+  fillDateTime,
+  login,
+  romeDate,
+  uid,
+  visitorIp,
+} from "./support";
 import { USERS } from "./users";
 
 /** The public site's quote form reaches the admin panel through the backend. */
@@ -8,7 +17,7 @@ import { USERS } from "./users";
 const post = (path: string, body: unknown) =>
   fetch(`${BASE_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-forwarded-for": visitorIp() },
     body: JSON.stringify(body),
   });
 
@@ -30,7 +39,7 @@ test("a quote request sent on the public site appears in the inbox and becomes a
   const created = await post("/api/quote-requests", { ...request, elapsed: 6000 });
   expect(created.status).toBe(201);
   const { reference } = (await created.json()) as { reference: string };
-  expect(reference).toMatch(/^RQ-\d{4}-\d{5}$/);
+  expect(reference).toMatch(/^RQ-\d{4}-\d{5}-[A-Z2-9]{6}$/);
   const invalid = await post("/api/quote-requests", { ...request, phone: "1", elapsed: 6000 });
   expect(invalid.status).toBe(422);
   // A script that submits instantly is told "ok" but nothing is stored.
@@ -109,7 +118,10 @@ test("the real public form, with no mocks, reaches the admin inbox", async ({ pa
   const name = `Public Visitor ${s}`;
 
   // A visitor on the public site (separate browser context: no admin session).
-  const visitor = await browser.newContext({ baseURL: BASE_URL });
+  const visitor = await browser.newContext({
+    baseURL: BASE_URL,
+    extraHTTPHeaders: { "x-forwarded-for": visitorIp() },
+  });
   const site = await visitor.newPage();
   await site.goto("/preventivo");
   const main = site.getByRole("main");
@@ -128,8 +140,8 @@ test("the real public form, with no mocks, reaches the admin inbox", async ({ pa
   await site.waitForTimeout(1600);
   await main.getByRole("button", { name: "Invia la richiesta a BSR" }).click();
   const confirmation = site.getByTestId("quote-sent");
-  await expect(confirmation).toContainText(/RQ-\d{4}-\d{5}/);
-  const reference = (await confirmation.innerText()).match(/RQ-\d{4}-\d{5}/)![0];
+  await expect(confirmation).toContainText(/RQ-\d{4}-\d{5}-[A-Z2-9]{6}/);
+  const reference = (await confirmation.innerText()).match(/RQ-\d{4}-\d{5}-[A-Z2-9]{6}/)![0];
   await visitor.close();
 
   // The same request, as the dispatch team sees it.

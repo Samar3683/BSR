@@ -185,11 +185,12 @@ test.describe("no placeholders, no dead links, no invented proof", () => {
     for (const anchor of anchors) await expect(page.locator(anchor)).toHaveCount(1);
   });
 
-  test("no testimonial and no client logo is published without approval", async ({ page }) => {
+  test("no testimonial is published without approval; the six collaborator logos show", async ({
+    page,
+  }) => {
     await page.goto("/");
     await expect(page.locator("#recensioni blockquote")).toHaveCount(0);
-    await expect(page.locator("#clienti img")).toHaveCount(0);
-    await expect(page.getByText(/Transcoop|Transmec|One Express|LogiCo|Expedia/)).toHaveCount(0);
+    await expect(page.locator("#collaboratori img")).toHaveCount(6);
   });
 });
 

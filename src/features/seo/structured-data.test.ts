@@ -20,7 +20,15 @@ describe("structured data", () => {
   });
 
   it("never claims what BSR has not supplied", () => {
-    for (const key of ["openingHours", "openingHoursSpecification", "aggregateRating", "review", "priceRange", "foundingDate", "numberOfEmployees"]) {
+    for (const key of [
+      "openingHours",
+      "openingHoursSpecification",
+      "aggregateRating",
+      "review",
+      "priceRange",
+      "foundingDate",
+      "numberOfEmployees",
+    ]) {
       expect(data).not.toHaveProperty(key);
     }
   });

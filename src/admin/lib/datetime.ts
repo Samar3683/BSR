@@ -4,7 +4,26 @@
  * evaluates business days in the same zone. Instants are stored in UTC.
  */
 export const BUSINESS_TIME_ZONE = "Europe/Rome";
-const LOCALE = "en-GB";
+let LOCALE = "en-GB";
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+/** Sets the language dates are written in ("it" or "en"); called by the language provider. */
+export function setDateLocale(lang: "en" | "it") {
+  LOCALE = lang === "it" ? "it-IT" : "en-GB";
+}
+
+/** The locale numbers and dates are written in. */
+export const dateLocale = () => LOCALE;
+
+function cached(key: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const id = `${LOCALE}|${key}`;
+  let found = formatters.get(id);
+  if (!found) {
+    found = new Intl.DateTimeFormat(LOCALE, options);
+    formatters.set(id, found);
+  }
+  return found;
+}
 
 interface ZonedParts {
   year: number;
@@ -106,46 +125,45 @@ export function endOfMonth(date: string): string {
   return addDays(addMonths(startOfMonth(date), 1), -1);
 }
 
-const dateTimeFormatter = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: BUSINESS_TIME_ZONE,
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
-const timeFormatter = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: BUSINESS_TIME_ZONE,
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23",
-});
-const longDateFormatter = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: "UTC",
-  weekday: "short",
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
-const monthFormatter = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: "UTC",
-  month: "long",
-  year: "numeric",
-});
+const dateTimeFormatter = () =>
+  cached("dt", {
+    timeZone: BUSINESS_TIME_ZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+const timeFormatter = () =>
+  cached("t", {
+    timeZone: BUSINESS_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+const longDateFormatter = () =>
+  cached("ld", {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+const monthFormatter = () => cached("m", { timeZone: "UTC", month: "long", year: "numeric" });
 
 /** 12/10/2026 14:30 */
 export function formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return "";
   const date = typeof value === "string" ? new Date(value) : value;
-  return Number.isNaN(date.getTime()) ? "" : dateTimeFormatter.format(date);
+  return Number.isNaN(date.getTime()) ? "" : dateTimeFormatter().format(date);
 }
 
 /** 14:30 */
 export function formatTime(value: string | Date | null | undefined): string {
   if (!value) return "";
   const date = typeof value === "string" ? new Date(value) : value;
-  return Number.isNaN(date.getTime()) ? "" : timeFormatter.format(date);
+  return Number.isNaN(date.getTime()) ? "" : timeFormatter().format(date);
 }
 
 /** A calendar day (YYYY-MM-DD) as 12/10/2026. */
@@ -157,12 +175,12 @@ export function formatCalendarDate(date: string | null | undefined): string {
 
 /** A calendar day as "Mon 12 Oct 2026". */
 export function formatLongDate(date: string): string {
-  return longDateFormatter.format(new Date(`${date}T12:00:00Z`));
+  return longDateFormatter().format(new Date(`${date}T12:00:00Z`));
 }
 
 /** "October 2026" for a day of that month. */
 export function formatMonth(date: string): string {
-  return monthFormatter.format(new Date(`${date.slice(0, 7)}-15T12:00:00Z`));
+  return monthFormatter().format(new Date(`${date.slice(0, 7)}-15T12:00:00Z`));
 }
 
 /** "3 min ago", "yesterday", or the date. */

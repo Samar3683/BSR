@@ -1,26 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
-import { isBackendConfigured, readConfig } from "@/server/config";
+import { isBackendConfigured } from "@/server/config";
 import { IntakeError, submitQuoteRequest } from "@/server/intake";
 import { clientKey, rateLimited } from "@/server/limits";
-
-const HEADERS = { "Cache-Control": "no-store" };
-const fail = (message: string, status: number) =>
-  NextResponse.json({ error: { message } }, { status, headers: HEADERS });
-
-/** Same-site browser requests only (a server-side client has neither header). */
-function sameSite(request: NextRequest): boolean {
-  const origin = request.headers.get("origin");
-  if (origin) {
-    try {
-      return new URL(origin).host === request.nextUrl.host;
-    } catch {
-      return false;
-    }
-  }
-  const site = request.headers.get("sec-fetch-site");
-  return !site || site === "same-origin" || site === "none";
-}
+import { baseUrl, fail, ok, readJson, sameSite } from "@/server/public-api";
 
 /** The quote form's submission: stored for the dispatch team to answer. */
 export async function POST(request: NextRequest) {
@@ -31,26 +14,15 @@ export async function POST(request: NextRequest) {
     return fail("Troppe richieste. Riprova più tardi o scrivici su WhatsApp.", 429);
   }
 
-  let body: unknown;
-  try {
-    const raw = await request.text();
-    if (raw.length > 20_000) return fail("Richiesta non valida.", 413);
-    body = JSON.parse(raw);
-  } catch {
-    return fail("Richiesta non valida.", 400);
-  }
+  const body = await readJson(request);
+  if (body === null) return fail("Richiesta non valida.", 400);
   // The form reports how long it was open: a "visitor" that submits within a second is a script.
-  const elapsed = (body as { elapsed?: unknown } | null)?.elapsed;
-  if (typeof elapsed === "number" && elapsed < 1500) {
-    return NextResponse.json({ reference: "RQ-0000-00000" }, { headers: HEADERS });
-  }
+  const elapsed = (body as { elapsed?: unknown }).elapsed;
+  if (typeof elapsed === "number" && elapsed < 1500) return ok({ reference: "RQ-0000-00000" });
 
   try {
-    const reference = await submitQuoteRequest(
-      body,
-      readConfig()?.appUrl ?? request.nextUrl.origin,
-    );
-    return NextResponse.json({ reference }, { status: 201, headers: HEADERS });
+    const reference = await submitQuoteRequest(body, baseUrl(request));
+    return ok({ reference }, 201);
   } catch (error) {
     if (error instanceof IntakeError) return fail(error.message, error.status);
     console.error("quote request failed:", (error as Error).message);
