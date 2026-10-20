@@ -17,10 +17,9 @@ const RECHECK_MS = 60_000;
 
 async function isActiveAdmin(userId: string, email: string | null): Promise<boolean> {
   try {
-    return await withIdentity({ userId, email }, async (client) => {
-      const { rows } = await client.query<{ active: boolean; role: string }>(
-        "select active, role from public.current_admin()",
-      );
+    return await withIdentity({ userId, email }, async (tx) => {
+      const rows = await tx.$queryRaw<{ active: boolean; role: string }[]>`
+        select active, role from public.current_admin()`;
       return Boolean(rows[0]?.active && rows[0].role === "admin");
     });
   } catch {

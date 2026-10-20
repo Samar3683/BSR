@@ -18,25 +18,37 @@ Next.js server (route handlers under /admin/api, src/admin/server)
   ├─ src/proxy.ts ........... /admin only: redirects visitors without a valid session cookie
   └─ app/admin/(panel)/layout  checks the session row + active admin profile before rendering
   ▼
+Prisma Client (src/server/db.ts, driver adapter @prisma/adapter-pg)
+  ▼
 PostgreSQL
   each request runs in a transaction as role `authenticated` with the user in request.jwt.claims,
   so RLS, column grants and auth.uid() apply to every statement
 ```
 
+The server reaches the database only through Prisma Client (`db()` and `withIdentity()` in
+`src/server/db.ts`). Sessions, login and one-time links use Prisma's models of the `auth` tables;
+everything that runs as the signed-in user uses raw SQL inside `withIdentity()`, because the
+request roles may only read some columns and Prisma's model queries read all of them. The one
+exception is the live-update listener (`src/server/changes.ts`): `LISTEN` needs a dedicated
+connection, so it uses `pg` directly.
+
 ## Where things are
 
-| Path                             | Contents                                                                                                                                                                          |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `db/bootstrap.sql`               | Request roles, `auth` and `storage` schemas, `auth.uid()`, extensions (idempotent)                                                                                                |
-| `db/migrations/`                 | Schema, functions, triggers, RLS, storage, configuration seed (13 migrations)                                                                                                     |
-| `scripts/db/migrate.mjs`         | Applies the bootstrap and pending migrations (`pnpm db:migrate`)                                                                                                                  |
-| `src/app/admin/`                 | Pages (login, recovery, `auth/confirm`, `(panel)`) and the API (`api/rest`, `api/rpc`, `api/auth`, `api/admins`, `api/files`)                                                     |
-| `src/admin/server/`              | Server only: configuration, connection pool, request identity, query builder, passwords, sessions, email, auth actions                                                            |
-| `src/admin/`                     | The admin area: `lib/` (data client, field engine, dates, CSV, errors), `services/` (data access), `components/` (UI kit, fields, shell), `features/` (pages), `styles/admin.css` |
-| `src/proxy.ts`                   | Request proxy, matcher `/admin/:path*` only                                                                                                                                       |
-| `scripts/admin/create-admin.mjs` | Create the first administrator (writes to PostgreSQL, trusted machine)                                                                                                            |
-| `tools/postgres-local/`          | Local PostgreSQL cluster + mail sink for development and tests                                                                                                                    |
-| `tests/db/`, `tests/e2e-admin/`  | Database integration tests, admin end-to-end tests                                                                                                                                |
+| Path                             | Contents                                                                                                                                                                                                         |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prisma/migrations/`             | SQL migrations applied by Prisma Migrate: bootstrap (request roles, `auth` and `storage` schemas, `auth.uid()`, extensions), schema, functions, triggers, RLS, storage, configuration seed, the application role |
+| `prisma/schema.prisma`           | Prisma Client models, introspected from the migrated database (`npm run db:pull`)                                                                                                                                |
+| `prisma.config.ts`               | Prisma CLI settings (migrations and introspection connect as `DATABASE_ADMIN_URL`)                                                                                                                               |
+| `src/server/db.ts`               | Prisma Client, `withIdentity()` (request role + claims), database errors                                                                                                                                         |
+| `compose.yaml`, `Dockerfile`     | Docker: PostgreSQL, mail sink, migrations job and the web app                                                                                                                                                    |
+| `scripts/db/reset.mjs`           | Drops and recreates the local database, then applies every migration (`npm run db:reset`)                                                                                                                        |
+| `src/app/admin/`                 | Pages (login, recovery, `auth/confirm`, `(panel)`) and the API (`api/rest`, `api/rpc`, `api/auth`, `api/admins`, `api/files`)                                                                                    |
+| `src/admin/server/`              | Server only: query builder, passwords, sessions, auth actions, HTTP helpers                                                                                                                                      |
+| `src/admin/`                     | The admin area: `lib/` (data client, field engine, dates, CSV, errors), `services/` (data access), `components/` (UI kit, fields, shell), `features/` (pages), `styles/admin.css`                                |
+| `src/proxy.ts`                   | Request proxy, matcher `/admin/:path*` only                                                                                                                                                                      |
+| `scripts/admin/create-admin.mjs` | Create the first administrator (writes to PostgreSQL, trusted machine)                                                                                                                                           |
+| `docker/mail-sink/`              | The SMTP sink of the `mail` service: captures emails as files for development and tests                                                                                                                          |
+| `tests/db/`, `tests/e2e-admin/`  | Database integration tests, admin end-to-end tests                                                                                                                                                               |
 
 Isolation is enforced by ESLint (`eslint.config.mjs`): public code cannot import `@/admin/*`; admin
 code cannot import the public site's features, components, providers, stores or the hero. Admin
@@ -65,11 +77,20 @@ Order-specific system columns: `order_number` (generated, `BSR-YYYY-NNNNN`), `cu
 
 ### Migrations
 
-`pnpm db:migrate` applies `db/bootstrap.sql` and then every file of `db/migrations/` that has not
-been applied yet, each in its own transaction, recording them in `db_admin.schema_migrations`.
+`npm run db:migrate` (`prisma migrate deploy`) applies every folder of `prisma/migrations/` that
+has not been applied yet, in order, each in one transaction, and records them in
+`public._prisma_migrations` (no request role can read it). The migrations are plain SQL: Prisma
+does not model row-level security, grants, functions or triggers, so the SQL is the definition of
+the database and `prisma/schema.prisma` is read back from it.
+
+To change the schema: add a folder `prisma/migrations/<timestamp>_<name>/migration.sql` (by hand,
+or `npx prisma migrate dev --create-only` and review the SQL), apply it with `npm run db:migrate`,
+then run `npm run db:pull` to refresh the models and the client. A migration that adds a function
+the server calls as itself (outside a request role) grants it to `bsr_app` in the same file.
 
 | File                               | Contents                                                                                 |
 | ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| `…085900_bootstrap`                | Database defaults, request roles, `auth` and `storage` schemas, `auth.uid()`, extensions |
 | `…090000_foundation`               | Extensions, `private` schema, `admin_profiles`, authorization helpers, `current_admin()` |
 | `…090100_configuration`            | `field_type` enum, `entity_configs`, `field_definitions`, `field_options`                |
 | `…090200_entities`                 | `order_status` enum, entity tables, indexes, order numbers                               |
@@ -83,6 +104,12 @@ been applied yet, each in its own transaction, recording them in `db_admin.schem
 | `…091000_seed_configuration`       | The four entities and starting fields/options (no records)                               |
 | `…091100_admin_access_and_exports` | `list_admins()`, `create_admin_profile()`, `report_orders_export()`                      |
 | `…20261012090000_admin_ux`         | Field sections, bulk actions, global search, dispatch requirements                       |
+| `…20261012100000_auth_helpers`     | `auth.active_admin_user_id()` for password-reset requests                                |
+| `…20261012110000_quote_requests`   | Quote requests and contact events from the public site (`intake` schema)                 |
+| `…20261012120000_realtime_notify`  | `bsr_changes` notifications for live updates                                             |
+| `…20261012130000_app_role`         | The `bsr_app` login role and its grants                                                  |
+| `…20261012130100_messages_tracking` | Messages, conversations, tracking codes, `intake` functions for messages and tracking     |
+| `…20261012140000_report_relation_breakdown` | Fix for the relation field breakdown in reports                                  |
 
 ## Security model
 
@@ -234,7 +261,7 @@ Status workflow (`private.order_status_transition_allowed`):
   application role). Each gets a tracking code: the reference plus 6 random characters, e.g.
   `RQ-2026-00042-K7F3QX` or `MS-2026-00007-AB23CD`. The reference alone is guessable; the suffix is not.
 - `/tracciamento` (noindex) looks a code up with `intake.track`. It returns status, route, the
-  conversation and, once a request became an order, the order's progress — never name, phone or email.
+  conversation and, once a request became an order, the order's progress â€” never name, phone or email.
   Lookups are limited per address (wrong codes count double).
 - A visitor's follow-up (`intake.add_visitor_message`) reopens the item. The panel's **Requests** and
   **Messages** pages show the thread and a reply box; `public.reply_to_thread` stores the answer, and
@@ -252,57 +279,92 @@ Status workflow (`private.order_status_transition_allowed`):
 
 See `.env.example`. None of these is ever sent to a browser.
 
-| Variable                | Where                                                             | Secret  |
-| ----------------------- | ----------------------------------------------------------------- | ------- |
-| `DATABASE_URL`          | Web server: the limited application role                          | **yes** |
-| `SESSION_SECRET`        | Web server: signs the session cookie (32+ chars)                  | **yes** |
-| `APP_URL`               | Web server: base URL of emailed links                             | no      |
-| `SMTP_URL`, `MAIL_FROM` | Web server: reset and invitation emails                           | **yes** |
-| `NOTIFY_EMAIL`          | Web server: team address(es) told about new requests and messages | no      |
-| `DATABASE_ADMIN_URL`    | `pnpm db:migrate`, `pnpm admin:create`, tests                     | **yes** |
-| `DATABASE_APP_ROLE`     | `pnpm db:migrate` (default `bsr_app`)                             | no      |
+| Variable                | Where                                                       | Secret  |
+| ----------------------- | ----------------------------------------------------------- | ------- |
+| `DATABASE_URL`          | Web server: the limited application role                    | **yes** |
+| `SESSION_SECRET`        | Web server: signs the session cookie (32+ chars)            | **yes** |
+| `APP_URL`               | Web server: base URL of emailed links                       | no      |
+| `SMTP_URL`, `MAIL_FROM` | Web server: reset and invitation emails                     | **yes** |
+| `NOTIFY_EMAIL`          | Web server: team address(es) told about new requests and messages | no |
+| `DATABASE_ADMIN_URL`    | Prisma CLI (`db:migrate`, `db:pull`), `admin:create`, tests | **yes** |
 
 Without `DATABASE_URL` and `SESSION_SECRET` the panel shows "Backend not configured". The public
 site is unaffected either way.
 
 ## Local development
 
-PostgreSQL 15 or newer must be installed (its `initdb`, `pg_ctl` and `psql` on `PATH`, or
-`PG_BIN` pointing at its `bin` folder). No Docker is needed:
+Docker Desktop (or Docker Engine with Compose v2) runs PostgreSQL 17 and the mail sink; Node.js
+runs the app as usual. `.env.local` holds the connection settings (see `.env.example`; the values
+below are the defaults of `compose.yaml`):
 
 ```bash
-pnpm db:start        # private cluster in .postgres-local/ on port 54320 + mail sink on 54325;
-                     # creates the database, the bsr_app role and a .env.local when missing
-pnpm db:reset        # fresh database: bootstrap + all migrations + configuration seed
-pnpm admin:create --email you@example.com --name "Your Name" --password '…'
-pnpm dev             # http://localhost:3000/admin
-pnpm db:status       # health; pnpm db:stop to shut everything down
+DATABASE_URL=postgresql://bsr_app@localhost:54320/bsr
+DATABASE_ADMIN_URL=postgresql://postgres@localhost:54320/bsr
+SESSION_SECRET=<48 random bytes: node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))">
+APP_URL=http://localhost:3000
+SMTP_URL=smtp://127.0.0.1:54325
+MAIL_FROM=BSR Trasporti <no-reply@bsr.test>
 ```
 
-Emails (password reset, invitations) are captured as `.eml` / `.json` files in
-`.postgres-local/mail/` instead of being sent.
+```bash
+npm install          # also generates Prisma Client (postinstall)
+npm run db:start     # PostgreSQL on 127.0.0.1:54320 + mail sink on 127.0.0.1:54325 (Docker)
+npm run db:migrate   # apply prisma/migrations; npm run db:reset for a fresh database
+npm run admin:create -- --email you@example.com --name "Your Name" --password '…'
+npm run dev          # http://localhost:3000/admin
+npm run db:status    # container health; npm run db:stop to stop them
+```
+
+The data lives in the Docker volume `bsr_pgdata` (`docker compose down -v` deletes it). Emails
+(password reset, invitations) are captured as `.eml` / `.json` files in `.local/mail/` instead of
+being sent. `npx prisma studio` browses the database as `DATABASE_ADMIN_URL`.
+
+### The whole app in Docker
+
+```bash
+npm run docker:up    # builds the image, applies migrations, starts the app on 127.0.0.1:3000
+npm run docker:down
+```
+
+The `app` profile of `compose.yaml` adds two services built from the `Dockerfile`: `migrate`
+(runs `prisma migrate deploy` as the database owner, then exits) and `web` (the Next.js standalone
+server, as the unprivileged `node` user). `web` reads `SESSION_SECRET`, `APP_URL`, `MAIL_FROM` and
+`NOTIFY_EMAIL` from `.env.local`; its database and mail connections point at the other containers.
+Stop `npm run dev` first or set `WEB_PORT` to another port.
 
 ## Deployment
 
-1. Provision a PostgreSQL database (managed or self-hosted). Create the application login role
-   (for example `bsr_app`, with a password) and make sure the migration role can create schemas,
-   roles and extensions (`pgcrypto`, `btree_gist`).
+1. Provision a PostgreSQL 15+ database (managed or self-hosted) and make sure the migration role can
+   create schemas, roles and extensions (`pgcrypto`, `btree_gist`).
 2. Apply the schema from a trusted machine or CI:
-   `DATABASE_ADMIN_URL=postgresql://… pnpm db:migrate`. It grants the application role what it needs.
+   `DATABASE_ADMIN_URL=postgresql://… npx prisma migrate deploy`. The last migration creates the
+   application login role `bsr_app` (no password) and grants it what it needs; give it a password:
+   `alter role bsr_app password '…'`.
 3. Set `DATABASE_URL` (the application role), `SESSION_SECRET`, `APP_URL`, `SMTP_URL` and
    `MAIL_FROM` in the hosting environment and deploy the Next.js app (a Node.js host: the proxy and
-   API routes use the Node runtime and a persistent connection pool).
+   API routes use the Node runtime and a persistent connection pool). With Docker, build the
+   `runner` target of the `Dockerfile` (and `migrate` for step 2) and pass these as environment
+   variables; nothing secret is baked into the images.
 4. Create the first administrator:
-   `DATABASE_ADMIN_URL=… SMTP_URL=… APP_URL=https://<origin> pnpm admin:create --email … --name … --invite`.
+   `DATABASE_ADMIN_URL=… SMTP_URL=… APP_URL=https://<origin> npm run admin:create -- --email … --name … --invite`.
    Invite the others from Settings → Administrators.
 5. Use TLS (`?sslmode=require` in the connection string) and run the application behind HTTPS so the
-   session cookie is marked Secure.
+   session cookie is marked Secure. A reverse proxy in front of the app must pass the original host
+   and scheme (`Host` or `X-Forwarded-Host`, and `X-Forwarded-Proto`): the cross-site check and the
+   cookie's Secure flag use them (`src/server/request.ts`), because inside the Docker image Next.js
+   only knows its listening address (`0.0.0.0:3000`).
+
+`compose.yaml` is made for one machine: it publishes every port on 127.0.0.1 only and lets
+PostgreSQL trust connections without a password. To run it on a server, set `POSTGRES_PASSWORD`
+and `POSTGRES_HOST_AUTH_METHOD=scram-sha-256` before the first start, give `bsr_app` a password,
+and pass the URLs with passwords as `CONTAINER_DATABASE_URL` and `CONTAINER_DATABASE_ADMIN_URL`;
+replace the mail sink with a real SMTP server (`CONTAINER_SMTP_URL`).
 
 ## Tests
 
-| Command               | What                                                                                                                                                                                                                                   |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm test`           | Unit tests: field validation, values, keys, dates/DST, CSV, errors, filters, the query builder, passwords and session cookies (plus the existing site tests)                                                                           |
-| `pnpm test:db`        | Database tests against a running PostgreSQL: RLS, privileges, audit immutability, validation engine, field lifecycle, dispatch conflicts and workflow, reports (each test rolls back)                                                  |
-| `pnpm test:e2e:admin` | Admin E2E on a production build against the real local database: auth and recovery by email, dynamic-field workflow, dispatch workflow, reports + CSV, audit, security (API, files, sessions), WCAG A/AA, responsive, public isolation |
-| `pnpm test:e2e`       | The public site's existing suite (unchanged)                                                                                                                                                                                           |
+| Command                  | What                                                                                                                                                                                                                                                           |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm test`               | Unit tests: field validation, values, keys, dates/DST, CSV, errors, filters, the query builder, passwords and session cookies (plus the existing site tests)                                                                                                   |
+| `npm run test:db`        | Database tests against the running PostgreSQL (`npm run db:start`, `npm run db:reset`): RLS, privileges, audit immutability, validation engine, field lifecycle, dispatch conflicts and workflow, reports (each test rolls back)                               |
+| `npm run test:e2e:admin` | Admin E2E on a production build against the Docker database (reset first) and mail sink: auth and recovery by email, dynamic-field workflow, dispatch workflow, reports + CSV, audit, security (API, files, sessions), WCAG A/AA, responsive, public isolation |
+| `npm run test:e2e`       | The public site's existing suite (unchanged)                                                                                                                                                                                                                   |

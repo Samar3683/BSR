@@ -1,5 +1,5 @@
 import { readConfig } from "./config";
-import { withApp } from "./db";
+import { databaseError, db } from "./db";
 import { receiptMail, sendMail } from "./mail";
 
 /**
@@ -64,16 +64,12 @@ export async function submitQuoteRequest(input: unknown, adminBaseUrl: string): 
   const payload = normalizeQuote(input);
   let reference: string;
   try {
-    reference = await withApp(async (client) => {
-      const { rows } = await client.query<{ reference: string }>(
-        "select intake.submit_quote_request($1::jsonb) as reference",
-        [JSON.stringify(payload)],
-      );
-      return rows[0]!.reference;
-    });
+    const rows = await db().$queryRaw<{ reference: string }[]>`
+      select intake.submit_quote_request(${JSON.stringify(payload)}::jsonb) as reference`;
+    reference = rows[0]!.reference;
   } catch (error) {
-    const e = error as { hint?: string; message: string };
-    if (e.hint === "business_rule") throw new IntakeError(e.message);
+    const e = databaseError(error);
+    if (e?.hint === "business_rule") throw new IntakeError(e.message);
     throw error;
   }
   void notifyTeam(reference, payload, adminBaseUrl).catch(() => undefined);
@@ -114,9 +110,7 @@ async function notifyTeam(reference: string, payload: QuotePayload, baseUrl: str
 
 export async function recordContactEvent(channel: unknown, page: unknown): Promise<void> {
   if (typeof channel !== "string" || typeof page !== "string") return;
-  await withApp((client) =>
-    client.query("select intake.record_contact_event($1, $2)", [channel, page.slice(0, 200)]),
-  );
+  await db().$executeRaw`select intake.record_contact_event(${channel}, ${page.slice(0, 200)})`;
 }
 
 /** Tells the visitor their code by email (when they left an address and mail is configured). */
@@ -149,16 +143,12 @@ export async function submitContactMessage(input: unknown, baseUrl: string): Pro
   };
   let reference: string;
   try {
-    reference = await withApp(async (client) => {
-      const { rows } = await client.query<{ reference: string }>(
-        "select intake.submit_message($1::jsonb) as reference",
-        [JSON.stringify(payload)],
-      );
-      return rows[0]!.reference;
-    });
+    const rows = await db().$queryRaw<{ reference: string }[]>`
+      select intake.submit_message(${JSON.stringify(payload)}::jsonb) as reference`;
+    reference = rows[0]!.reference;
   } catch (error) {
-    const e = error as { hint?: string; message: string };
-    if (e.hint === "business_rule") throw new IntakeError(e.message);
+    const e = databaseError(error);
+    if (e?.hint === "business_rule") throw new IntakeError(e.message);
     throw error;
   }
   void notifyMessage(reference, payload, baseUrl).catch(() => undefined);
@@ -194,27 +184,20 @@ async function notifyMessage(reference: string, payload: MessagePayload, baseUrl
 /** What a visitor may see for a tracking code, or null when the code is unknown. */
 export async function trackCode(code: unknown): Promise<unknown> {
   if (typeof code !== "string" || code.length > 60) return null;
-  return withApp(async (client) => {
-    const { rows } = await client.query<{ result: unknown }>("select intake.track($1) as result", [
-      code,
-    ]);
-    return rows[0]?.result ?? null;
-  });
+  const rows = await db().$queryRaw<{ result: unknown }[]>`
+    select intake.track(${code}) as result`;
+  return rows[0]?.result ?? null;
 }
 
 export async function addVisitorMessage(code: unknown, message: unknown): Promise<boolean> {
   if (typeof code !== "string" || code.length > 60 || typeof message !== "string") return false;
   try {
-    return await withApp(async (client) => {
-      const { rows } = await client.query<{ ok: boolean }>(
-        "select intake.add_visitor_message($1, $2) as ok",
-        [code, message.slice(0, 2000)],
-      );
-      return Boolean(rows[0]?.ok);
-    });
+    const rows = await db().$queryRaw<{ ok: boolean }[]>`
+      select intake.add_visitor_message(${code}, ${message.slice(0, 2000)}) as ok`;
+    return Boolean(rows[0]?.ok);
   } catch (error) {
-    const e = error as { hint?: string; message: string };
-    if (e.hint === "business_rule") throw new IntakeError(e.message);
+    const e = databaseError(error);
+    if (e?.hint === "business_rule") throw new IntakeError(e.message);
     throw error;
   }
 }

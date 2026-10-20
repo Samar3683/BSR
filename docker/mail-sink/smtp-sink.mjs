@@ -1,13 +1,15 @@
 // Tiny SMTP sink for local development and tests (stands in for Mailpit). Node built-ins only.
-// Every message is written to .postgres-local/mail/<stamp>.eml (raw) and <stamp>.json
+// Runs as the `mail` service of compose.yaml. Every message is written to BSR_MAIL_DIR
+// (.local/mail/ on the host) as <stamp>.eml (raw) and <stamp>.json
 // ({ from, to, subject, text, html, links, ... }) so tests can read recovery/invite links.
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
 
-import { MAIL_DIR as DEFAULT_MAIL_DIR, PORTS, ensureDir } from "./lib.mjs";
-
-const MAIL_DIR = ensureDir(process.env.BSR_MAIL_DIR || DEFAULT_MAIL_DIR);
+const MAIL_DIR = process.env.BSR_MAIL_DIR || path.resolve(".local/mail");
+const HOST = process.env.SMTP_HOST || "127.0.0.1";
+const PORT = Number(process.env.SMTP_PORT || 54325);
+fs.mkdirSync(MAIL_DIR, { recursive: true });
 const MAX_SIZE = 25 * 1024 * 1024;
 let seq = 0;
 
@@ -153,7 +155,7 @@ const server = net.createServer((socket) => {
   let envelope = { from: null, to: [] };
   const reply = (line) => socket.write(`${line}\r\n`);
 
-  reply("220 localhost ESMTP supabase-local smtp-sink");
+  reply("220 localhost ESMTP bsr smtp-sink");
   socket.setEncoding("utf8");
   socket.on("error", () => {});
   socket.on("data", (chunk) => {
@@ -222,6 +224,6 @@ const server = net.createServer((socket) => {
   });
 });
 
-server.listen(PORTS.smtp, "127.0.0.1", () => {
-  console.log(`smtp-sink listening on 127.0.0.1:${PORTS.smtp}, writing to ${MAIL_DIR}`);
+server.listen(PORT, HOST, () => {
+  console.log(`smtp-sink listening on ${HOST}:${PORT}, writing to ${MAIL_DIR}`);
 });

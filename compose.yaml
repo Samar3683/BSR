@@ -1,0 +1,92 @@
+# BSR with Docker: PostgreSQL and a mail sink for development and tests, plus
+# the containerised web app.
+#
+#   npm run db:start                              PostgreSQL on 127.0.0.1:54320, mail sink on 127.0.0.1:54325
+#   npm run db:migrate                            apply prisma/migrations (from the host)
+#   docker compose --profile app up -d --build    + migrations and the web app on 127.0.0.1:3000
+#
+# Every port is published on 127.0.0.1 only. PostgreSQL trusts connections
+# without a password by default, which is only acceptable on a developer
+# machine; see docs/admin-backend.md (Deployment) before running it anywhere else.
+name: bsr
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bsr
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD:-trust}
+    ports:
+      - "127.0.0.1:54320:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bsr"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Captures outgoing email (password resets, invitations) as files in .local/mail/.
+  mail:
+    image: node:22-alpine
+    restart: unless-stopped
+    command: ["node", "/sink/smtp-sink.mjs"]
+    environment:
+      SMTP_HOST: 0.0.0.0
+      SMTP_PORT: "1025"
+      BSR_MAIL_DIR: /mail
+    ports:
+      - "127.0.0.1:54325:1025"
+    volumes:
+      - ./docker/mail-sink:/sink:ro
+      - ./.local/mail:/mail
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('net').connect(1025, '127.0.0.1').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # Applies pending migrations as the database owner, then exits.
+  migrate:
+    profiles: [app]
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_ADMIN_URL: ${CONTAINER_DATABASE_ADMIN_URL:-postgresql://postgres@db:5432/bsr}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    profiles: [app]
+    build:
+      context: .
+      target: runner
+    restart: unless-stopped
+    # SESSION_SECRET, APP_URL, MAIL_FROM and NOTIFY_EMAIL come from .env.local;
+    # the connections below point at the other containers instead of the host ports.
+    env_file:
+      - path: .env.local
+        required: false
+    environment:
+      DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgresql://bsr_app@db:5432/bsr}
+      DATABASE_ADMIN_URL: ""
+      SMTP_URL: ${CONTAINER_SMTP_URL:-smtp://mail:1025}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mail:
+        condition: service_healthy
+
+volumes:
+  pgdata:

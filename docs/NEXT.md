@@ -2,6 +2,14 @@
 
 Where the project stands and what comes next. Update this file at the end of every phase.
 
+## Database layer: Prisma and Docker (12 October 2026)
+
+The admin backend now reaches PostgreSQL through **Prisma** (7.10, driver adapter `pg`), and the
+SQL migrations are applied by Prisma Migrate (`prisma/migrations`). Security is unchanged: RLS,
+column grants and SECURITY DEFINER functions stay in the database. **Docker** runs PostgreSQL 17
+and the mail sink for development (`pnpm db:start`), and `compose.yaml` + `Dockerfile` run the
+whole app (`pnpm docker:up`). See admin-backend.md → Local development / Deployment.
+
 ## Admin panel and backend (11 October 2026)
 
 **Backend + admin panel: done** — see [admin-backend.md](admin-backend.md). Plain PostgreSQL
@@ -9,7 +17,7 @@ Where the project stands and what comes next. Update this file at the end of eve
 dashboard, orders, dispatch (conflict-safe assignments), calendar, vehicles, drivers, customers,
 reports with CSV, immutable audit log, and a field builder that drives every form, list, filter
 and report. The public site and the hero are untouched (verified by hash). Open: provision the
-production PostgreSQL database, run `pnpm db:migrate`, set `DATABASE_URL`, `SESSION_SECRET`,
+production PostgreSQL database, run `pnpm db:migrate` (Prisma Migrate), set `DATABASE_URL`, `SESSION_SECRET`,
 `APP_URL` and `SMTP_URL`, invite the first administrator (steps in admin-backend.md → Deployment).
 
 ## Where we are (10 October 2026, evening)

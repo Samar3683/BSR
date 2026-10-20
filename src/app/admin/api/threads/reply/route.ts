@@ -38,16 +38,11 @@ export async function POST(request: NextRequest) {
 
   let stored: { entry_id: string; email: string | null; reference: string };
   try {
-    stored = await withIdentity(
-      { userId: session.userId, email: session.email },
-      async (client) => {
-        const { rows } = await client.query<{ result: typeof stored }>(
-          "select public.reply_to_thread($1, $2, $3) as result",
-          [body.kind, body.id, body.body],
-        );
-        return rows[0]!.result;
-      },
-    );
+    stored = await withIdentity({ userId: session.userId, email: session.email }, async (tx) => {
+      const rows = await tx.$queryRaw<{ result: typeof stored }[]>`
+        select public.reply_to_thread(${body.kind}, ${body.id}::uuid, ${body.body}) as result`;
+      return rows[0]!.result;
+    });
   } catch (error) {
     return errorResponse(error);
   }
@@ -57,8 +52,9 @@ export async function POST(request: NextRequest) {
   if (stored.email && readConfig()?.smtpUrl) {
     try {
       await sendMail(replyMail(stored.email, stored.reference, body.body, siteOrigin(request)));
-      await withIdentity({ userId: session.userId, email: session.email }, (client) =>
-        client.query("select public.mark_thread_entry_emailed($1)", [stored.entry_id]),
+      await withIdentity(
+        { userId: session.userId, email: session.email },
+        (tx) => tx.$executeRaw`select public.mark_thread_entry_emailed(${stored.entry_id}::uuid)`,
       );
       emailed = true;
     } catch (error) {

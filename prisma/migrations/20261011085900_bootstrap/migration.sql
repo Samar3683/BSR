@@ -1,9 +1,11 @@
 -- =============================================================================
 -- BSR — PostgreSQL bootstrap (plain PostgreSQL 15+, no Supabase services)
 --
--- Idempotent. Run as a role that may create roles, schemas and extensions
--- (`pnpm db:migrate` does it). It provides what the migrations rely on:
+-- Idempotent. Applied by `prisma migrate deploy` (npm run db:migrate) as a role
+-- that may create roles, schemas and extensions. It provides what the
+-- migrations rely on:
 --
+--   * defaults        UTC, and the `extensions` schema on the search path.
 --   * request roles   anon / authenticated / service_role (NOLOGIN). The app
 --                     server switches into `authenticated` per request and
 --                     passes the signed-in user in `request.jwt.claims`, so
@@ -15,6 +17,15 @@
 -- =============================================================================
 
 set client_min_messages = warning;
+
+-- The defaults the migrations were written for. They apply to new sessions;
+-- this one switches now.
+do $$
+begin
+  execute format('alter database %I set timezone = %L', current_database(), 'UTC');
+  execute format('alter database %I set search_path = "$user", public, extensions', current_database());
+end $$;
+set search_path = "$user", public, extensions;
 
 do $$
 begin

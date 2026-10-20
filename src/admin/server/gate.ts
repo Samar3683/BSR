@@ -36,8 +36,9 @@ export async function resolveAdminGate(): Promise<AdminGate> {
   if (!isBackendConfigured()) return { state: "unconfigured" };
   const session = await getSessionUser();
   if (!session) return { state: "signed-out" };
-  const admin = await withIdentity({ userId: session.userId, email: session.email }, async (c) => {
-    const { rows } = await c.query<CurrentAdmin>("select * from public.current_admin()");
+  const admin = await withIdentity({ userId: session.userId, email: session.email }, async (tx) => {
+    const rows = await tx.$queryRaw<CurrentAdmin[]>`
+      select id, user_id, display_name, role, active, email from public.current_admin()`;
     return rows[0] ?? null;
   });
   if (!admin) return { state: "no-access", email: session.email };

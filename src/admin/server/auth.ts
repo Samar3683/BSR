@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 
 import { passwordProblem } from "../lib/password-policy";
-import { withApp, withIdentity } from "@/server/db";
+import { db, withIdentity } from "@/server/db";
 import { inviteMail, recoveryMail, sendMail } from "@/server/mail";
 import { hashPassword, verifyPassword } from "./passwords";
 import {
@@ -38,18 +38,16 @@ export async function login(
   if (!EMAIL.test(email) || typeof password !== "string" || !password || password.length > 200) {
     throw generic;
   }
-  const user = await withApp(async (client) => {
-    const { rows } = await client.query<{ id: string; encrypted_password: string | null }>(
-      "select id, encrypted_password from auth.users where lower(email) = $1",
-      [email],
-    );
-    return rows[0] ?? null;
-  });
+  // lower(email) matches the unique index users_email_lower_key.
+  const [user] = await db().$queryRaw<{ id: string; encrypted_password: string | null }[]>`
+    select id, encrypted_password from auth.users where lower(email) = ${email}`;
   const ok = await verifyPassword(user?.encrypted_password ?? null, password);
   if (!user || !ok) throw generic;
-  await withApp((client) =>
-    client.query("update auth.users set last_sign_in_at = now() where id = $1", [user.id]),
-  );
+  await db().users.update({
+    where: { id: user.id },
+    data: { last_sign_in_at: new Date() },
+    select: { id: true },
+  });
   return createSession(user.id, "password", userAgent);
 }
 
@@ -60,18 +58,19 @@ type TokenKind = "recovery" | "invite";
 async function issueToken(userId: string, kind: TokenKind): Promise<string> {
   const token = randomBytes(32).toString("base64url");
   const hours = kind === "invite" ? 24 * 7 : 1;
-  await withApp(async (client) => {
-    // One live link per kind and user.
-    await client.query("delete from auth.one_time_tokens where user_id = $1 and kind = $2", [
-      userId,
-      kind,
-    ]);
-    await client.query(
-      `insert into auth.one_time_tokens (user_id, kind, token_hash, expires_at)
-       values ($1, $2, $3, now() + make_interval(hours => $4))`,
-      [userId, kind, sha256(token), hours],
-    );
-  });
+  // One live link per kind and user.
+  await db().$transaction([
+    db().one_time_tokens.deleteMany({ where: { user_id: userId, kind } }),
+    db().one_time_tokens.create({
+      data: {
+        user_id: userId,
+        kind,
+        token_hash: sha256(token),
+        expires_at: new Date(Date.now() + hours * 3_600_000),
+      },
+      select: { id: true },
+    }),
+  ]);
   return token;
 }
 
@@ -89,16 +88,13 @@ export async function consumeToken(
   kind: TokenKind,
   userAgent: string | null,
 ): Promise<NewSession | null> {
-  const userId = await withApp(async (client) => {
-    const { rows } = await client.query<{ user_id: string }>(
-      `update auth.one_time_tokens
-          set used_at = now()
-        where token_hash = $1 and kind = $2 and used_at is null and expires_at > now()
-        returning user_id`,
-      [sha256(token), kind],
-    );
-    return rows[0]?.user_id ?? null;
+  // One statement (update … returning): a link can only be used once.
+  const [used] = await db().one_time_tokens.updateManyAndReturn({
+    where: { token_hash: sha256(token), kind, used_at: null, expires_at: { gt: new Date() } },
+    data: { used_at: new Date() },
+    select: { user_id: true },
   });
+  const userId = used?.user_id ?? null;
   return userId ? createSession(userId, "link", userAgent) : null;
 }
 
@@ -109,13 +105,9 @@ export async function consumeToken(
 export async function requestPasswordReset(emailInput: unknown, origin: string): Promise<void> {
   const email = normalizeEmail(emailInput);
   if (!EMAIL.test(email)) return;
-  const userId = await withApp(async (client) => {
-    const { rows } = await client.query<{ id: string | null }>(
-      "select auth.active_admin_user_id($1) as id",
-      [email],
-    );
-    return rows[0]?.id ?? null;
-  });
+  const [row] = await db().$queryRaw<{ id: string | null }[]>`
+    select auth.active_admin_user_id(${email}) as id`;
+  const userId = row?.id ?? null;
   if (!userId) return;
   const token = await issueToken(userId, "recovery");
   await sendMail(recoveryMail(email, confirmLink(origin, token, "recovery")));
@@ -139,13 +131,11 @@ export async function changePassword(
   if (problem) throw new AuthFailure(problem, 422, { password: problem });
 
   if (session.via === "password") {
-    const stored = await withApp(async (client) => {
-      const { rows } = await client.query<{ encrypted_password: string | null }>(
-        "select encrypted_password from auth.users where id = $1",
-        [session.userId],
-      );
-      return rows[0]?.encrypted_password ?? null;
+    const user = await db().users.findUnique({
+      where: { id: session.userId },
+      select: { encrypted_password: true },
     });
+    const stored = user?.encrypted_password ?? null;
     const valid = typeof current === "string" && (await verifyPassword(stored, current));
     if (!valid) {
       throw new AuthFailure("The current password is not correct", 403, {
@@ -160,12 +150,11 @@ export async function changePassword(
   }
 
   const hash = await hashPassword(password);
-  await withApp((client) =>
-    client.query(
-      "update auth.users set encrypted_password = $2, updated_at = now() where id = $1",
-      [session.userId, hash],
-    ),
-  );
+  await db().users.update({
+    where: { id: session.userId },
+    data: { encrypted_password: hash, updated_at: new Date() },
+    select: { id: true },
+  });
   await revokeUserSessions(session.userId);
   return createSession(session.userId, "password", userAgent);
 }
@@ -187,10 +176,9 @@ export async function inviteAdmin(
   displayNameInput: unknown,
   origin: string,
 ): Promise<InviteResult> {
-  const isAdmin = await withIdentity({ userId: caller.userId, email: caller.email }, async (c) => {
-    const { rows } = await c.query<{ active: boolean; role: string }>(
-      "select active, role from public.current_admin()",
-    );
+  const isAdmin = await withIdentity({ userId: caller.userId, email: caller.email }, async (tx) => {
+    const rows = await tx.$queryRaw<{ active: boolean; role: string }[]>`
+      select active, role from public.current_admin()`;
     return Boolean(rows[0]?.active && rows[0].role === "admin");
   });
   if (!isAdmin) throw new AuthFailure("Not authorized", 403);
@@ -205,16 +193,13 @@ export async function inviteAdmin(
     throw new AuthFailure("Some fields need attention", 422, fieldErrors);
   }
 
-  const created = await withApp(async (client) => {
-    const { rows } = await client.query<{ id: string }>(
-      `insert into auth.users (email, raw_user_meta_data)
-       values ($1, jsonb_build_object('display_name', $2::text))
-       on conflict do nothing
-       returning id`,
-      [email, displayName],
-    );
-    return rows[0]?.id ?? null;
+  // insert … on conflict do nothing returning id: nothing comes back for a taken email.
+  const [inserted] = await db().users.createManyAndReturn({
+    data: [{ email, raw_user_meta_data: { display_name: displayName } }],
+    skipDuplicates: true,
+    select: { id: true },
   });
+  const created = inserted?.id ?? null;
   if (!created) {
     throw new AuthFailure("A user with this email already exists", 409, {
       email: "A user with this email already exists",
@@ -223,16 +208,14 @@ export async function inviteAdmin(
 
   let profile: unknown;
   try {
-    profile = await withIdentity({ userId: caller.userId, email: caller.email }, async (c) => {
-      const { rows } = await c.query("select public.create_admin_profile($1, $2) as profile", [
-        created,
-        displayName,
-      ]);
+    profile = await withIdentity({ userId: caller.userId, email: caller.email }, async (tx) => {
+      const rows = await tx.$queryRaw<{ profile: unknown }[]>`
+        select to_json(public.create_admin_profile(${created}::uuid, ${displayName})) as profile`;
       return rows[0]?.profile;
     });
   } catch (error) {
     // Do not leave a login without the profile it was invited for.
-    await withApp((client) => client.query("delete from auth.users where id = $1", [created]));
+    await db().users.deleteMany({ where: { id: created } });
     throw new AuthFailure(
       (error as Error).message || "The administrator profile could not be created",
       400,

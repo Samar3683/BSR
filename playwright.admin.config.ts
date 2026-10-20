@@ -3,10 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 import { stackEnv } from "./tests/e2e-admin/stack";
 
 /**
- * Admin panel end-to-end tests against a REAL Supabase backend: the local
- * stack (`pnpm supabase:local start`, Auth + PostgREST + Storage + Edge
- * Functions) or any project given by NEXT_PUBLIC_SUPABASE_URL /
- * NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY / SUPABASE_DB_URL.
+ * Admin panel end-to-end tests against a REAL backend: the Docker PostgreSQL
+ * and mail sink (`npm run db:start`), or any database given by DATABASE_URL /
+ * DATABASE_ADMIN_URL / SESSION_SECRET / SMTP_URL.
  * Global setup resets the local database (set BSR_E2E_RESET=0 to skip) and
  * creates the test administrators. Tests share one database, so they run
  * serially.

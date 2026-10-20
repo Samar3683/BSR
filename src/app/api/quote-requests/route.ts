@@ -3,12 +3,13 @@ import type { NextRequest } from "next/server";
 import { isBackendConfigured } from "@/server/config";
 import { IntakeError, submitQuoteRequest } from "@/server/intake";
 import { clientKey, rateLimited } from "@/server/limits";
-import { baseUrl, fail, ok, readJson, sameSite } from "@/server/public-api";
+import { baseUrl, fail, ok, readJson } from "@/server/public-api";
+import { isSameSite } from "@/server/request";
 
 /** The quote form's submission: stored for the dispatch team to answer. */
 export async function POST(request: NextRequest) {
   if (!isBackendConfigured()) return fail("Il servizio non è disponibile.", 503);
-  if (!sameSite(request)) return fail("Richiesta non valida.", 403);
+  if (!isSameSite(request)) return fail("Richiesta non valida.", 403);
 
   if (rateLimited(`quote:ip:${clientKey(request)}`, 5, 60 * 60_000)) {
     return fail("Troppe richieste. Riprova più tardi o scrivici su WhatsApp.", 429);

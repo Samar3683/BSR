@@ -32,11 +32,10 @@ export async function POST(request: NextRequest) {
   const mime = file.type || "application/octet-stream";
 
   try {
-    await withIdentity({ userId: session.userId, email: session.email }, async (client) => {
-      const { rows } = await client.query<{
-        file_size_limit: number | null;
-        allowed_mime_types: string[] | null;
-      }>("select file_size_limit, allowed_mime_types from storage.buckets where id = $1", [BUCKET]);
+    await withIdentity({ userId: session.userId, email: session.email }, async (tx) => {
+      const rows = await tx.$queryRaw<
+        { file_size_limit: bigint | null; allowed_mime_types: string[] | null }[]
+      >`select file_size_limit, allowed_mime_types from storage.buckets where id = ${BUCKET}`;
       const bucket = rows[0];
       if (!bucket) throw Object.assign(new Error("Storage is not available"), { status: 503 });
       if (bucket.file_size_limit && file.size > Number(bucket.file_size_limit)) {
@@ -45,16 +44,11 @@ export async function POST(request: NextRequest) {
       if (bucket.allowed_mime_types && !bucket.allowed_mime_types.includes(mime)) {
         throw Object.assign(new Error("This file type is not allowed."), { status: 415 });
       }
-      await client.query(
-        `insert into storage.objects (bucket_id, name, owner, metadata, content)
-         values ($1, $2, auth.uid(), $3::jsonb, $4)`,
-        [
-          BUCKET,
-          path,
-          JSON.stringify({ size: file.size, mimetype: mime }),
-          Buffer.from(await file.arrayBuffer()),
-        ],
-      );
+      const content = new Uint8Array(await file.arrayBuffer());
+      const metadata = JSON.stringify({ size: file.size, mimetype: mime });
+      await tx.$executeRaw`
+        insert into storage.objects (bucket_id, name, owner, metadata, content)
+        values (${BUCKET}, ${path}, auth.uid(), ${metadata}::jsonb, ${content})`;
     });
     return json({ ok: true, path });
   } catch (error) {
@@ -72,16 +66,11 @@ export async function GET(request: NextRequest) {
   const path = request.nextUrl.searchParams.get("path") ?? "";
   if (!path || path.length > 300) return json({ error: { message: "Not found" } }, 404);
 
-  const row = await withIdentity(
-    { userId: session.userId, email: session.email },
-    async (client) => {
-      const { rows } = await client.query<{ content: Buffer; metadata: { mimetype?: string } }>(
-        "select content, metadata from storage.objects where bucket_id = $1 and name = $2",
-        [BUCKET, path],
-      );
-      return rows[0] ?? null;
-    },
-  ).catch(() => null);
+  const row = await withIdentity({ userId: session.userId, email: session.email }, async (tx) => {
+    const rows = await tx.$queryRaw<{ content: Uint8Array; metadata: { mimetype?: string } }[]>`
+      select content, metadata from storage.objects where bucket_id = ${BUCKET} and name = ${path}`;
+    return rows[0] ?? null;
+  }).catch(() => null);
   if (!row) return json({ error: { message: "Not found" } }, 404);
 
   const mime = row.metadata?.mimetype ?? "application/octet-stream";

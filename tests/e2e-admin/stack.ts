@@ -10,20 +10,26 @@ export interface StackEnv {
   smtpUrl: string;
   /** Directory the local mail sink writes captured emails to. */
   mailDir: string;
-  /** True when the local PostgreSQL from `pnpm db:start` is used (it may be reset). */
+  /** True when the Docker database from `npm run db:start` is used (it may be reset). */
   local: boolean;
 }
 
-/** Backend under test: explicit env vars, else the local PostgreSQL started by `pnpm db:start`. */
+/** SESSION_SECRET of .env.local, if there is one. */
+function localSessionSecret(): string {
+  const file = resolve(process.cwd(), ".env.local");
+  if (!existsSync(file)) return "";
+  const line = readFileSync(file, "utf8").match(/^\s*SESSION_SECRET\s*=\s*(.*)$/m)?.[1] ?? "";
+  return line.trim().replace(/^["']|["']$/g, "");
+}
+
+/** Backend under test: explicit env vars, else the Docker services started by `npm run db:start`. */
 export function stackEnv(): StackEnv {
-  const secretFile = resolve(process.cwd(), ".postgres-local/session-secret");
-  const generated = existsSync(secretFile) ? readFileSync(secretFile, "utf8").trim() : "";
   return {
     databaseUrl: process.env.DATABASE_URL ?? "postgresql://bsr_app@localhost:54320/bsr",
     adminUrl: process.env.DATABASE_ADMIN_URL ?? "postgresql://postgres@localhost:54320/bsr",
-    sessionSecret: process.env.SESSION_SECRET ?? generated,
+    sessionSecret: process.env.SESSION_SECRET ?? localSessionSecret(),
     smtpUrl: process.env.SMTP_URL ?? "smtp://127.0.0.1:54325",
-    mailDir: process.env.BSR_MAIL_DIR ?? resolve(process.cwd(), ".postgres-local/mail"),
+    mailDir: process.env.BSR_MAIL_DIR ?? resolve(process.cwd(), ".local/mail"),
     local: !process.env.DATABASE_URL,
   };
 }

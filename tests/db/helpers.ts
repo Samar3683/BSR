@@ -3,14 +3,13 @@ import { randomUUID } from "node:crypto";
 import pg from "pg";
 
 /**
- * Database test harness. Connects as the migration owner (postgres) to a
- * Supabase database (local stack or `supabase start`), and runs every test
- * inside a transaction that is rolled back, so nothing persists.
- * Requests are simulated exactly as PostgREST makes them: SET LOCAL ROLE plus
- * the JWT claims in request.jwt.claims.
+ * Database test harness. Connects as the migration owner (postgres) to the
+ * migrated database (`npm run db:start`, `npm run db:reset`), and runs every
+ * test inside a transaction that is rolled back, so nothing persists.
+ * Requests are simulated exactly as the server makes them (withIdentity in
+ * src/server/db.ts): SET LOCAL ROLE plus the claims in request.jwt.claims.
  */
-export const DB_URL =
-  process.env.DATABASE_ADMIN_URL ?? "postgresql://postgres@localhost:54320/bsr";
+export const DB_URL = process.env.DATABASE_ADMIN_URL ?? "postgresql://postgres@localhost:54320/bsr";
 
 export type Db = pg.PoolClient;
 

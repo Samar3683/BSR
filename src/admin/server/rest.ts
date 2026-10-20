@@ -1,4 +1,4 @@
-import type pg from "pg";
+import type { Tx } from "@/server/db";
 
 /**
  * Table and function access for the admin panel.
@@ -300,16 +300,14 @@ export function buildStatement(
 
 const typeCache = new Map<string, { at: number; types: ColumnTypes }>();
 
-async function columnTypes(client: pg.PoolClient, table: string): Promise<ColumnTypes> {
+async function columnTypes(tx: Tx, table: string): Promise<ColumnTypes> {
   const cached = typeCache.get(table);
   if (cached && Date.now() - cached.at < 60_000) return cached.types;
-  const { rows } = await client.query<{ attname: string; typname: string }>(
-    `select a.attname, t.typname
-       from pg_attribute a
-       join pg_type t on t.oid = a.atttypid
-      where a.attrelid = to_regclass($1) and a.attnum > 0 and not a.attisdropped`,
-    [`public.${quoteIdent(table)}`],
-  );
+  const rows = await tx.$queryRaw<{ attname: string; typname: string }[]>`
+    select a.attname, t.typname
+      from pg_attribute a
+      join pg_type t on t.oid = a.atttypid
+     where a.attrelid = to_regclass(${`public.${quoteIdent(table)}`}) and a.attnum > 0 and not a.attisdropped`;
   const types: ColumnTypes = {};
   for (const row of rows) {
     types[row.attname] = {
@@ -324,7 +322,7 @@ async function columnTypes(client: pg.PoolClient, table: string): Promise<Column
 const relationCache = new Map<string, { at: number; relations: Relations }>();
 
 /** Foreign keys from op.table to the tables a select list embeds. */
-async function relationsFor(client: pg.PoolClient, op: RestOp): Promise<Relations> {
+async function relationsFor(tx: Tx, op: RestOp): Promise<Relations> {
   const targets = op.action === "select" ? embeddedTables(op.columns) : [];
   if (!targets.length) return {};
   const key = `${op.table}>${targets.join(",")}`;
@@ -332,15 +330,14 @@ async function relationsFor(client: pg.PoolClient, op: RestOp): Promise<Relation
   if (cached && Date.now() - cached.at < 60_000) return cached.relations;
   const relations: Relations = {};
   for (const target of targets) {
-    const { rows } = await client.query<{ child: string; parent: string }>(
-      `select ca.attname as child, pa.attname as parent
-         from pg_constraint c
-         join pg_attribute ca on ca.attrelid = c.conrelid and ca.attnum = c.conkey[1]
-         join pg_attribute pa on pa.attrelid = c.confrelid and pa.attnum = c.confkey[1]
-        where c.contype = 'f' and array_length(c.conkey, 1) = 1
-          and c.conrelid = to_regclass($1) and c.confrelid = to_regclass($2)`,
-      [`public.${quoteIdent(op.table)}`, `public.${quoteIdent(target)}`],
-    );
+    const rows = await tx.$queryRaw<{ child: string; parent: string }[]>`
+      select ca.attname as child, pa.attname as parent
+        from pg_constraint c
+        join pg_attribute ca on ca.attrelid = c.conrelid and ca.attnum = c.conkey[1]
+        join pg_attribute pa on pa.attrelid = c.confrelid and pa.attnum = c.confkey[1]
+       where c.contype = 'f' and array_length(c.conkey, 1) = 1
+         and c.conrelid = to_regclass(${`public.${quoteIdent(op.table)}`})
+         and c.confrelid = to_regclass(${`public.${quoteIdent(target)}`})`;
     if (rows.length !== 1) {
       throw new RestError(
         rows.length ? `Ambiguous relationship to "${target}"` : `No relationship to "${target}"`,
@@ -353,38 +350,57 @@ async function relationsFor(client: pg.PoolClient, op: RestOp): Promise<Relation
   return relations;
 }
 
+/**
+ * Runs a statement that returns rows and gets them back as JSON built by
+ * PostgreSQL (as PostgREST does): every column type arrives in its JSON form —
+ * timestamps as ISO strings, ranges and intervals as text — in statement order.
+ */
+async function jsonRows(tx: Tx, text: string, params: Params): Promise<Record<string, unknown>[]> {
+  const result = await tx.$queryRawUnsafe<{ rows: Record<string, unknown>[] }[]>(
+    `with _rows as (${text}) select coalesce(json_agg(_rows), '[]'::json) as rows from _rows`,
+    ...params,
+  );
+  return result[0]?.rows ?? [];
+}
+
 export interface RestResult {
   data: unknown;
   count?: number;
 }
 
-export async function executeRest(client: pg.PoolClient, op: RestOp): Promise<RestResult> {
+export async function executeRest(tx: Tx, op: RestOp): Promise<RestResult> {
   const types =
-    op.action === "insert" || op.action === "update" ? await columnTypes(client, op.table) : {};
-  const relations = await relationsFor(client, op);
+    op.action === "insert" || op.action === "update" ? await columnTypes(tx, op.table) : {};
+  const relations = await relationsFor(tx, op);
   const built = buildStatement(op, types, relations);
-  const result = await client.query(built.text, built.params);
+  const returnsRows = op.action === "select" || op.returning;
+
+  let rows: Record<string, unknown>[] = [];
+  if (returnsRows) rows = await jsonRows(tx, built.text, built.params);
+  else await tx.$executeRawUnsafe(built.text, ...built.params);
 
   let count: number | undefined;
   if (built.countText) {
-    const counted = await client.query<{ count: number }>(built.countText, built.countParams);
-    count = Number(counted.rows[0]?.count ?? 0);
+    const counted = await tx.$queryRawUnsafe<{ count: bigint }[]>(
+      built.countText,
+      ...(built.countParams ?? []),
+    );
+    count = Number(counted[0]?.count ?? 0);
   }
 
-  const returnsRows = op.action === "select" || op.returning;
   if (!returnsRows) return { data: null };
   if (op.single) {
-    if (result.rows.length !== 1) {
+    if (rows.length !== 1) {
       throw new RestError(
         "JSON object requested, multiple (or no) rows returned",
         "PGRST116",
         406,
-        `The result contains ${result.rows.length} rows`,
+        `The result contains ${rows.length} rows`,
       );
     }
-    return { data: result.rows[0], count };
+    return { data: rows[0], count };
   }
-  return { data: result.rows, count };
+  return { data: rows, count };
 }
 
 // -------------------------------------------------------------------- functions
@@ -400,26 +416,21 @@ interface FunctionInfo {
 
 const FUNCTION_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
 
-async function functionInfo(client: pg.PoolClient, name: string): Promise<FunctionInfo | null> {
+async function functionInfo(tx: Tx, name: string): Promise<FunctionInfo | null> {
   const cached = fnCache.get(name);
   if (cached && Date.now() - cached.at < 60_000) return cached.info;
-  const { rows } = await client.query<{
-    argnames: string[] | null;
-    argtypes: string[];
-    proretset: boolean;
-    rettype: string;
-  }>(
-    `select p.proargnames as argnames,
-            array(select format_type(t, null) from unnest(string_to_array(p.proargtypes::text, ' ')::oid[]) t) as argtypes,
-            p.proretset,
-            format_type(p.prorettype, null) as rettype
-       from pg_proc p
-       join pg_namespace n on n.oid = p.pronamespace
-      where n.nspname = 'public' and p.proname = $1 and p.prokind = 'f'
-        and p.prorettype <> 'trigger'::regtype
-      limit 1`,
-    [name],
-  );
+  const rows = await tx.$queryRaw<
+    { argnames: string[] | null; argtypes: string[]; proretset: boolean; rettype: string }[]
+  >`
+    select p.proargnames as argnames,
+           array(select format_type(t, null) from unnest(string_to_array(p.proargtypes::text, ' ')::oid[]) t) as argtypes,
+           p.proretset,
+           format_type(p.prorettype, null) as rettype
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public' and p.proname = ${name} and p.prokind = 'f'
+       and p.prorettype <> 'trigger'::regtype
+     limit 1`;
   const row = rows[0];
   const info = row
     ? {
@@ -433,14 +444,18 @@ async function functionInfo(client: pg.PoolClient, name: string): Promise<Functi
   return info;
 }
 
-/** Calls a function of the public schema with named arguments. */
+/**
+ * Calls a function of the public schema with named arguments. Results come
+ * back as JSON built by PostgreSQL: a set as an array (of values for a set of
+ * scalars, of objects for a set of rows), anything else as one value.
+ */
 export async function executeRpc(
-  client: pg.PoolClient,
+  tx: Tx,
   name: string,
   args: Record<string, unknown>,
 ): Promise<unknown> {
   if (!FUNCTION_NAME.test(name)) throw new RestError("Invalid function name", "PGRST202", 404);
-  const info = await functionInfo(client, name);
+  const info = await functionInfo(tx, name);
   if (!info) throw new RestError(`Could not find the function public.${name}`, "PGRST202", 404);
 
   const params: Params = [];
@@ -462,14 +477,12 @@ export async function executeRpc(
 
   const call = `public.${quoteIdent(name)}(${named.join(", ")})`;
   if (info.returnType === "void") {
-    await client.query(`select ${call}`, params);
+    await tx.$executeRawUnsafe(`select ${call}`, ...params);
     return null;
   }
-  if (info.returnsSet) {
-    const result = await client.query(`select * from ${call}`, params);
-    const only = result.fields.length === 1 ? result.fields[0]?.name : null;
-    return only === name ? result.rows.map((r) => r[only]) : result.rows;
-  }
-  const result = await client.query(`select ${call} as value`, params);
-  return result.rows[0]?.value ?? null;
+  const query = info.returnsSet
+    ? `select coalesce(json_agg(_result), '[]'::json) as value from ${call} _result`
+    : `select to_json(${call}) as value`;
+  const result = await tx.$queryRawUnsafe<{ value: unknown }[]>(query, ...params);
+  return result[0]?.value ?? null;
 }

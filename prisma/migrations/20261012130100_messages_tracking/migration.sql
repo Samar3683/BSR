@@ -412,3 +412,7 @@ begin
       t || '_notify', t);
   end loop;
 end $$;
+
+-- The web server calls these as itself (outside a request role), like the quote intake.
+grant execute on function intake.submit_message(jsonb), intake.track(text),
+  intake.add_visitor_message(text, text) to bsr_app;

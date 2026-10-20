@@ -8,6 +8,18 @@ import { setSessionCookie } from "@/admin/server/http";
 const KINDS = ["recovery", "invite"] as const;
 
 /**
+ * A redirect within this site. Relative, because request.url names the
+ * server's listening address (http://0.0.0.0:3000 in Docker), not the site.
+ */
+function redirectTo(path: string): NextResponse {
+  const url = new URL(path, "http://site.invalid"); // normalises and percent-encodes the path
+  return new NextResponse(null, {
+    status: 307,
+    headers: { Location: `${url.pathname}${url.search}${url.hash}` },
+  });
+}
+
+/**
  * Landing point of the emailed links (password recovery, administrator
  * invitations). The one-time token is consumed, a short session that may only
  * set a password is opened in the cookie, and the visitor continues to a
@@ -26,10 +38,10 @@ export async function GET(request: NextRequest) {
       request.headers.get("user-agent"),
     );
     if (session) {
-      const response = NextResponse.redirect(new URL(next, request.url));
+      const response = redirectTo(next);
       setSessionCookie(response, session, request);
       return response;
     }
   }
-  return NextResponse.redirect(new URL("/admin/login?error=link", request.url));
+  return redirectTo("/admin/login?error=link");
 }
